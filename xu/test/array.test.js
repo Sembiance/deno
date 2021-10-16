@@ -141,7 +141,7 @@ Deno.test("pickRandom", () =>
 	}
 	assertStrictEquals(r.includes(4), true);
 	assertStrictEquals(2, r.length);
-	for(let i=0;i<10000;i++)
+	for(let i=0;i<10_000;i++)
 	{
 		assertStrictEquals(a.pickRandom(4, {exclude : [3]}).includes(3), false);
 		assertStrictEquals(a.pickRandom(3, {exclude : [1, 5]}).includesAny([1, 5]), false);
@@ -204,10 +204,20 @@ Deno.test("removeOnce", () =>
 	assertEquals(a, a.removeOnce(c));
 });
 
+Deno.test("replaceAt", () =>
+{
+	const a = [1, 2, 3, 4, 5];
+	let r = [1, 2, 7, 4, 5];
+	assertEquals(r, a.replaceAt(2, 7));
+	assertEquals(r, a);
+	r = [1, 2, 7, 4, 47];
+	assertEquals(r, a.replaceAt(-1, 47));
+});
+
 Deno.test("shuffle", () =>
 {
-	const a = [].pushSequence(0, 10000);
-	const r = [].pushSequence(0, 10000);
+	const a = [].pushSequence(0, 10_000);
+	const r = [].pushSequence(0, 10_000);
 	assertEquals(r, a);
 	assertNotEquals(r, a.shuffle());	// In theory this could shuffle all 10,000 elements the same, but highly unlikely.
 	assertNotEquals(r, a);
@@ -229,9 +239,9 @@ Deno.test("sortMulti", () =>
 Deno.test("standardDeviation", () =>
 {
 	const a = [1, 2, 3, 4, 5];
-	let r = 1.4142135623730951;
+	let r = 1.414_213_562_373_095_1;
 	assertStrictEquals(r, a.standardDeviation());
-	r = 1.5811388300841898;
+	r = 1.581_138_830_084_189_8;
 	assertStrictEquals(r, a.standardDeviation(true));
 });
 

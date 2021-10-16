@@ -225,6 +225,16 @@ if(!Array.prototype.removeOnce)
 	};
 }
 
+/** Replaces a particular value at index idx, returning the array for chaining */
+if(!Array.prototype.replaceAt)
+{
+	Array.prototype.replaceAt = function replaceAt(idx, v)
+	{
+		this[(idx<0 ? this.length+idx : idx)] = v;
+		return this;
+	};
+}
+
 /** Shuffles an array of numbers, correctly. Does so IN PLACE and returns the array for chaining */
 if(!Array.prototype.shuffle)
 {

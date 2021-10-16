@@ -3,7 +3,7 @@ import {} from "../number.js";
 
 Deno.test("bytesToSize", () =>
 {
-	const a = Number(128939123);
+	const a = Number(128_939_123);
 	assertStrictEquals(a.bytesToSize(), "129MB");
 });
 
@@ -39,8 +39,8 @@ Deno.test("getBits", () =>
 Deno.test("scale", () =>
 {
 	const a = Number(47);
-	const ra = Number(34127.64);
-	assertStrictEquals(ra, a.scale(0, 100, 0, 72612));
+	const ra = Number(34_127.64);
+	assertStrictEquals(ra, a.scale(0, 100, 0, 72_612));
 });
 
 Deno.test("secondsAsHumanReadable", () =>
@@ -53,7 +53,7 @@ Deno.test("secondsAsHumanReadable", () =>
 	const rb = "44 seconds";
 	assertStrictEquals(b.secondsAsHumanReadable(), rb);
 
-	const c = Number(1700355);
+	const c = Number(1_700_355);
 	let rc = "19d16h19m15s";
 	assertStrictEquals(c.secondsAsHumanReadable({short : true}), rc);
 	rc = "19d16h";
@@ -63,11 +63,11 @@ Deno.test("secondsAsHumanReadable", () =>
 	const rd = "500ms";
 	assertStrictEquals(d.secondsAsHumanReadable({short : true}), rd);
 
-	const e = Number(1209601);
+	const e = Number(1_209_601);
 	const re = "14d1s";
 	assertStrictEquals(e.secondsAsHumanReadable({short : true}), re);
 
-	const f = Number(48923789432.25);
+	const f = Number(48_923_789_432.25);
 	let rf = "1,550 years, 3 months, 18 days, 18 hours, 32 seconds";
 	assertStrictEquals(f.secondsAsHumanReadable(), rf);
 	rf = "1,550y3mo18d18h32s";

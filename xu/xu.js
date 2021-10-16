@@ -45,7 +45,7 @@ xu.parseJSON = function parseJSON(raw, fallback)
 {
 	try
 	{
-		return JSON.parse(raw);
+		return JSON.parse(raw);	// eslint-disable-line no-restricted-syntax
 	}
 	catch(err)
 	{
