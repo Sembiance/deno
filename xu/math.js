@@ -1,4 +1,3 @@
-"use strict";
 import {} from "./array.js";
 
 /** Converts an angle from degrees to radians */
@@ -24,6 +23,9 @@ if(!Math.randomInt)
 {
 	Math.randomInt = function randomInt(min, max, {exclude=[]}={})
 	{
+		if(!Array.isArray(exclude))
+			throw new TypeError("pickRandom called with exclude option not of type array");
+			
 		if(exclude.length===0)
 			return Math.floor(Math.random() * (max - min + 1)) + min;
 		

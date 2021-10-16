@@ -1,17 +1,5 @@
-"use strict";
 import {assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import { xu } from "../xu.js";
-
-Deno.test("freeze", () =>
-{
-	const a = {abc : 123, sub : {num : 47}};
-	a.hello = "world";
-	assertStrictEquals(a.hello, "world");
-	Object.freeze(a);
-	assertThrows(() => { a.goodbye = "world"; });
-	assertThrows(() => { delete a.hello; });
-	assertThrows(() => { a.hello = "goodbye"; });
-});
 
 Deno.test("clone", () =>
 {
@@ -30,4 +18,25 @@ Deno.test("clone", () =>
 	assertEquals(xu.clone(a).sub.doubleSub, doubleSub);
 	assertStrictEquals(xu.clone(b, {shallow : true}).at(-1), sub);
 	assertEquals(xu.clone(b, {shallow : false}).at(-1), sub);
+});
+
+Deno.test("freeze", () =>
+{
+	const a = {abc : 123, sub : {num : 47}};
+	a.hello = "world";
+	assertStrictEquals(a.hello, "world");
+	Object.freeze(a);
+	assertThrows(() => { a.goodbye = "world"; });
+	assertThrows(() => { delete a.hello; });
+	assertThrows(() => { a.hello = "goodbye"; });
+});
+
+Deno.test("parseJSON", () =>
+{
+	let a = '{"abc" : 123, "xyz" : [4, 7]}';
+	const r = {abc : 123, xyz : [4, 7]};
+	assertEquals(r, xu.parseJSON(a, {}));
+
+	a = '{"abc" : 123, notQuotedInvalid : [4, 7]}';
+	assertStrictEquals(xu.parseJSON(a, "invalid"), "invalid");
 });

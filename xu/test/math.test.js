@@ -1,5 +1,4 @@
-"use strict";
-import {assertEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {assertEquals, assertStrictEquals, assertThrows} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../math.js";
 
 Deno.test("degreesToRadians", () =>
@@ -18,6 +17,8 @@ Deno.test("radiansToDegrees", () =>
 
 Deno.test("randomInt", () =>
 {
+	assertThrows(() => Math.randomInt(1, 7, {exclude : 2}));
+
 	for(let i=0;i<1000;i++)
 	{
 		const num = Math.randomInt(1, 7);

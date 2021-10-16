@@ -1,4 +1,3 @@
-"use strict";
 import {} from "./array.js";
 
 /** Deletes all keys in an object, in place. Useful to clear an object that is 'const' */

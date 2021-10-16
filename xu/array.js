@@ -1,4 +1,3 @@
-"use strict";
 import {} from "./object.js";
 import {} from "./math.js";
 
@@ -164,6 +163,20 @@ if(!Array.prototype.min)
 	};
 }
 
+/** Returns an array with numbers in sequence from start to end INCLUSIVE */
+if(!Array.prototype.pushSequence)
+{
+	Array.prototype.pushSequence = function pushSequence(start, end)
+	{
+		if(end>=start)
+			this.push(...Array.from(Array((end-start)+1).keys(), v => v+start));
+		else
+			this.push(...Array.from(Array((start-end)+1).keys(), v => v+end).reverse());
+		
+		return this;
+	};
+}
+
 /** Pushes the passed in values onto the array, but only if they are not already present within the array */
 if(!Array.prototype.pushUnique)
 {
@@ -207,6 +220,24 @@ if(!Array.prototype.removeOnce)
 			return this;
 		
 		this.splice(loc, 1);
+
+		return this;
+	};
+}
+
+/** Shuffles an array of numbers, correctly. Does so IN PLACE and returns the array for chaining */
+if(!Array.prototype.shuffle)
+{
+	Array.prototype.shuffle = function shuffle()
+	{
+		let m=this.length, t=null, i=0;
+		while(m)
+		{
+			i = Math.randomInt(0, --m);
+			t = this[m];
+			this[m] = this[i];
+			this[i] = t;
+		}
 
 		return this;
 	};
@@ -327,45 +358,15 @@ if(!Array.prototype.pickRandom)
 {
 	Array.prototype.pickRandom = function pickRandom(num=1, {exclude=[]}={})
 	{
+		if(!Array.isArray(exclude))
+			throw new TypeError("pickRandom called with exclude option not of type array");
+
 		if(exclude.length===0 && num===1)
 			return [this[Math.floor(Math.random()*this.length)]];
 		
 		if(exclude.length===0 && num>=this.length)
 			return Array.from(this).shuffle();
 
-		// TODO uhm? what?
-		// I could .shuffle() and then if the value is in the exclude array skip it but this means computation to shuffle the entire array, even if I only want 1 index
-		// So this code below is probably right, but I need to read it and better understand it and make sure that if I have DUPLICATE values, that those are not chosen
-		// Maybe brute force?
-		const excludedIndexes = exclude.map(v => this.indexOf(v)).unique().filter(v => v!==-1);
-
-		const pickedIndexes=[];
-		for(let i=0;i<num;i++)
-			pickedIndexes.push(Math.randomInt(0, (this.length-1), [...pickedIndexes, ...excludedIndexes]));
-
-		return pickedIndexes.map(pickedIndex => this[pickedIndex]);
+		return Array.from(this).shuffle().filter(v => !exclude.includes(v)).slice(0, num);
 	};
 }
-
-/*
-
-
-// Shuffles an array of numbers, Correctly. Does so IN PLACE and returns the array.
-if(!Array.prototype.shuffle)
-{
-	Array.prototype.shuffle = function shuffle()
-	{
-		let m=this.length, t=null, i=0;
-		while(m)
-		{
-			i = Math.randomInt(0, --m);
-			t = this[m];
-			this[m] = this[i];
-			this[i] = t;
-		}
-
-		return this;
-	};
-}
-
-*/

@@ -1,7 +1,8 @@
-"use strict";
-
-import {} from "./object.js";
 import {} from "./array.js";
+import {} from "./math.js";
+import {} from "./number.js";
+import {} from "./object.js";
+import {} from "./string.js";
 
 const xu = {};
 xu.SECOND = 1000;
@@ -37,6 +38,38 @@ xu.freeze = function freeze(o, {recursive}={})
 	Object.freeze(o);
 
 	return o;
+};
+
+/** Parses the given raw data as JSON and if it fails return the fallback */
+xu.parseJSON = function parseJSON(raw, fallback)
+{
+	try
+	{
+		return JSON.parse(raw);
+	}
+	catch(err)
+	{
+		return fallback;
+	}
+};
+
+/** Template literaly that allows you to easily include multi-line strings and each line will be trimmed */
+xu.trim = function trim(strs, ...vals)
+{
+	const r = [];
+	strs.forEach(str =>
+	{
+		const rVals = [str];
+		if(vals.length>0)
+		{
+			const val = vals.shift();
+			rVals.push((typeof val==="object" ? JSON.stringify(val) : `${val}`));
+		}
+
+		r.push(...rVals.map(rVal => rVal.split("\n").map(line => line.trim()).join("\n")));
+	});
+
+	return r.join("");
 };
 
 export { xu };

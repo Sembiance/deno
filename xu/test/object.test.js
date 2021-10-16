@@ -1,4 +1,3 @@
-"use strict";
 import {assertEquals, assertNotStrictEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../object.js";
 
