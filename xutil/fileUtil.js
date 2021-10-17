@@ -7,6 +7,34 @@ export async function exists(v)
 	return !!await Deno.stat(v).catch(() => {});
 }
 
+let TMP_DIR_PATH = null;
+/** Finds a unique (at time of checking) temporary file path to use */
+export async function genTempPath(prefix, suffix=".tmp")
+{
+	// One time initialization check to see if our preferred /mnt/ram/tmp directory exists or not
+	if(TMP_DIR_PATH===null)
+	{
+		try { TMP_DIR_PATH = (Deno.statSync("/mnt/ram/tmp").isDirectory ? "/mnt/ram/tmp" : "/tmp");	}	// Synchronouse to avoid potential race conditions with multiple calls to genTempPath()
+		catch {	TMP_DIR_PATH = "/tmp"; }
+	}
+	
+	let r = null;
+	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
+
+	do
+		r = path.join(fullPrefix, ((`${performance.now()}`).replaceAll(".", "") + Math.randomInt(0, 1_000_000)) + suffix);
+	while(await exists(r));		// eslint-disable-line no-await-in-loop
+
+	return r;
+}
+
+/** Reads all content from the given filePath and decodes it as encoding (default utf-8) */
+export async function readFile(filePath, encoding="utf-8")
+{
+	const data = await Deno.readFile(filePath);
+	return (encoding ? (new TextDecoder(encoding)).decode(data) : data);
+}
+
 /** Returns a recursive list of all files and directories contained in dirPath.
  * Options:
  *  regex	If set, the relative path from the root must match this regex to be included
@@ -39,23 +67,8 @@ export async function tree(root, {nodir=false, nofile=false, regex, _originalRoo
 	return r;
 }
 
-let TMP_DIR_PATH = null;
-/** Finds a unique (at time of checking) temporary file path to use */
-export async function genTempPath(prefix, suffix=".tmp")
+/** Reads all content from the given filePath and decodes it as encoding (default utf-8) */
+export async function writeFile(filePath, data, encoding="utf-8", {append=false}={})
 {
-	// One time initialization check to see if our preferred /mnt/ram/tmp directory exists or not
-	if(TMP_DIR_PATH===null)
-	{
-		try { TMP_DIR_PATH = (Deno.statSync("/mnt/ram/tmp").isDirectory ? "/mnt/ram/tmp" : "/tmp");	}	// Synchronouse to avoid potential race conditions with multiple calls to genTempPath()
-		catch {	TMP_DIR_PATH = "/tmp"; }
-	}
-	
-	let r = null;
-	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
-
-	do
-		r = path.join(fullPrefix, ((`${performance.now()}`).replaceAll(".", "") + Math.randomInt(0, 1_000_000)) + suffix);
-	while(await exists(r));		// eslint-disable-line no-await-in-loop
-
-	return r;
+	await Deno.writeFile(filePath, (encoding ? (new TextEncoder(encoding)).encode(data) : data), {append});
 }

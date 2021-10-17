@@ -40,3 +40,11 @@ Deno.test("parseJSON", () =>
 	a = '{"abc" : 123, notQuotedInvalid : [4, 7]}';
 	assertStrictEquals(xu.parseJSON(a, "invalid"), "invalid");
 });
+
+Deno.test("trim", () =>
+{
+	const r = xu.trim`
+	This is just
+		a test of the xu trimming	`;
+	assertStrictEquals(r, "This is just\na test of the xu trimming");
+});

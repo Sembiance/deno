@@ -11,6 +11,20 @@ Deno.test("exists", async () =>
 	assertStrictEquals(await fileUtil.exists(path.join(FILES_DIR, "noSuchFileHereMuHahaha")), false);
 });
 
+Deno.test("genTempPath", async () =>
+{
+	const r = await fileUtil.genTempPath();
+	assertStrictEquals(r.startsWith("/mnt/ram/tmp"), true);
+	assertStrictEquals(await fileUtil.exists(r), false);
+	assertStrictEquals((await fileUtil.genTempPath("/tmp")).startsWith("/tmp"), true);
+	assertStrictEquals((await fileUtil.genTempPath(undefined, ".png")).endsWith(".png"), true);
+});
+
+Deno.test("readFile", async () =>	// eslint-disable-line sembiance/shorter-arrow-funs
+{
+	assertStrictEquals(await fileUtil.readFile(path.join(FILES_DIR, "a.txt")), "abc\n");
+});
+
 Deno.test("tree", async () =>
 {
 	let r = await fileUtil.tree(GLOB_DIR);
@@ -49,11 +63,12 @@ Deno.test("tree", async () =>
 	assertStrictEquals(r.length, 0);
 });
 
-Deno.test("genTempPath", async () =>
+Deno.test("writeFile", async () =>
 {
-	const r = await fileUtil.genTempPath();
-	assertStrictEquals(r.startsWith("/mnt/ram/tmp"), true);
-	assertStrictEquals(await fileUtil.exists(r), false);
-	assertStrictEquals((await fileUtil.genTempPath("/tmp")).startsWith("/tmp"), true);
-	assertStrictEquals((await fileUtil.genTempPath(undefined, ".png")).endsWith(".png"), true);
+	const tmpFilePath = await fileUtil.genTempPath();
+	const data = "this is just\na test";
+	await fileUtil.writeFile(tmpFilePath, data);
+	assertStrictEquals(await fileUtil.readFile(tmpFilePath), data);
+	await fileUtil.writeFile(tmpFilePath, "more", undefined, {append : true});
+	assertStrictEquals(await fileUtil.readFile(tmpFilePath), `${data}more`);
 });

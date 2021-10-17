@@ -1,36 +1,65 @@
 import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {xu} from "xu";
 import * as runUtil from "../runUtil.js";
+import * as fileUtil from "../fileUtil.js";
 
 Deno.test("run", async () =>
 {
-	let {stdout, stderr, status} = await runUtil.run("uname");
-	assertStrictEquals(stdout, "Linux\n");
+	// cwd
+	let {stdout, stderr, status} = await runUtil.run("cat", ["hosts"], {cwd : "/etc"});
 	assertStrictEquals(stderr.length, 0);
 	assertStrictEquals(status.success, true);
 	assertStrictEquals(status.code, 0);
+	assertStrictEquals(stdout.length>0, true);
+	assertStrictEquals(stdout.includes("127.0.0.1"), true);
+	assertStrictEquals(stdout.includes("localhost"), true);
 
+	// env
+	({stdout} = await runUtil.run("printenv", [], {env : {RUNUTIL_ENV_TEST : 47}}));
+	assertStrictEquals(stdout.includes("RUNUTIL_ENV_TEST=47"), true);
+
+	// liveOutput
+	({stdout, stderr, status} = await runUtil.run("echo", ["\nLive Output Test. Normal to see this message.\n"], {liveOutput : true}));
+	assertStrictEquals(stdout.length, 0);
+	assertStrictEquals(stderr.length, 0);
+	assertStrictEquals(status.success, true);
+	assertStrictEquals(status.code, 0);
+	
+	// stdout
+	({stdout} = await runUtil.run("uname"));
+	assertStrictEquals(stdout, "Linux\n");
+
+	// stderr
+	const stderrResult = `cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`;
 	({stdout, stderr, status} = await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"]));
 	assertStrictEquals(stdout.length, 0);
-	assertStrictEquals(stderr, `cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
+	assertStrictEquals(stderr, stderrResult);
 	assertStrictEquals(status.success, false);
 	assertStrictEquals(status.code, 1);
 
-	const p = await runUtil.run("sleep", [2000], {detached : true});
-	({stdout, stderr, status} = await runUtil.run("ps", ["-p", `${p.pid}`, "-o", "comm="]));
-	assertStrictEquals(stdout, "sleep\n");
+	// stdoutFilePath
+	let outFilePath = await fileUtil.genTempPath();
+	await runUtil.run("uname", [], {stdoutFilePath : outFilePath});
+	assertStrictEquals(await fileUtil.readFile(outFilePath), "Linux\n");
+	await Deno.remove(outFilePath);
 
-	p.kill("SIGKILL");
-	({stdout, stderr, status} = await runUtil.run("ps", ["-p", `${p.pid}`, "-o", "comm="]));
-	assertStrictEquals(stdout, "sleep <defunct>\n");
+	// stderrFilePath
+	outFilePath = await fileUtil.genTempPath();
+	await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"], {stderrFilePath : outFilePath});
+	assertStrictEquals(await fileUtil.readFile(outFilePath), stderrResult);
+	await Deno.remove(outFilePath);
 
-	status = await p.status();
-	assertStrictEquals(status.signal, 9);
+	// timeout
+	const beforeTime = performance.now();
+	let timedOut = undefined;
+	({stdout, stderr, status, timedOut} = await runUtil.run("sleep", [30], {timeout : xu.SECOND*2}));
+	assertStrictEquals(timedOut, true);
+	assertStrictEquals(status.signal, 15);
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 
-	({stdout, stderr, status} = await runUtil.run("ps", ["-p", `${p.pid}`, "-o", "comm="]));
-	assertStrictEquals(status.code, 1);
-	assertStrictEquals(stdout.length, 0);
-
-	p.close();
-
-	// TODO add test for timeout
+	// virtualX
+	({stderr} = await runUtil.run("drawview", ["--help"], {timeout : xu.SECOND*2, env : {DISPLAY : ""}}));
+	assertStrictEquals(stderr.includes("could not connect to display"), true);
+	({stdout} = await runUtil.run("drawview", ["--help"], {env : {DISPLAY : ""}, virtualX : true}));
+	assertStrictEquals(stdout.startsWith("Usage: drawview "), true);
 });

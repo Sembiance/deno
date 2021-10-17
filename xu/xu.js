@@ -47,7 +47,7 @@ xu.parseJSON = function parseJSON(raw, fallback)
 	{
 		return JSON.parse(raw);	// eslint-disable-line no-restricted-syntax
 	}
-	catch(err)
+	catch
 	{
 		return fallback;
 	}
@@ -69,7 +69,7 @@ xu.trim = function trim(strs, ...vals)
 		r.push(...rVals.map(rVal => rVal.split("\n").map(line => line.trim()).join("\n")));
 	});
 
-	return r.join("");
+	return r.join("").trim();
 };
 
 export { xu };
