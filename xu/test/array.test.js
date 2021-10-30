@@ -141,7 +141,7 @@ Deno.test("pickRandom", () =>
 	}
 	assertStrictEquals(r.includes(4), true);
 	assertStrictEquals(2, r.length);
-	for(let i=0;i<10_000;i++)
+	for(let i=0;i<10000;i++)
 	{
 		assertStrictEquals(a.pickRandom(4, {exclude : [3]}).includes(3), false);
 		assertStrictEquals(a.pickRandom(3, {exclude : [1, 5]}).includesAny([1, 5]), false);
@@ -216,8 +216,8 @@ Deno.test("replaceAt", () =>
 
 Deno.test("shuffle", () =>
 {
-	const a = [].pushSequence(0, 10_000);
-	const r = [].pushSequence(0, 10_000);
+	const a = [].pushSequence(0, 10000);
+	const r = [].pushSequence(0, 10000);
 	assertEquals(r, a);
 	assertNotEquals(r, a.shuffle());	// In theory this could shuffle all 10,000 elements the same, but highly unlikely.
 	assertNotEquals(r, a);

@@ -31,7 +31,6 @@
 				"no-dupe-else-if",
 				"no-dupe-keys",
 				"no-duplicate-case",
-				"no-empty",
 				"no-empty-character-class",
 				"no-empty-enum",
 				"no-empty-interface",
@@ -61,7 +60,6 @@
 				"no-self-assign",
 				"no-setter-return",
 				"no-shadow-restricted-names",
-				"no-this-alias",
 				"no-this-before-super",
 				"no-unreachable",
 				"no-unsafe-finally",
@@ -77,10 +75,11 @@
 				"require-yield",
 				"use-isnan",
 				"valid-typeof"
-				
 			],
 			"exclude" :
 			[
+				"no-empty",
+				"no-this-alias",
 				"no-unused-vars"	// Complains about variables that have to be included and recommends you rename them with an underscore prefix. Lame.
 			]
 		}

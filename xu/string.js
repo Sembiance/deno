@@ -88,8 +88,7 @@ if(!String.prototype.isNumber)
 {
 	String.prototype.isNumber = function isNumber()
 	{
-		const n = parseFloat(this);
-		return !isNaN(n) && isFinite(n);
+		return !isNaN(this) && !isNaN(parseFloat(this)) && isFinite(parseFloat(this));
 	};
 }
 

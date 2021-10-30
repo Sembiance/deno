@@ -1,3 +1,4 @@
+import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 import {} from "./array.js";
 import {} from "./math.js";
 import {} from "./number.js";
@@ -70,6 +71,14 @@ xu.trim = function trim(strs, ...vals)
 	});
 
 	return r.join("").trim();
+};
+
+/** Will wait until the given async function fun returns a truthy value. Exponential delay, starting at 5ms */
+xu.waitUntil = async function waitUntil(fun)
+{
+	let i=0;
+	while(!(await fun()))
+		await delay(Math.min(5*(i++), xu.SECOND));
 };
 
 export { xu };

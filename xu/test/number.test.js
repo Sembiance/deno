@@ -39,8 +39,8 @@ Deno.test("getBits", () =>
 Deno.test("scale", () =>
 {
 	const a = Number(47);
-	const ra = Number(34_127.64);
-	assertStrictEquals(ra, a.scale(0, 100, 0, 72_612));
+	const ra = Number(34127.64);
+	assertStrictEquals(ra, a.scale(0, 100, 0, 72612));
 });
 
 Deno.test("secondsAsHumanReadable", () =>

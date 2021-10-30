@@ -27,7 +27,7 @@ if(!Math.randomInt)
 			throw new TypeError("pickRandom called with exclude option not of type array");
 			
 		if(exclude.length===0)
-			return Math.floor(Math.random() * (max - min + 1)) + min;
+			return Math.floor(Math.trueRandom() * (max - min + 1)) + min;
 		
 		const excluding = exclude.map(i => Math.trunc(i)).filter(i => (i>=min && i<=max)).unique();
 		if(excluding.length===((max-min)+1))
@@ -82,5 +82,21 @@ if(!Math.rotatePointInBox)
 		const dy2 = Math.sin(a) * dist;
 
 		return [dx2 + centerX, dy2 + centerY];
+	};
+}
+
+// Returns a truly random number, taking advantage of crypto if available
+if(!Math.trueRandom)
+{
+	Math.trueRandom = function trueRandom()
+	{
+		try
+		{
+			if(crypto.getRandomValues)
+				return crypto.getRandomValues(new Uint32Array(1))[0] / 0x1_00_00_00_00;
+		}
+		catch {}
+
+		return Math.random();
 	};
 }

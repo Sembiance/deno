@@ -91,7 +91,7 @@ if(!Number.prototype.ease)
 		if(type==="easeInOutCirc")
 			return x<0.5 ? ((1-Math.sqrt(1-((2*x) ** 2)))/2) : ((Math.sqrt(1-((-2*x+2) ** 2))+1)/2);
 
-		const c1 = 1.701_58;
+		const c1 = 1.70158;
 		const c2 = c1*1.525;
 		const c3 = c1+1;
 		const c4 = (2*Math.PI)/3;
@@ -180,7 +180,7 @@ if(!Number.prototype.noExponents)
 		if(mag<=0)
 		{
 			z = `${sign}0.`;
-			while(!(mag >= 0))
+			while(mag<0)
 			{
 				z += "0";
 				++mag;
@@ -192,7 +192,7 @@ if(!Number.prototype.noExponents)
 		if(str.length<=mag)
 		{
 			mag -= str.length;
-			while(!(mag<=0))
+			while(mag>0)
 			{
 				z += 0;
 				--mag;
@@ -224,7 +224,7 @@ if(!Number.prototype.secondsAsHumanReadable)
 		[
 			{n :   "year", s :  "y", v : 31_557_600},
 			{n :  "month", s : "mo", v : 2_629_800},
-			{n :    "day", s :  "d", v : 86_400},
+			{n :    "day", s :  "d", v : 86400},
 			{n :   "hour", s :  "h", v : 3600},
 			{n : "minute", s :  "m", v : 60},
 			{n : "second", s :  "s", v : 1}

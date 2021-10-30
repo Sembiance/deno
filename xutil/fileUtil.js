@@ -4,7 +4,20 @@ import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 /** Returns true if the file/dir v exists, false otherwise */
 export async function exists(v)
 {
-	return !!await Deno.stat(v).catch(() => {});
+	try
+	{
+		await Deno.stat(v);
+		return true;
+	}
+	catch(err)
+	{
+		// If we get a NotFound error, then we simply return false
+		if(err instanceof Deno.errors.NotFound)
+			return false;
+		
+		// Otherwise we probably got a permission denied or some other error, so throw that
+		throw err;
+	}
 }
 
 let TMP_DIR_PATH = null;
@@ -47,8 +60,8 @@ export async function readFile(filePath, encoding="utf-8")
  */
 export async function tree(root, {nodir=false, nofile=false, regex, _originalRoot=root}={})
 {
-	if(!(await Deno.stat(root).catch(() => {}))?.isDirectory)
-		throw new Error(`root must be a directory`);
+	if(!(await Deno.stat(root))?.isDirectory)
+		throw new Error(`root ${root} must be a directory`);
 
 	if(regex && regex instanceof RegExp===false)
 		throw new TypeError(`regex must be an actual RegExp to avoid all sorts of edge cases when matching`);

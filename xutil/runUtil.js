@@ -16,7 +16,7 @@ import * as fileUtil from "./fileUtil.js";
  */
 export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, stderrFilePath, timeout, timeoutSignal="SIGTERM", virtualX, virtualXGLX}={})
 {
-	const runArgs = {cmd : [cmd, ...args], stdout : "piped", stderr : "piped"};
+	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped"};
 	if(env)
 		runArgs.env = Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()])));
 	if(cwd)
@@ -35,7 +35,7 @@ export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, s
 		do
 		{
 			xvfbPort = Math.randomInt(10, 9999);
-			existingSessions = (await fileUtil.tree("/tmp/.X11-unix", {nodir : true, regex : /^X\d+/})).map(v => +path.basename(v).substring(1));	// eslint-disable-line no-await-in-loop
+			existingSessions = (await fileUtil.tree("/tmp/.X11-unix", {nodir : true, regex : /^X\d+/})).map(v => +path.basename(v).substring(1));
 		} while(existingSessions.includes(xvfbPort));
 
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
@@ -57,7 +57,7 @@ export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, s
 
 	// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
 	const stdoutPromise = liveOutput ? Promise.resolve() : (stdoutFilePath ? streams.copy(p.stdout, streams.writerFromStreamWriter(stdoutFile)) : p.output());
-	const stderrPromise = liveOutput ? Promise.resolve() : stderrFilePath ? streams.copy(p.stderr, streams.writerFromStreamWriter(stderrFile)) : p.stderrOutput();
+	const stderrPromise = liveOutput ? Promise.resolve() : (stderrFilePath ? streams.copy(p.stderr, streams.writerFromStreamWriter(stderrFile)) : p.stderrOutput());
 
 	// Start our timer
 	let timerid = null;

@@ -1,9 +1,20 @@
+/----------\
+| Doc URLS |
+\----------/
+    STABLE DOCS: https://doc.deno.land/builtin/stable
+  UNSTABLE DOCS: https://doc.deno.land/builtin/unstable
+       STD DOCS: https://deno.land/std
+NODE OS to DENO: https://medium.com/deno-the-complete-reference/os-module-denos-equivalent-of-node-js-cdd66c61cee1
+
+
 /----------------\
 | Common Imports |
 \----------------/
 import {xu} from "xu";
-import * as fs from "https://deno.land/std@0.111.0/fs/mod.ts";
+import {whateverUtil} from "xutil";
 import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
+import * as fs from "https://deno.land/std@0.111.0/fs/mod.ts";
 import * as streams from "https://deno.land/std@0.111.0/streams/mod.ts";
-import { delay } from "https://deno.land/std/async/mod.ts";
+import * as colors from "https://deno.land/std@0.111.0/fmt/colors.ts";
+import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 

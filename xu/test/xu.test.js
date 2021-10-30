@@ -1,5 +1,6 @@
 import {assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import { xu } from "../xu.js";
+import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 
 Deno.test("clone", () =>
 {
@@ -47,4 +48,20 @@ Deno.test("trim", () =>
 	This is just
 		a test of the xu trimming	`;
 	assertStrictEquals(r, "This is just\na test of the xu trimming");
+});
+
+Deno.test("waitUntil", async () =>
+{
+	let test = null;
+	let counter = 0;
+	setTimeout(() => { test = 123; }, xu.SECOND*2);
+	const errorTimeout = setTimeout(() => { throw new Error("Should not see"); }, xu.SECOND*3);	// eslint-disable-line sembiance/shorter-arrow-funs
+	await xu.waitUntil(async () =>
+	{
+		await delay(500);
+		counter++;
+		return test===123;
+	});
+	clearTimeout(errorTimeout);
+	assertStrictEquals(counter, 4);
 });
