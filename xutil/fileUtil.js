@@ -36,7 +36,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 
 	do
 		r = path.join(fullPrefix, ((`${performance.now()}`).replaceAll(".", "") + Math.randomInt(0, 1_000_000)) + suffix);
-	while(await exists(r));		// eslint-disable-line no-await-in-loop
+	while(await exists(r));
 
 	return r;
 }
@@ -46,6 +46,16 @@ export async function readFile(filePath, encoding="utf-8")
 {
 	const data = await Deno.readFile(filePath);
 	return (encoding ? (new TextDecoder(encoding)).decode(data) : data);
+}
+
+/** reads in byteCount bytes from filePath and returns a Uint8Array */
+export async function readFileBytes(filePath, byteCount)
+{
+	const f = await Deno.open(filePath);
+	const buf = new Uint8Array(byteCount);
+	await Deno.read(f.rid, buf);
+	Deno.close(f.rid);
+	return buf;
 }
 
 /** Returns a recursive list of all files and directories contained in dirPath.
@@ -58,8 +68,11 @@ export async function readFile(filePath, encoding="utf-8")
  * Likewise, fs.walk() suffers from issues such as throwing exceptions whenever it encounters non-standard files, such as sockets
  * Deno.readDir() doesn't suffer from these problems, so I've rolled my own simplified blog with a simple regex match
  */
-export async function tree(root, {nodir=false, nofile=false, regex, _originalRoot=root}={})
+export async function tree(root, {nodir=false, nofile=false, regex, depth=Number.MAX_SAFE_INTEGER, _originalRoot=root}={})
 {
+	if(depth===0)
+		return [];
+
 	if(!(await Deno.stat(root))?.isDirectory)
 		throw new Error(`root ${root} must be a directory`);
 
@@ -74,7 +87,7 @@ export async function tree(root, {nodir=false, nofile=false, regex, _originalRoo
 			r.push(entryPath);
 
 		if(entry.isDirectory)
-			r.push(...await tree(entryPath, {nodir, nofile, regex, _originalRoot}));
+			r.push(...await tree(entryPath, {nodir, nofile, regex, _originalRoot, depth : depth-1}));
 	}
 
 	return r;

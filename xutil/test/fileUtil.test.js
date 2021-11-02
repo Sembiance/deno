@@ -28,35 +28,43 @@ Deno.test("readFile", async () =>	// eslint-disable-line sembiance/shorter-arrow
 Deno.test("tree", async () =>
 {
 	let r = await fileUtil.tree(GLOB_DIR);
-	assertEquals(r, [
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/file1.txt",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/subdir",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt"
+	assertEquals(r.sort(), [
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file1.txt"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt")
+	]);
+
+	r = await fileUtil.tree(GLOB_DIR, {depth : 1});
+	assertEquals(r.sort(), [
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file1.txt"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir")
 	]);
 
 	r = await fileUtil.tree(GLOB_DIR, {nodir : true});
-	assertEquals(r, [
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/file1.txt",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt"
+	assertEquals(r.sort(), [
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file1.txt"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt")
 	]);
 
 	r = await fileUtil.tree(GLOB_DIR, {nodir : true, regex : /2\.txt$/});
 	assertEquals(r, [
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt"
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file2.txt")
 	]);
 
 	r = await fileUtil.tree(GLOB_DIR, {nodir : true, regex : /subdir\/.*3\.txt$/});
 	assertEquals(r, [
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt"
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt")
 	]);
 
 	r = await fileUtil.tree(GLOB_DIR, {nofile : true});
 	assertEquals(r, [
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir",
-		"/mnt/compendium/DevLab/deno/xutil/test/files/globTest/A_dir_with[brackets]_and?(parenthesis)/subdir"
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir"),
+		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir")
 	]);
 
 	r = await fileUtil.tree(GLOB_DIR, {nofile : true, nodir : true});
@@ -71,4 +79,10 @@ Deno.test("writeFile", async () =>
 	assertStrictEquals(await fileUtil.readFile(tmpFilePath), data);
 	await fileUtil.writeFile(tmpFilePath, "more", undefined, {append : true});
 	assertStrictEquals(await fileUtil.readFile(tmpFilePath), `${data}more`);
+});
+
+Deno.test("readFileBytes", async () =>
+{
+	const a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4);
+	assertEquals(a, new Uint8Array([0x89, 0x50, 0x4E, 0x47]));
 });

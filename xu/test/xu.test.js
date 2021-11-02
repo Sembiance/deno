@@ -2,6 +2,11 @@ import {assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} f
 import { xu } from "../xu.js";
 import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 
+Deno.test("dirname", () =>
+{
+	assertStrictEquals(xu.dirname(import.meta), "/mnt/compendium/DevLab/deno/xu/test");
+});
+
 Deno.test("clone", () =>
 {
 	const doubleSub = {num : 47};
@@ -65,3 +70,18 @@ Deno.test("waitUntil", async () =>
 	clearTimeout(errorTimeout);
 	assertStrictEquals(counter, 4);
 });
+
+Deno.test("log", () =>
+{
+	xu.log`\nxu.log test message`;
+	xu.log`xu.log test message with string: ${"hello"}`;
+	xu.log`xu.log test message with number: ${47}`;
+});
+
+Deno.test("color", () =>
+{
+	console.log(`color test: ${xu.cf.fg.magenta("magenta")} and regular here`);
+	const modifiers = ["bold", "underline", "blink", "reverse", "strike", "italic"];
+	Object.keys(xu.c.fg).forEach(colorName => xu.log`${xu.c.reset + colorName.padStart(7)}: ${`${xu.c.fg[colorName]}foreground ${modifiers.map(v => xu.c[v] + xu.c.fg[colorName] + v + xu.c.reset).join(" ")}`} ${`${xu.c.reset + xu.c.bg[colorName]}background`}`);
+});
+
