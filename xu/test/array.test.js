@@ -1,5 +1,6 @@
 import {assertEquals, assertNotEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../object.js";
+import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 
 Deno.test("average", () =>
 {
@@ -116,6 +117,27 @@ Deno.test("min", () =>
 	a = [0.456, 0.197];
 	r = 0.197;
 	assertStrictEquals(r, a.min());
+});
+
+Deno.test("parallelMap", async () =>
+{
+	const a = [1, 2, 3, 4, 5];
+
+	async function fn(i)
+	{
+		await delay(1000);
+		return i*2;
+	}
+	
+	let beforeTime = performance.now();
+	let r = await a.parallelMap(fn, 2);
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/1000), 3);
+	assertEquals(r, [2, 4, 6, 8, 10]);
+
+	beforeTime = performance.now();
+	r = await a.parallelMap(fn);
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/1000), 1);
+	assertEquals(r, [2, 4, 6, 8, 10]);
 });
 
 Deno.test("pickRandom", () =>

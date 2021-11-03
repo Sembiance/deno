@@ -1,5 +1,6 @@
 import {} from "./object.js";
 import {} from "./math.js";
+import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";
 
 /** Returns an average of all the numbers in the array (arithmetic mean) */
 if(!Array.prototype.average)
@@ -160,6 +161,18 @@ if(!Array.prototype.min)
 	Array.prototype.min = function min()
 	{
 		return Math.min(...this);
+	};
+}
+
+/** Runs the given fn in parallel for each item in the array, returning a mapped result. Set atOnce to limit how many run at a time */
+if(!Array.prototype.parallelMap)
+{
+	Array.prototype.parallelMap = async function parallelMap(fn, atOnce)
+	{
+		if(atOnce)
+			return await (new PQueue({concurrency : atOnce})).addAll(this.map(v => () => fn(v)));
+
+		return await Promise.all(this.map(fn));
 	};
 }
 

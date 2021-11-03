@@ -1,7 +1,8 @@
-import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {assertStrictEquals, assert} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {xu} from "xu";
 import * as runUtil from "../runUtil.js";
 import * as fileUtil from "../fileUtil.js";
+import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 
 Deno.test("run", async () =>
 {
@@ -50,7 +51,7 @@ Deno.test("run", async () =>
 	await Deno.remove(outFilePath);
 
 	// timeout
-	const beforeTime = performance.now();
+	let beforeTime = performance.now();
 	let timedOut = undefined;
 	({stdout, stderr, status, timedOut} = await runUtil.run("sleep", [30], {timeout : xu.SECOND*2}));
 	assertStrictEquals(timedOut, true);
@@ -62,4 +63,14 @@ Deno.test("run", async () =>
 	assertStrictEquals(stderr.includes("could not connect to display"), true);
 	({stdout} = await runUtil.run("drawview", ["--help"], {env : {DISPLAY : ""}, virtualX : true}));
 	assertStrictEquals(stdout.startsWith("Usage: drawview "), true);
+
+	// detached
+	beforeTime = performance.now();
+	const p = await runUtil.run("sleep", [30], {detached : true, virtualX : true});
+	assert((performance.now()-beforeTime)<xu.SECOND);
+	beforeTime = performance.now();
+	await delay(xu.SECOND*3);
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 3);
+	p.kill("SIGTERM");
+	p.close();
 });

@@ -6,6 +6,7 @@ import * as fileUtil from "./fileUtil.js";
  * Options:
  *   cwd				The current working directory to run the program in
  *   env				An object of key : value pairs to be addded to the environment
+ *   detached			Don't wait for the command to finish, return the Process once launched
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
@@ -14,7 +15,7 @@ import * as fileUtil from "./fileUtil.js";
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  */
-export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, stderrFilePath, timeout, timeoutSignal="SIGTERM", virtualX, virtualXGLX}={})
+export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, stderrFilePath, timeout, timeoutSignal="SIGTERM", virtualX, virtualXGLX, detached}={})
 {
 	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped"};
 	if(env)
@@ -26,6 +27,11 @@ export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, s
 	{
 		runArgs.stdout = "inherit";
 		runArgs.stderr = "inherit";
+	}
+	else if(detached)
+	{
+		runArgs.stdout = "null";
+		runArgs.stderr = "null";
 	}
 
 	let xvfbProc = null;
@@ -50,6 +56,20 @@ export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, s
 	
 	// Kick off the process
 	const p = Deno.run(runArgs);
+
+	if(detached)
+	{
+		p.status().then(() =>
+		{
+			if(xvfbProc)
+			{
+				xvfbProc.kill("SIGTERM");
+				xvfbProc.close();
+			}
+		});
+
+		return p;
+	}
 
 	// Create our output files if we are redirecting stdout or stderr
 	const stdoutFile = stdoutFilePath ? await Deno.create(stdoutFilePath) : null;

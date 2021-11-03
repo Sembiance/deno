@@ -28,8 +28,8 @@ Deno.test("isNumber", () =>
 	assertStrictEquals("1000".isNumber(), true);
 	assertStrictEquals("1234.56".isNumber(), true);
 	assertStrictEquals("-100".isNumber(), true);
-	assertStrictEquals("100hj".isNumber(), true);
-	assertStrictEquals(!"hj2000".isNumber(), true);
+	assertStrictEquals("100hj".isNumber(), false);
+	assertStrictEquals("hj2000".isNumber(), false);
 });
 
 Deno.test("repeat", () =>
