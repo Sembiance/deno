@@ -199,7 +199,7 @@ xu.log = function log(strs, ...vals)
 		}
 	});
 
-	console.log(r.join(""));	// eslint-disable-line no-restricted-syntax
+	console.log(r.join(""));
 };
 
 const stdoutEncoder = new TextEncoder();

@@ -20,3 +20,39 @@ Deno.test("randomCrop", async () =>
 	assertStrictEquals(width, 640);
 	assertStrictEquals(height, 480);
 });
+
+Deno.test("getInfo", async () =>
+{
+	let r = await imageUtil.getInfo(path.join(FILES_DIR, "input.png"));
+	assertStrictEquals(r.width, 1487);
+	assertStrictEquals(r.height, 1500);
+	assertStrictEquals(r.colorCount, 355_646);
+	assertStrictEquals(r.format, "PNG");
+	assertStrictEquals(r.canvasWidth, 1487);
+	assertStrictEquals(r.canvasHeight, 1500);
+	assertStrictEquals(r.size, 3_328_508);
+	assertStrictEquals(r.opaque, false);
+	assertStrictEquals(r.compressionType, "Zip");
+
+	r = await imageUtil.getInfo(path.join(FILES_DIR, "yoda.gif"));
+	assertStrictEquals(r.width, 640);
+	assertStrictEquals(r.height, 481);
+	assertStrictEquals(r.colorCount, 152);
+	assertStrictEquals(r.format, "GIF");
+	assertStrictEquals(r.canvasWidth, 640);
+	assertStrictEquals(r.canvasHeight, 481);
+	assertStrictEquals(r.size, 197_663);
+	assertStrictEquals(r.opaque, true);
+	assertStrictEquals(r.compressionType, "LZW");
+
+	r = await imageUtil.getInfo(path.join(FILES_DIR, "abydos.psd"));
+	assertStrictEquals(r.width, 800);
+	assertStrictEquals(r.height, 600);
+	assertStrictEquals(r.colorCount, 90427);
+	assertStrictEquals(r.format, "PSD");
+	assertStrictEquals(r.canvasWidth, 1600);
+	assertStrictEquals(r.canvasHeight, 1600);
+	assertStrictEquals(r.size, 4_665_024);
+	assertStrictEquals(r.opaque, false);
+	assertStrictEquals(r.compressionType, "RLE");
+});

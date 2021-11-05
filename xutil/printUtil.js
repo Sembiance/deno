@@ -125,7 +125,9 @@ export function columnizeObjects(objects, options={})
 export function multiLineBarChart(o, label="Label", lineLength=120)
 {
 	if(!o)
-		return;
+		return "";
+	
+	const r = [];
 
 	const COLORS = Array(100).fill(["orange", "violet", "blueGreen", "chartreuse", "violetRed", "deepSkyblue", "fogGray"]).flat();
 	const LINES = Object.entries(o).sort((a, b) => b[1]-a[1]);
@@ -134,23 +136,25 @@ export function multiLineBarChart(o, label="Label", lineLength=120)
 	const longestKey = LINES.map(line => line[0].length).sort((a, b) => b-a)[0];
 	const barLength = lineLength-(longestKey+2);
 
-	xu.stdoutWrite(`${" ".repeat(Math.round((lineLength-label.length)/2)) + xu.cf.fg.yellow(label)}\n`);
-	xu.stdoutWrite(`${xu.cf.fg.cyan("=").repeat(lineLength)}\n`);
+	r.push(`${" ".repeat(Math.round((lineLength-label.length)/2)) + xu.cf.fg.yellow(label)}\n`);
+	r.push(`${xu.cf.fg.cyan("=").repeat(lineLength)}\n`);
 
 	LINES.forEach((LINE, i) =>
 	{
-		xu.stdoutWrite(`${xu.cf.fg.greenDim(LINE[0].padStart(longestKey))}${xu.cf.fg.cyan(":")} `);
-		xu.stdoutWrite(xu.cf.fg[COLORS[i]]("█".repeat(Math.max((LINE[1] > 0 ? 1 : 0), Math.round(barLength*(LINE[1]/TOTAL))))));
-		xu.stdoutWrite(` ${VALUES[i]}`);
-		xu.stdoutWrite("\n");
+		r.push(`${xu.cf.fg.greenDim(LINE[0].padStart(longestKey))}${xu.cf.fg.cyan(":")} `);
+		r.push(xu.cf.fg[COLORS[i]]("█".repeat(Math.max((LINE[1] > 0 ? 1 : 0), Math.round(barLength*(LINE[1]/TOTAL))))));
+		r.push(` ${VALUES[i]}`);
+		r.push("\n");
 	});
 
-	xu.stdoutWrite("\n");
+	r.push("\n");
+	return r.join("");
 }
 
 /** Prints out a single line boolean pie chart */
 export function singleLineBooleanPie(o, label="Label", lineLength=120)
 {
+	const r=[];
 	const COLORS = ["orange", "violet"];
 	const barLength = lineLength-(label.length+2);
 	const keys = Object.keys(o);
@@ -163,22 +167,22 @@ export function singleLineBooleanPie(o, label="Label", lineLength=120)
 		values.push(0);
 
 	// Labels
-	xu.stdoutWrite(`${xu.cf.fg.white(label)}: `);
-	xu.stdoutWrite(xu.cf.fg.yellow(keys[0]));
+	r.push(`${xu.cf.fg.white(label)}: `);
+	r.push(xu.cf.fg.yellow(keys[0]));
 	const firstValue = ` ${values[0].toLocaleString()} (${Math.round((values[0]/TOTAL)*100)}%)`;
-	xu.stdoutWrite(firstValue);
+	r.push(firstValue);
 	const secondValue = ` ${values[1].toLocaleString()} (${Math.round((values[1]/TOTAL)*100)}%)`;
-	xu.stdoutWrite(" ".repeat(barLength-((keys[0].length+keys[1].length+firstValue.length+secondValue.length)-1)));
-	xu.stdoutWrite(xu.cf.fg.yellow(keys[1]));
-	xu.stdoutWrite(secondValue);
-	xu.stdoutWrite("\n");
+	r.push(" ".repeat(barLength-((keys[0].length+keys[1].length+firstValue.length+secondValue.length)-1)));
+	r.push(xu.cf.fg.yellow(keys[1]));
+	r.push(secondValue);
+	r.push("\n");
 
 	// Pie
-	xu.stdoutWrite(" ".repeat(label.length+1) + xu.cf.fg.cyan("["));
-	values.forEach((v, i) => xu.stdoutWrite(xu.cf.fg[COLORS[i]]("█".repeat(barLength*(v/TOTAL)))));
-	xu.stdoutWrite(xu.cf.fg.cyan("]"));
+	r.push(" ".repeat(label.length+1) + xu.cf.fg.cyan("["));
+	values.forEach((v, i) => r.push(xu.cf.fg[COLORS[i]]("█".repeat(barLength*(v/TOTAL)))));
+	r.push(xu.cf.fg.cyan("]"));
 
-	xu.stdoutWrite("\n\n");
+	return r.join("");
 }
 
 /** Prints out a major header that looks like this
@@ -187,17 +191,17 @@ export function singleLineBooleanPie(o, label="Label", lineLength=120)
 \--------------/  */
 export function majorHeader(text, options={})
 {
+	const r=[];
 	if(options.prefix)
-		xu.stdoutWrite(options.prefix);
+		r.push(options.prefix);
 
-	/* eslint-disable no-restricted-syntax */
-	console.log(`${xu.c.fg.cyan}/${"-".repeat(text.length+2)}\\`);
-	console.log(`${xu.c.fg.cyan}| ${xu.c.fg.white + text} ${xu.c.fg.cyan}|`);
-	console.log(`${xu.c.fg.cyan}\\${"-".repeat(text.length+2)}/${xu.c.reset}`);
-	/* eslint-enable no-restricted-syntax */
+	r.push(`${xu.cf.fg.cyan(`/${"-".repeat(text.length+2)}\\`)}\n`);
+	r.push(`${xu.cf.fg.cyan("| ")}${xu.cf.fg.white(text)}${xu.cf.fg.cyan(" |")}\n`);
+	r.push(`${xu.cf.fg.cyan(`\\${"-".repeat(text.length+2)}/`)}\n`);
 
 	if(options.suffix)
-		xu.stdoutWrite(options.suffix);
+		r.push(options.suffix);
+	return r.join("");
 }
 
 /** Prints out a minor header that looks like this
@@ -205,35 +209,38 @@ Minor Header
 ------------ */
 export function minorHeader(text, options={})
 {
+	const r=[];
 	if(options.prefix)
-		xu.stdoutWrite(options.prefix);
+		r.push(options.prefix);
 
-	/* eslint-disable no-restricted-syntax */
-	console.log(xu.c.fg.white + text);
-	console.log(xu.c.fg.cyan + "-".repeat(text.length) + xu.c.reset);
-	/* eslint-enable no-restricted-syntax */
+	r.push(`${xu.cf.fg.white(text)}\n`);
+	r.push(`${xu.cf.fg.cyan("-".repeat(text.length))}\n`);
 
 	if(options.suffix)
-		xu.stdoutWrite(options.suffix);
+		r.push(options.suffix);
+	return r.join("");
 }
 
 /** Prints out a list of items with an optional "header" in options  */
 export function list(items, options={})
 {
+	const r=[];
 	if(options.prefix)
-		xu.stdoutWrite(options.prefix);
+		r.push(options.prefix);
 
 	if(options.header)
 	{
 		const headerArgs = [options.header, (options.headerColor ? { color : options.headerColor } : undefined)];
 		if(options.headerType==="major")
-			majorHeader(...headerArgs);
+			r.push(majorHeader(...headerArgs));
 		else
-			minorHeader(...headerArgs);
+			r.push(minorHeader(...headerArgs));
 	}
 
-	items.forEach(item => xu.stdoutWrite(`${" ".repeat(options.indent || 2)}${xu.cf.fg.yellow("*")} ${item}\n`));
+	items.forEach(item => r.push(`${" ".repeat(options.indent || 2)}${xu.cf.fg.yellow("*")} ${item}\n`));
 
 	if(options.suffix)
-		xu.stdoutWrite(options.suffix);
+		r.push(options.suffix);
+	
+	return r.join("");
 }

@@ -1,5 +1,6 @@
 import {xu} from "xu";
 import * as runUtil from "./runUtil.js";
+import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 
 /** Returns the [width, height] of the image at imageFilePath */
 export async function getWidthHeight(imageFilePath)
@@ -24,4 +25,52 @@ export async function randomCrop(inputFilePath, outputFilePath, targetWidth, tar
 	const yOffset = (targetHeight<imageHeight) ? Math.randomInt(0, (imageHeight-targetHeight)) : 0;
 
 	await runUtil.run("convert", [inputFilePath, "-crop", `${targetWidth}x${targetHeight}+${xOffset}+${yOffset}`, "+repage", outputFilePath]);
+}
+
+/** returns info about the image */
+export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOnly}={})
+{
+	const [width, height] = await getWidthHeight(imageFilePath);
+	const imageInfo = {width, height};
+
+	// Because imagemagick is so damn slow at calculating info, we don't bother getting advanced info if the image is too large
+	if(widthHeightOnly || [imageInfo.width, imageInfo.height].some(v => v>=10000))
+		return imageInfo;
+	
+	// Available properties: https://imagemagick.org/script/escape.php
+	const PROPS =
+	{
+		colorCount      : "%k",
+		format          : "%[magick]",
+		canvasHeight    : "%H",
+		canvasWidth     : "%W",
+		size            : "%B",
+		compressionType : "%C",
+		opaque          : "%[opaque]"
+	};
+
+	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", Object.entries(PROPS).map(([k, v]) => `${k}:${v}`).join("\\n"), `./${path.basename(imageFilePath)}`], {timeout, cwd : path.dirname(imageFilePath)}, this);
+	if(stdout.length===0 || stdout.includes("corrupt image"))	// Old node check, may not need with deno:  || stdout.toLowerCase().startsWith("error: command failed")
+		return {...imageInfo, err : stderr};
+	
+	const imgLines = stdout.split("\n");
+	if(imgLines.length===0)
+		return {...imageInfo, err : stderr};
+	
+	const NUMS = ["width", "height", "canvasWidth", "canvasHeight", "colorCount", "size", "compressionQuality", "entropy"];
+	const BOOLS = ["opaque"];
+	for(const imgLine of imgLines)
+	{
+		const lineProps = (imgLine.match(/(?<name>[^:]+):(?<value>.*)$/) || {}).groups;
+		if(!lineProps || !Object.hasOwn(PROPS, lineProps.name))
+			continue;
+		
+		const propValue = NUMS.includes(lineProps.name) ? +lineProps.value : (BOOLS.includes(lineProps.name) ? lineProps.value.toLowerCase()==="true" : lineProps.value);
+		if(propValue==="Undefined")
+			continue;
+
+		imageInfo[lineProps.name] = NUMS.includes(lineProps.name) ? Math.max(propValue, (imageInfo[lineProps.name] || 0)) : propValue;
+	}
+	
+	return imageInfo;
 }
