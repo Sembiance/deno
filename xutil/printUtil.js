@@ -1,11 +1,5 @@
 import {xu} from "xu";
 
-/** returns the string str without any ansi escape codes. Useful for measuring actual length of string that will be printed to the terminal */
-export function decolor(str)
-{
-	return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");	// eslint-disable-line no-control-regex, unicorn/better-regex, unicorn/escape-case
-}
-
 /** prints out a single object in a tabular format where the keys are listed in column 1 and the values are in column 2 */
 export function columnizeObject(o, options={})
 {
@@ -22,7 +16,7 @@ export function columnizeObject(o, options={})
 		options.alignment = options.alignment.map(a => a.charAt(0).toLowerCase());
 
 	const maxColSizes = [];
-	rows.forEach(row => row.forEach((col, i) => { maxColSizes[i] = Math.max((maxColSizes[i] || 0), decolor(`${(col)}`).length); }));
+	rows.forEach(row => row.forEach((col, i) => { maxColSizes[i] = Math.max((maxColSizes[i] || 0), `${(col)}`.decolor().length); }));
 
 	if(options.header)
 		rows.splice(1, 0, maxColSizes.map(maxColSize => xu.cf.fg.cyan("-".repeat(maxColSize))));
@@ -38,7 +32,7 @@ export function columnizeObject(o, options={})
 			const col = `${_col}`;
 			
 			const a = (options.header && rowNum===0) ? "c" : (options.alignment ? (options.alignment[i] || "l") : "l");
-			const colPadding = maxColSizes[i] - decolor(col).length;
+			const colPadding = maxColSizes[i] - col.decolor().length;
 
 			if(a==="c" || a==="r")
 				rowOut += " ".repeat(Math.max(Math.floor(colPadding/(a==="c" ? 2 : 1)), 0));
@@ -85,7 +79,7 @@ export function columnizeObjects(objects, options={})
 
 	const maxColSizeMap = {};
 
-	rows.forEach(row => colNames.forEach(colName => { if(Object.hasOwn(row, colName)) { maxColSizeMap[colName] = Math.max((maxColSizeMap[colName] || 0), decolor(`${row[colName]}`).length, colNameMap[colName].length); } }));	// eslint-disable-line curly
+	rows.forEach(row => colNames.forEach(colName => { if(Object.hasOwn(row, colName)) { maxColSizeMap[colName] = Math.max((maxColSizeMap[colName] || 0), `${row[colName]}`.decolor().length, colNameMap[colName].length); } }));	// eslint-disable-line curly
 
 	rows.unshift(Object.map(colNameMap, (k, v) => v), Object.map(colNameMap, k => [k, xu.cf.fg.cyan("-".repeat(maxColSizeMap[k]))]));
 
@@ -98,7 +92,7 @@ export function columnizeObjects(objects, options={})
 		{
 			const col = `${row[colName]}`;
 			const a = rowNum===0 ? "c" : (options.alignment ? (options.alignment[colName] || alignmentDefault) : (colTypes[i]==="number" ? "r" : (colTypes[i]==="boolean" ? "c" : alignmentDefault)));
-			const colPadding = maxColSizeMap[colName] - decolor(col).length;
+			const colPadding = maxColSizeMap[colName] - col.decolor().length;
 
 			if(a==="c" || a==="r")
 				rowOut += " ".repeat(Math.max(Math.floor(colPadding/(a==="c" ? 2 : 1)), 0));

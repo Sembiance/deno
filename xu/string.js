@@ -16,6 +16,15 @@ if(!String.prototype.decodeURLPath)
 	};
 }
 
+/** returns the string str without any ansi escape codes. Useful for measuring actual length of string that will be printed to the terminal */
+if(!String.prototype.decolor)
+{
+	String.prototype.decolor = function decolor()
+	{
+		return this.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");	// eslint-disable-line no-control-regex, unicorn/better-regex, unicorn/escape-case
+	};
+}
+
 /** Encode a URL path segment, replacing things like # and ? and % with the proper hex escaping  */
 if(!String.prototype.encodeURLPath)
 {

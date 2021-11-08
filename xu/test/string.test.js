@@ -1,11 +1,18 @@
 import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../string.js";
+import {printUtil} from "../../xutil/xutil.js";
+import {encode as base64Encode, decode as base64Decode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
 
 Deno.test("capitalize", () =>
 {
 	const a = "hello";
 	const r = "Hello";
 	assertStrictEquals(r, a.capitalize());
+});
+
+Deno.test("decolor", () =>
+{
+	assertStrictEquals(base64Encode((new TextDecoder()).decode(base64Decode("G1s5N21TaW5nbGUgTGluZSBCb29sZWFuIFBpZRtbMG06IBtbOTNtdHJ1ZRtbMG0gNiw0MDcgKDgxJSkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAbWzkzbWZhbHNlG1swbSAxLDQ3NyAoMTklKQogICAgICAgICAgICAgICAgICAgICAgICAbWzk2bVsbWzBtG1szODs1OzIwOG3ilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilogbWzBtG1szODs1OzkzbeKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiBtbMG0bWzk2bV0bWzBt")).decolor()), "U2luZ2xlIExpbmUgQm9vbGVhbiBQaWU6IHRydWUgNiw0MDcgKDgxJSkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBmYWxzZSAxLDQ3NyAoMTklKQogICAgICAgICAgICAgICAgICAgICAgICBb4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paIXQ==");	// eslint-disable-line max-len
 });
 
 Deno.test("innerTrim", () =>

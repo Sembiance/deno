@@ -96,7 +96,8 @@ xu.c =
 		deepSkyblue : "\x1b[38;5;27m",
 		violetRed   : "\x1b[38;5;163m",
 		blueGreen   : "\x1b[38;5;23m",
-		fogGray     : "\x1b[38;5;250m"
+		fogGray     : "\x1b[38;5;250m",
+		brown       : "\x1b[38;5;94m"
 	}
 };
 /* eslint-enable unicorn/escape-case, unicorn/no-hex-escape */
