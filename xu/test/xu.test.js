@@ -1,7 +1,7 @@
 import {assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import { xu } from "../xu.js";
 import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
-import {encode as base64Encode, decode as base64Decode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
+import {encode as base64Encode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
 
 Deno.test("dirname", () =>	// eslint-disable-line sembiance/shorter-arrow-funs
 {
