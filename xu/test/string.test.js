@@ -1,6 +1,5 @@
 import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../string.js";
-import {printUtil} from "../../xutil/xutil.js";
 import {encode as base64Encode, decode as base64Decode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
 
 Deno.test("capitalize", () =>
@@ -52,6 +51,14 @@ Deno.test("strip", () =>
 	const r = "hll, wrld";
 	assertStrictEquals(r, a.strip("aeiou"));
 	assertStrictEquals(r, a.strip(["a", "e", "i", "o", "u"]));
+});
+
+Deno.test("squeeze", () =>
+{
+	const o = {abc : () => {}, xyz : false, numbers : [23, 213, 125, 123_523_523, 23423], moreProps : {subObj : "keys", andMore : "live\nlong\nand\nprosper"}};
+	const a = Deno.inspect(o, {colors : false, compact : true, depth : 7, iterableLimit : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false}).squeeze();
+	const r = `{ abc: [Function: abc], xyz: false, numbers: [ 23, 213, 125, 123523523, 23423 ], moreProps: { subObj: "keys", andMore: "live\\nlong\\nand\\nprosper" } }`;
+	assertStrictEquals(r, a);
 });
 
 Deno.test("toCamelCase", () =>

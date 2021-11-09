@@ -182,6 +182,12 @@ xu.dirname = function dirname(meta)
 	return path.resolve((new URL(".", meta.url)).pathname);
 };
 
+/** returns a nice pretty representation of val */
+xu.inspect = function inspect(val)
+{
+	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false});
+};
+
 /** improved template literal version of console.log() with better depth settings  */
 xu.log = function log(strs, ...vals)
 {
@@ -196,7 +202,7 @@ xu.log = function log(strs, ...vals)
 			if(typeof val==="string")
 				r.push(xu.cf.fg.greenDim(val));
 			else
-				r.push(Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false}));
+				r.push(xu.inspect(val));
 		}
 	});
 

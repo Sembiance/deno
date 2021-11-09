@@ -120,6 +120,15 @@ if(!String.prototype.strip)
 	};
 }
 
+/** Squeezes a string, removing newlines and inner paddings */
+if(!String.prototype.squeeze)
+{
+	String.prototype.squeeze = function squeeze()
+	{
+		return this.replaceAll("\n", " ").innerTrim().trim();
+	};
+}
+
 /** Converts a string to camel case */
 if(!String.prototype.toCamelCase)
 {
