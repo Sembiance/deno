@@ -215,4 +215,5 @@ xu.stdoutWrite = function stdoutWrite(str)
 	Deno.stdout.writeSync(stdoutEncoder.encode(str));
 };
 
-export { xu };
+const fg = xu.cf.fg;
+export { xu, fg };
