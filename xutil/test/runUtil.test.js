@@ -73,4 +73,10 @@ Deno.test("run", async () =>
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 3);
 	p.kill("SIGTERM");
 	p.close();
+
+	// custom home env
+	({stdout} = await runUtil.run("sh", ["-c", "cd ~ && pwd"]));
+	assertStrictEquals(stdout.trim(), "/home/sembiance");
+	({stdout} = await runUtil.run("sh", ["-c", "cd ~ && pwd"], {env : {HOME : "/tmp"}}));
+	assertStrictEquals(stdout.trim(), "/tmp");
 });

@@ -1,3 +1,4 @@
+import {xu} from "xu";
 import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 import * as streams from "https://deno.land/std@0.111.0/streams/mod.ts";
 import * as fileUtil from "./fileUtil.js";
@@ -5,21 +6,37 @@ import * as fileUtil from "./fileUtil.js";
 /** Will run the given cmd and pass it the given args.
  * Options:
  *   cwd				The current working directory to run the program in
- *   env				An object of key : value pairs to be addded to the environment
  *   detached			Don't wait for the command to finish, return the Process once launched
+ *   env				An object of key : value pairs to be addded to the environment
+ *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
+ *   verbose            Set to true to output some details about the program
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  */
-export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, stderrFilePath, timeout, timeoutSignal="SIGTERM", virtualX, virtualXGLX, detached}={})
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], liveOutput, stdoutFilePath, stderrFilePath, timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
 {
 	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped"};
+
+	if(inheritEnv!==true)
+	{
+		runArgs.clearEnv = true;
+		if(Array.isArray(inheritEnv))
+			runArgs.env = Object.fromEntries(inheritEnv.map(k => [k, Deno.env.get(k)]));
+	}
+	
 	if(env)
-		runArgs.env = Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()])));
+	{
+		if(!runArgs.env)
+			runArgs.env = {};
+		
+		Object.assign(runArgs.env, Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()]))));
+	}
+
 	if(cwd)
 		runArgs.cwd = cwd;
 	
@@ -53,6 +70,9 @@ export async function run(cmd, args=[], {cwd, env, liveOutput, stdoutFilePath, s
 			runArgs.env = {};
 		runArgs.env.DISPLAY = `:${xvfbPort}`;
 	}
+
+	if(verbose)
+		xu.log`runUtil.run running ${runArgs}`;
 	
 	// Kick off the process
 	const p = Deno.run(runArgs);

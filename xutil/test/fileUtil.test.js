@@ -5,6 +5,13 @@ import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
 const GLOB_DIR = path.join(FILES_DIR, "globTest", "A_dir_with[brackets]_and?(parenthesis)");
 
+Deno.test("areEqual", async () =>
+{
+	assertStrictEquals(await fileUtil.areEqual(path.join(FILES_DIR, "input.png"), path.join(FILES_DIR, "input.gif")), false);
+	assertStrictEquals(await fileUtil.areEqual(path.join(FILES_DIR, "input.png"), path.join(FILES_DIR, "input.png")), true);
+	assertStrictEquals(await fileUtil.areEqual(path.join(FILES_DIR, "input.png"), path.join(FILES_DIR, "duplicateInput.png")), true);
+});
+
 Deno.test("exists", async () =>
 {
 	assertStrictEquals(await fileUtil.exists(path.join(FILES_DIR, "input.png")), true);

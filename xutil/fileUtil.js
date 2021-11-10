@@ -1,5 +1,13 @@
 import {xu} from "xu";
 import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
+import * as runUtil from "./runUtil.js";
+
+/** returns true if files a and b are equals. Calls out to 'cmp' due to how optimized that program is for speed */
+export async function areEqual(a, b)
+{
+	const {status} = await runUtil.run("cmp", ["--silent", a, b]);
+	return !!status.success;
+}
 
 /** Returns true if the file/dir v exists, false otherwise */
 export async function exists(v)
