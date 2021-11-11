@@ -59,10 +59,10 @@ Deno.test("run", async () =>
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 
 	// virtualX
-	({stderr} = await runUtil.run("drawview", ["--help"], {timeout : xu.SECOND*2, env : {DISPLAY : ""}}));
-	assertStrictEquals(stderr.includes("could not connect to display"), true);
-	({stdout} = await runUtil.run("drawview", ["--help"], {env : {DISPLAY : ""}, virtualX : true}));
-	assertStrictEquals(stdout.startsWith("Usage: drawview "), true);
+	({stderr} = await runUtil.run("drawview", ["--help"], {timeout : xu.SECOND*2}));
+	assertStrictEquals(stderr.includes("could not connect to display"), true, stderr);
+	({stdout} = await runUtil.run("drawview", ["--help"], {virtualX : true}));
+	assertStrictEquals(stdout.startsWith("Usage: drawview "), true, stderr);
 
 	// detached
 	beforeTime = performance.now();

@@ -12,11 +12,11 @@ NODE OS to DENO: https://medium.com/deno-the-complete-reference/os-module-denos-
 \----------------/
 import {xu} from "xu";
 import {whateverUtil} from "xutil";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
-import * as fs from "https://deno.land/std@0.111.0/fs/mod.ts";
-import * as streams from "https://deno.land/std@0.111.0/streams/mod.ts";
-import * as colors from "https://deno.land/std@0.111.0/fmt/colors.ts";
+import * as path from "https://deno.land/std@0.114.0/path/mod.ts";
+import * as fs from "https://deno.land/std@0.114.0/fs/mod.ts";
+import * as streams from "https://deno.land/std@0.114.0/streams/mod.ts";
+import * as colors from "https://deno.land/std@0.114.0/fmt/colors.ts";
 
-import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
-import {decode, encode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
+import { delay } from "https://deno.land/std@0.114.0/async/mod.ts";
+import {decode, encode} from "https://deno.land/std@0.114.0/encoding/base64.ts";
 import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";

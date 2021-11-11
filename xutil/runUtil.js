@@ -1,4 +1,4 @@
-import {xu} from "xu";
+import {xu, fg} from "xu";
 import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 import * as streams from "https://deno.land/std@0.111.0/streams/mod.ts";
 import * as fileUtil from "./fileUtil.js";
@@ -72,7 +72,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	}
 
 	if(verbose)
-		xu.log`runUtil.run running ${runArgs}`;
+		xu.log`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${xu.inspect({...runArgs, cmd : []}).squeeze()}`;
 	
 	// Kick off the process
 	const p = Deno.run(runArgs);

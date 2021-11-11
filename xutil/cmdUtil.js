@@ -50,7 +50,8 @@ export function cmdInit({cmdid="", version="1.0.0", desc="", opts : _opts={}, ar
 		if(args.length>0)
 			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}`).join("\n")}`);
 		
-		console.log(`\nOptions:\n${Object.entries(opts).map(([optid, opt]) => `${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}`).join("\n")}`);
+		console.log(`\nOptions:\n${Object.entries(opts).map(([optid, opt]) =>
+			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}`).join("\n")}`);
 
 		Deno.exit(0);
 	}

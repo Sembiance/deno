@@ -67,7 +67,7 @@ Deno.test("waitUntil", async () =>
 	let test = null;
 	let counter = 0;
 	setTimeout(() => { test = 123; }, xu.SECOND*2);
-	const errorTimeout = setTimeout(() => { throw new Error("Should not see"); }, xu.SECOND*3);	// eslint-disable-line sembiance/shorter-arrow-funs
+	let errorTimeout = setTimeout(() => { throw new Error("Should not see"); }, xu.SECOND*3);	// eslint-disable-line sembiance/shorter-arrow-funs
 	await xu.waitUntil(async () =>
 	{
 		await delay(500);
@@ -76,6 +76,19 @@ Deno.test("waitUntil", async () =>
 	});
 	clearTimeout(errorTimeout);
 	assertStrictEquals(counter, 4);
+
+	test = null;
+	counter = 0;
+	setTimeout(() => { test = 123; }, xu.SECOND);
+	errorTimeout = setTimeout(() => { throw new Error("Should not see"); }, xu.SECOND*2);	// eslint-disable-line sembiance/shorter-arrow-funs
+	await xu.waitUntil(async () =>
+	{
+		await delay(1);
+		counter++;
+		return test===123;
+	}, 200);
+	clearTimeout(errorTimeout);
+	assertStrictEquals(counter, 6);
 });
 
 /////////////////////////////////////////////////////
