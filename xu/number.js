@@ -219,7 +219,7 @@ if(!Number.prototype.secondsAsHumanReadable)
 	Number.prototype.secondsAsHumanReadable = function secondsAsHumanReadable({lang="en", short=false, maxParts=Infinity}={})
 	{
 		if(this===0)
-			return "0s";
+			return short ? "0s" : "0 seconds";
 			
 		const r = [];
 		let left = this;	// eslint-disable-line consistent-this
