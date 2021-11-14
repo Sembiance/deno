@@ -30,8 +30,12 @@ export async function randomCrop(inputFilePath, outputFilePath, targetWidth, tar
 /** returns info about the image */
 export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOnly}={})
 {
-	const [width, height] = await getWidthHeight(imageFilePath);
-	const imageInfo = {width, height};
+	let whErr = null;
+	const wh = await getWidthHeight(imageFilePath).catch(err => { whErr = err; });
+	if(whErr)
+		return {err : whErr};
+
+	const imageInfo = {width : wh[0], height : wh[1]};
 
 	// Because imagemagick is so damn slow at calculating info, we don't bother getting advanced info if the image is too large
 	if(widthHeightOnly || [imageInfo.width, imageInfo.height].some(v => v>=10000))

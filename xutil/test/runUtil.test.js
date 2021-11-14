@@ -61,7 +61,7 @@ Deno.test("run", async () =>
 	// virtualX
 	({stderr} = await runUtil.run("drawview", ["--help"], {timeout : xu.SECOND*2}));
 	assertStrictEquals(stderr.includes("could not connect to display"), true, stderr);
-	({stdout} = await runUtil.run("drawview", ["--help"], {virtualX : true}));
+	({stdout} = await runUtil.run("drawview", ["--help"], {inheritEnv : true, virtualX : true}));
 	assertStrictEquals(stdout.startsWith("Usage: drawview "), true, stderr);
 
 	// detached

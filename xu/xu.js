@@ -7,6 +7,8 @@ import {} from "./object.js";
 import {} from "./string.js";
 
 const xu = {};
+xu.verbose = 0;
+
 xu.SECOND = 1000;
 xu.MINUTE = xu.SECOND*60;
 xu.HOUR = xu.MINUTE*60;
@@ -115,6 +117,13 @@ function functionizeColors(src, dest)
 	}
 }
 functionizeColors(xu.c, xu.cf);
+const fg = xu.cf.fg;
+
+/** little function to surround some text with various symbols */
+xu.paren = text => `${fg.cyanDim("(")}${text}${fg.cyanDim(")")}`;
+xu.quote = text => `${fg.greenDim(`"`)}${text}${fg.greenDim(`"`)}`;
+xu.bracket = text => `${fg.cyanDim("[")}${text}${fg.cyanDim("]")}`;
+xu.colon = text => `${fg.whiteDim(text)}${fg.cyanDim(":")} `;
 
 /** clone the given value. Options: skipKeys : ["keyNames", "to", "skip"], shallow : true|false */
 xu.clone = function clone(v, {skipKeys, shallow=false}={})
@@ -209,11 +218,43 @@ xu.log = function log(strs, ...vals)
 	console.log(r.join(""));
 };
 
+/** xu.log#`` functions to only log if verbose level is set high enough */
+for(const minVerbose of [1, 2, 3, 4, 5])
+{
+	xu[`log${minVerbose}`] = (strs, ...vals) =>
+	{
+		if(xu.verbose<minVerbose)
+			return;
+
+		const r = [];
+		if(xu.verbose>=4)
+		{
+			const stackTrace = (new Error()).stack.split("\n");	// eslint-disable-line unicorn/error-message
+			const {filePath, lineNum} = (stackTrace[2].match(/\(?file:\/\/(?<filePath>[^):]+):?(?<lineNum>\d*):?\d*\)?$/) || {groups : {}}).groups;		// can add to beginning for methodName: ^\s+at (?<methodName>[^(]*) ?
+			r.push(`${fg.black(`${path.basename(filePath)}:${lineNum.padStart(3, " ")}`)}${fg.cyanDim(":")} `);
+		}
+		strs.forEach(str =>
+		{
+			r.push(str);
+
+			if(vals.length>0)
+			{
+				const val = vals.shift();
+				if(typeof val==="string")
+					r.push(xu.cf.fg.greenDim(val));
+				else
+					r.push(xu.inspect(val));
+			}
+		});
+
+		console.log(r.join(""));
+	};
+}
+
 const stdoutEncoder = new TextEncoder();
 xu.stdoutWrite = function stdoutWrite(str)
 {
 	Deno.stdout.writeSync(stdoutEncoder.encode(str));
 };
 
-const fg = xu.cf.fg;
 export { xu, fg };
