@@ -178,11 +178,16 @@ xu.trim = function trim(strs, ...vals)
 };
 
 /** waits until the given async function fun returns a truthy value. Exponential delay, starting at 5ms */
-xu.waitUntil = async function waitUntil(fun, interval)
+xu.waitUntil = async function waitUntil(fun, {interval, timeout}={})
 {
 	let i=0;
+	const startedAt = timeout ? performance.now() : null;
 	while(!(await fun()))
+	{
 		await delay(interval || Math.min(5*(i++), xu.SECOND));
+		if(timeout && (performance.now()-startedAt)>timeout)
+			break;
+	}
 };
 
 /** returns the node equilivant __dirname when passed in import.meta */

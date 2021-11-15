@@ -45,16 +45,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		runArgs.stdout = "inherit";
 		runArgs.stderr = "inherit";
 	}
-	else if(detached)
-	{
-		runArgs.stdout = "null";
-		runArgs.stderr = "null";
-	}
 
 	let xvfbProc = null;
+	let xvfbPort = null;
 	if(virtualX || virtualXGLX)
 	{
-		let existingSessions = null, xvfbPort = null;
+		let existingSessions = null;
 		do
 		{
 			xvfbPort = Math.randomInt(10, 9999);
@@ -81,6 +77,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	{
 		p.status().then(() =>
 		{
+			if(!liveOutput)
+			{
+				p.stdout.close();
+				p.stderr.close();
+			}
+
 			if(xvfbProc)
 			{
 				xvfbProc.kill("SIGTERM");
@@ -88,7 +90,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			}
 		});
 
-		return p;
+		const r = {p};
+		if(xvfbPort)
+			r.xvfbPort = xvfbPort;
+		return r;
 	}
 
 	// Create our output files if we are redirecting stdout or stderr

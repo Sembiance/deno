@@ -43,10 +43,20 @@ export async function genTempPath(prefix, suffix=".tmp")
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do
-		r = path.join(fullPrefix, ((`${performance.now()}`).replaceAll(".", "") + Math.randomInt(0, 1_000_000)) + suffix);
+		r = path.join(fullPrefix, `${Math.randomInt(0, 99999)}${suffix}`);
 	while(await exists(r));
 
 	return r;
+}
+
+/** Replaces the given findMe (which can be text or a regular expression) with replaceWith in the given filePath */
+export async function searchReplace(filePath, findMe, replaceWith)
+{
+	if(!(await exists(filePath)))
+		return;
+	
+	const data = await readFile(filePath);
+	await writeFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
 }
 
 /** Reads all content from the given filePath and decodes it as encoding (default utf-8) */

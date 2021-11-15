@@ -64,6 +64,7 @@ Deno.test("trim", () =>
 
 Deno.test("waitUntil", async () =>
 {
+	// default conditions
 	let test = null;
 	let counter = 0;
 	setTimeout(() => { test = 123; }, xu.SECOND*2);
@@ -77,6 +78,7 @@ Deno.test("waitUntil", async () =>
 	clearTimeout(errorTimeout);
 	assertStrictEquals(counter, 4);
 
+	// 200ms interval
 	test = null;
 	counter = 0;
 	setTimeout(() => { test = 123; }, xu.SECOND);
@@ -86,9 +88,14 @@ Deno.test("waitUntil", async () =>
 		await delay(1);
 		counter++;
 		return test===123;
-	}, 200);
+	}, {interval : 200});
 	clearTimeout(errorTimeout);
 	assertStrictEquals(counter, 6);
+
+	// 1 second timeout
+	const beforeTime = performance.now();
+	await xu.waitUntil(() => false, {timeout : xu.SECOND*2});
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 });
 
 /////////////////////////////////////////////////////

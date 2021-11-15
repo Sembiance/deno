@@ -32,6 +32,18 @@ Deno.test("readFile", async () =>	// eslint-disable-line sembiance/shorter-arrow
 	assertStrictEquals(await fileUtil.readFile(path.join(FILES_DIR, "a.txt")), "abc\n");
 });
 
+Deno.test("searchReplace", async () =>
+{
+	const tmpFilePath = await fileUtil.genTempPath();
+	await Deno.copyFile("/mnt/compendium/DevLab/deno/xutil/test/files/ab.txt", tmpFilePath);
+	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nabc\n123\nxyz");
+	await fileUtil.searchReplace(tmpFilePath, "abc", "yah, something 777 else now");
+	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nyah, something 777 else now\n123\nxyz");
+	await fileUtil.searchReplace(tmpFilePath, /\d+/g, "numbers");
+	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nyah, something numbers else now\nnumbers\nxyz");
+	await Deno.remove(tmpFilePath);
+});
+
 Deno.test("tree", async () =>
 {
 	let r = await fileUtil.tree(GLOB_DIR);

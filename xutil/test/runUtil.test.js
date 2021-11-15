@@ -66,7 +66,7 @@ Deno.test("run", async () =>
 
 	// detached
 	beforeTime = performance.now();
-	const p = await runUtil.run("sleep", [30], {detached : true, virtualX : true});
+	const {p} = await runUtil.run("sleep", [30], {detached : true, virtualX : true});
 	assert((performance.now()-beforeTime)<xu.SECOND);
 	beforeTime = performance.now();
 	await delay(xu.SECOND*3);
