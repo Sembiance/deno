@@ -24,3 +24,5 @@ DevLab/apps/redisRunScript
 DevLab/apps/ripCD
 DevLab/apps/searchMyCode
 DevLab/apps/tagflacs
+ovelay/util/
+sys/sembiance/.config/awesome/
