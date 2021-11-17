@@ -4,7 +4,8 @@
 export {initParser as initDOMParser, DOMParser} from "https://deno.land/x/deno_dom@v0.1.19-alpha/deno-dom-wasm-noinit.ts";
 
 export {parse as xmlParse} from "https://deno.land/x/xml@2.0.1/mod.ts";
+export * as Drash from "https://deno.land/x/drash@v2.1.0/mod.ts";
 
-// These require seeperate import/export lines due to 'export var from' not being available yet: https://github.com/tc39/proposal-export-default-from/issues
+// These require seperate import/export lines due to 'export var from' not being available yet: https://github.com/tc39/proposal-export-default-from/issues
 import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";
 export {PQueue};

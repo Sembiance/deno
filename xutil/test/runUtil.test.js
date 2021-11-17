@@ -5,6 +5,8 @@ import * as fileUtil from "../fileUtil.js";
 
 Deno.test("run", async () =>
 {
+	await runUtil.run("prlimit", ["--pid", Deno.pid, `--core=0`]);
+	
 	// cwd
 	let {stdout, stderr, status} = await runUtil.run("cat", ["hosts"], {cwd : "/etc"});
 	assertStrictEquals(stderr.length, 0);

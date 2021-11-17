@@ -201,33 +201,12 @@ xu.inspect = function inspect(val)
 	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false});
 };
 
-/** improved template literal version of console.log() with better depth settings  */
-xu.log = function log(strs, ...vals)
+/** xu.log`` and xu.log#(1-5)`` functions to only log if verbose level is set high enough */
+for(const minVerbose of [0, 1, 2, 3, 4, 5])
 {
-	const r = [];
-	strs.forEach(str =>
+	xu[`log${minVerbose===0 ? "" : minVerbose}`] = (strs, ...vals) =>
 	{
-		r.push(str);
-
-		if(vals.length>0)
-		{
-			const val = vals.shift();
-			if(typeof val==="string")
-				r.push(xu.cf.fg.greenDim(val));
-			else
-				r.push(xu.inspect(val));
-		}
-	});
-
-	console.log(r.join(""));
-};
-
-/** xu.log#`` functions to only log if verbose level is set high enough */
-for(const minVerbose of [1, 2, 3, 4, 5])
-{
-	xu[`log${minVerbose}`] = (strs, ...vals) =>
-	{
-		if(xu.verbose<minVerbose)
+		if(minVerbose>0 && xu.verbose<minVerbose)
 			return;
 
 		const r = [];
@@ -237,6 +216,7 @@ for(const minVerbose of [1, 2, 3, 4, 5])
 			const {filePath, lineNum} = (stackTrace[2].match(/\(?file:\/\/(?<filePath>[^):]+):?(?<lineNum>\d*):?\d*\)?$/) || {groups : {}}).groups;		// can add to beginning for methodName: ^\s+at (?<methodName>[^(]*) ?
 			r.push(`${fg.black(`${path.basename(filePath)}:${lineNum.padStart(3, " ")}`)}${fg.cyanDim(":")} `);
 		}
+		
 		strs.forEach(str =>
 		{
 			r.push(str);
