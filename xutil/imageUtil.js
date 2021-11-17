@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import * as runUtil from "./runUtil.js";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
+import {path} from "std";
 
 /** Returns the [width, height] of the image at imageFilePath */
 export async function getWidthHeight(imageFilePath)

@@ -1,6 +1,5 @@
-import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../string.js";
-import {encode as base64Encode, decode as base64Decode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
+import {base64Encode, base64Decode, assertStrictEquals} from "std";
 
 Deno.test("capitalize", () =>
 {

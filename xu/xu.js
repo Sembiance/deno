@@ -1,5 +1,4 @@
-import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
+import {delay, path} from "std";
 import {} from "./array.js";
 import {} from "./math.js";
 import {} from "./number.js";

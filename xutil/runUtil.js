@@ -1,7 +1,6 @@
 import {xu, fg} from "xu";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
-import * as streams from "https://deno.land/std@0.111.0/streams/mod.ts";
 import * as fileUtil from "./fileUtil.js";
+import {path, streams} from "std";
 
 /** Will run the given cmd and pass it the given args.
  * Options:

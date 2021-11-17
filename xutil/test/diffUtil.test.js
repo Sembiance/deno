@@ -1,4 +1,4 @@
-import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {assertStrictEquals} from "std";
 import * as diffUtil from "../diffUtil.js";
 
 Deno.test("diff", () =>

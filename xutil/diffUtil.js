@@ -1,5 +1,4 @@
-import {xu} from "xu";
-import * as colors from "https://deno.land/std@0.111.0/fmt/colors.ts";
+import {xu, fg} from "xu";
 
 export function diff(o, n, _options={})
 {
@@ -22,17 +21,17 @@ function diffObjects(o, n, options={})
 	const nKeys = Object.keys(n);
 
 	const keysAdded = nKeys.subtractAll(oKeys);
-	keysAdded.forEach(keyAdded => { result += " ".repeat(options.indent*4) + colors.green(`${keyAdded} : ${JSON.stringify(n[keyAdded])}`); });
+	keysAdded.forEach(keyAdded => { result += " ".repeat(options.indent*4) + fg.greenDim(`${keyAdded} : ${JSON.stringify(n[keyAdded])}`); });
 
 	const keysRemoved = oKeys.subtractAll(nKeys);
 	if(!options.ignoreRemovedKeys)
-		keysRemoved.forEach(keyRemoved => { result += " ".repeat(options.indent*4) + colors.red(`${keyRemoved} : ${JSON.stringify(o[keyRemoved])}`); });
+		keysRemoved.forEach(keyRemoved => { result += " ".repeat(options.indent*4) + fg.redDim(`${keyRemoved} : ${JSON.stringify(o[keyRemoved])}`); });
 
 	oKeys.subtractAll(keysAdded).subtractAll(keysRemoved).forEach(key =>
 	{
 		const subResult = diff(o[key], n[key], options);
 		if(subResult)
-			result += " ".repeat(options.indent*4) + colors.yellow(key) + colors.white(" : ") + subResult;
+			result += " ".repeat(options.indent*4) + fg.yellowDim(key) + fg.whiteDim(" : ") + subResult;
 	});
 
 	return (result.length ? "{\n" : "") + result + (result.length ? "}\n" : "");
@@ -60,8 +59,8 @@ function diffArray(o, n, options)
 	}
 	else
 	{
-		n.map(v => JSON.stringify(v)).subtractAll(o.map(v => JSON.stringify(v))).forEach(added => { result += (result.length ? ", " : "") + colors.green(added); });
-		o.map(v => JSON.stringify(v)).subtractAll(n.map(v => JSON.stringify(v))).forEach(removed => { result += (result.length ? ", " : "") + colors.red(removed); });
+		n.map(v => JSON.stringify(v)).subtractAll(o.map(v => JSON.stringify(v))).forEach(added => { result += (result.length ? ", " : "") + fg.greenDim(added); });
+		o.map(v => JSON.stringify(v)).subtractAll(n.map(v => JSON.stringify(v))).forEach(removed => { result += (result.length ? ", " : "") + fg.redDim(removed); });
 	}
 
 	return (result.length ? "[ " : "") + result + (result.length ? " ]\n" : "");
@@ -72,7 +71,7 @@ function diffValues(o, n)
 	if(o!==n)
 	{
 		const color = typeof o==="string" ? "magenta" : "white";
-		return `${colors[color](JSON.stringify(o)) + colors.yellow(" => ") + colors[`bright${color.capitalize()}`](JSON.stringify(n))}\n`;
+		return `${fg[color](JSON.stringify(o)) + fg.yellowDim(" => ") + fg[color](JSON.stringify(n))}\n`;
 	}
 
 	return "";

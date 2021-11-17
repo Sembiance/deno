@@ -1,8 +1,7 @@
-import {assertStrictEquals, assert} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {xu} from "xu";
+import {delay, assertStrictEquals, assert} from "std";
 import * as runUtil from "../runUtil.js";
 import * as fileUtil from "../fileUtil.js";
-import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
 
 Deno.test("run", async () =>
 {

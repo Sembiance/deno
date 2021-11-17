@@ -1,6 +1,5 @@
-import {assertEquals, assertNotEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../object.js";
-import { delay } from "https://deno.land/std@0.111.0/async/mod.ts";
+import {delay, assertEquals, assertNotEquals, assertStrictEquals} from "std";
 
 Deno.test("average", () =>
 {

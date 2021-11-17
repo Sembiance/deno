@@ -1,6 +1,5 @@
-import {assertEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {path, assertEquals, assertStrictEquals} from "std";
 import * as fileUtil from "../fileUtil.js";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 
 const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
 const GLOB_DIR = path.join(FILES_DIR, "globTest", "A_dir_with[brackets]_and?(parenthesis)");

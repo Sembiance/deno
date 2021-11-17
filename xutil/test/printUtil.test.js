@@ -1,8 +1,7 @@
 /* eslint-disable max-len */
 import {xu} from "xu";
 import * as printUtil from "../printUtil.js";
-import {encode as base64Encode} from "https://deno.land/std@0.113.0/encoding/base64.ts";
-import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {base64Encode, assertStrictEquals} from "std";
 
 Deno.test("minorHeader", () => assertStrictEquals(base64Encode(printUtil.minorHeader("Minor Header", { prefix : "prefix\n", suffix : "suffix\n"})), "cHJlZml4ChtbOTdtTWlub3IgSGVhZGVyG1swbQobWzk2bS0tLS0tLS0tLS0tLRtbMG0Kc3VmZml4Cg=="));
 Deno.test("majorHeader", () => assertStrictEquals(base64Encode(printUtil.majorHeader("Major Header", { prefix : "prefix\n", suffix : "suffix\n"})), "cHJlZml4ChtbOTZtLy0tLS0tLS0tLS0tLS0tXBtbMG0KG1s5Nm18IBtbMG0bWzk3bU1ham9yIEhlYWRlchtbMG0bWzk2bSB8G1swbQobWzk2bVwtLS0tLS0tLS0tLS0tLS8bWzBtCnN1ZmZpeAo="));

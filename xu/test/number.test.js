@@ -1,5 +1,5 @@
-import {assertEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../number.js";
+import {assertEquals, assertStrictEquals} from "std";
 
 Deno.test("bytesToSize", () =>
 {

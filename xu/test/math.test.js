@@ -1,5 +1,5 @@
-import {assertEquals, assertStrictEquals, assertThrows} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import {} from "../math.js";
+import {assertEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("degreesToRadians", () =>
 {

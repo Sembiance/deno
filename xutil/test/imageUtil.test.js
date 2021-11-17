@@ -1,7 +1,6 @@
-import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {path, assertStrictEquals} from "std";
 import * as imageUtil from "../imageUtil.js";
 import * as fileUtil from "../fileUtil.js";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 
 const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
 

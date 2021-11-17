@@ -2,6 +2,7 @@
 	"imports" :
 	{
 		"xu"    : "/mnt/compendium/DevLab/deno/xu/xu.js",
-		"xutil" : "/mnt/compendium/DevLab/deno/xutil/xutil.js"
+		"xutil" : "/mnt/compendium/DevLab/deno/xutil/xutil.js",
+		"std"   : "/mnt/compendium/DevLab/deno/std.js"
 	}
 }

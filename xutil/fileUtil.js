@@ -1,6 +1,6 @@
 import {xu} from "xu";
-import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 import * as runUtil from "./runUtil.js";
+import {path} from "std";
 
 /** returns true if files a and b are equals. Calls out to 'cmp' due to how optimized that program is for speed */
 export async function areEqual(a, b)

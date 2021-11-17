@@ -1,4 +1,4 @@
-import {assertEquals, assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
+import {assertEquals, assertStrictEquals} from "std";
 import * as cmdUtil from "../cmdUtil.js";
 
 Deno.test("cmdInit", () =>
