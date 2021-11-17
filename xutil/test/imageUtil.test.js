@@ -1,5 +1,6 @@
 import {assertStrictEquals} from "https://deno.land/std@0.111.0/testing/asserts.ts";
 import * as imageUtil from "../imageUtil.js";
+import * as fileUtil from "../fileUtil.js";
 import * as path from "https://deno.land/std@0.111.0/path/mod.ts";
 
 const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
@@ -16,7 +17,7 @@ Deno.test("randomCrop", async () =>
 	const tmpFilePath = "/mnt/ram/tmp/input.png";
 	await imageUtil.randomCrop(path.join(FILES_DIR, "input.png"), tmpFilePath, 640, 480);
 	const [width, height] = await imageUtil.getWidthHeight(tmpFilePath);
-	await Deno.remove(tmpFilePath);
+	await fileUtil.unlink(tmpFilePath);
 	assertStrictEquals(width, 640);
 	assertStrictEquals(height, 480);
 });

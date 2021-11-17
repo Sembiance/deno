@@ -111,6 +111,15 @@ export async function tree(root, {nodir=false, nofile=false, regex, depth=Number
 	return r;
 }
 
+/** removes the file or directory, but only if it exists */
+export async function unlink(targetPath, o={})
+{
+	if(!(await exists(targetPath)))
+		return;
+	
+	return await Deno.remove(targetPath, o);
+}
+
 /** Reads all content from the given filePath and decodes it as encoding (default utf-8) */
 export async function writeFile(filePath, data, encoding="utf-8", {append=false}={})
 {

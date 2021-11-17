@@ -73,10 +73,31 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	// Kick off the process
 	const p = Deno.run(runArgs);
 
+	// Start our timer
+	let timerid = null;
+	function timeoutHandler()
+	{
+		try
+		{
+			p.kill(timeoutSignal);
+			if(detached)
+				p.close();
+		}
+		catch {}
+		timerid = true;
+	}
+	if(timeout)
+		timerid = setTimeout(timeoutHandler, timeout);
+
 	if(detached)
 	{
+		// if we are detached, we need to kill xvfbProc and close stdout/stderr (if not liveOutput) after running
 		p.status().then(() =>
 		{
+			// If we have a timeout still running, clear it
+			if(typeof timerid==="number")
+				clearTimeout(timerid);
+
 			if(!liveOutput)
 			{
 				p.stdout.close();
@@ -103,17 +124,6 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
 	const stdoutPromise = liveOutput ? Promise.resolve() : (stdoutFilePath ? streams.copy(p.stdout, streams.writerFromStreamWriter(stdoutFile)) : p.output());
 	const stderrPromise = liveOutput ? Promise.resolve() : (stderrFilePath ? streams.copy(p.stderr, streams.writerFromStreamWriter(stderrFile)) : p.stderrOutput());
-
-	// Start our timer
-	let timerid = null;
-	function timeoutHandler()
-	{
-		try { p.kill(timeoutSignal); }
-		catch {}
-		timerid = true;
-	}
-	if(timeout)
-		timerid = setTimeout(timeoutHandler, timeout);
 
 	// Wait for the process to finish (or be killed by the timeoutHandler)
 	const [status, stdoutResult, stderrResult] = await Promise.all([p.status(),	stdoutPromise,	stderrPromise]);

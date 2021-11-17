@@ -32,6 +32,12 @@ Deno.test("readFile", async () =>	// eslint-disable-line sembiance/shorter-arrow
 	assertStrictEquals(await fileUtil.readFile(path.join(FILES_DIR, "a.txt")), "abc\n");
 });
 
+Deno.test("readFileBytes", async () =>
+{
+	const a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4);
+	assertEquals(a, new Uint8Array([0x89, 0x50, 0x4E, 0x47]));
+});
+
 Deno.test("searchReplace", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
@@ -41,7 +47,7 @@ Deno.test("searchReplace", async () =>
 	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nyah, something 777 else now\n123\nxyz");
 	await fileUtil.searchReplace(tmpFilePath, /\d+/g, "numbers");
 	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nyah, something numbers else now\nnumbers\nxyz");
-	await Deno.remove(tmpFilePath);
+	await fileUtil.unlink(tmpFilePath);
 });
 
 Deno.test("tree", async () =>
@@ -90,6 +96,18 @@ Deno.test("tree", async () =>
 	assertStrictEquals(r.length, 0);
 });
 
+Deno.test("unlink", async () =>
+{
+	const tmpFilePath = await fileUtil.genTempPath();
+	const data = "this is just\na test";
+	await fileUtil.writeFile(tmpFilePath, data);
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
+	await fileUtil.unlink(tmpFilePath);
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
+	await fileUtil.unlink(tmpFilePath);	// yes, call it twice to ensure that no error is reported
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
+});
+
 Deno.test("writeFile", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
@@ -98,10 +116,6 @@ Deno.test("writeFile", async () =>
 	assertStrictEquals(await fileUtil.readFile(tmpFilePath), data);
 	await fileUtil.writeFile(tmpFilePath, "more", undefined, {append : true});
 	assertStrictEquals(await fileUtil.readFile(tmpFilePath), `${data}more`);
+	await fileUtil.unlink(tmpFilePath);
 });
 
-Deno.test("readFileBytes", async () =>
-{
-	const a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4);
-	assertEquals(a, new Uint8Array([0x89, 0x50, 0x4E, 0x47]));
-});

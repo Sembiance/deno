@@ -42,13 +42,13 @@ Deno.test("run", async () =>
 	let outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("uname", [], {stdoutFilePath : outFilePath});
 	assertStrictEquals(await fileUtil.readFile(outFilePath), "Linux\n");
-	await Deno.remove(outFilePath);
+	await fileUtil.unlink(outFilePath);
 
 	// stderrFilePath
 	outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"], {stderrFilePath : outFilePath});
 	assertStrictEquals(await fileUtil.readFile(outFilePath), stderrResult);
-	await Deno.remove(outFilePath);
+	await fileUtil.unlink(outFilePath);
 
 	// timeout
 	let beforeTime = performance.now();
@@ -56,6 +56,14 @@ Deno.test("run", async () =>
 	({stdout, stderr, status, timedOut} = await runUtil.run("sleep", [30], {timeout : xu.SECOND*2}));
 	assertStrictEquals(timedOut, true);
 	assertStrictEquals(status.signal, 15);
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
+
+	// timeout (detached)
+	beforeTime = performance.now();
+	timedOut = undefined;
+	let {p} = await runUtil.run("sleep", [30], {detached : true, timeout : xu.SECOND*2});
+	const s = await p.status();
+	assertStrictEquals(s.signal, 15);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 
 	// virtualX
@@ -66,7 +74,7 @@ Deno.test("run", async () =>
 
 	// detached
 	beforeTime = performance.now();
-	const {p} = await runUtil.run("sleep", [30], {detached : true, virtualX : true});
+	({p} = await runUtil.run("sleep", [30], {detached : true, virtualX : true}));
 	assert((performance.now()-beforeTime)<xu.SECOND);
 	beforeTime = performance.now();
 	await delay(xu.SECOND*3);
