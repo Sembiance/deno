@@ -1,8 +1,9 @@
 {
 	"imports" :
 	{
-		"xu"    : "/mnt/compendium/DevLab/deno/xu/xu.js",
-		"xutil" : "/mnt/compendium/DevLab/deno/xutil/xutil.js",
-		"std"   : "/mnt/compendium/DevLab/deno/std.js"
+		"xu"        : "/mnt/compendium/DevLab/deno/xu/xu.js",
+		"xutil"     : "/mnt/compendium/DevLab/deno/xutil/xutil.js",
+		"std"       : "/mnt/compendium/DevLab/deno/std.js",
+		"denoLandX" : "/mnt/compendium/DevLab/deno/denoLandX.js"
 	}
 }

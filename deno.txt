@@ -12,8 +12,8 @@ NODE OS to DENO: https://medium.com/deno-the-complete-reference/os-module-denos-
 \----------------/
 import {xu} from "xu";
 import {whateverUtil} from "xutil";
-import {stuff} from "std";
-import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";
+import {various, stuff} from "std";
+import {DOMParser, PQueue, xmlParse} from "denoLandX";
 
 
 /------------\

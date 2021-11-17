@@ -1,6 +1,6 @@
 import {} from "./object.js";
 import {} from "./math.js";
-import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";
+import {PQueue} from "denoLandX";
 
 /** Returns an average of all the numbers in the array (arithmetic mean) */
 if(!Array.prototype.average)
