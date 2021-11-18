@@ -11,6 +11,24 @@ Deno.test("areEqual", async () =>
 	assertStrictEquals(await fileUtil.areEqual(path.join(FILES_DIR, "input.png"), path.join(FILES_DIR, "duplicateInput.png")), true);
 });
 
+Deno.test("emptyDir", async () =>
+{
+	const EMPTY_DIR_PATH = await fileUtil.genTempPath();
+	await Deno.mkdir(path.join(EMPTY_DIR_PATH, "subdir"), {recursive : true});
+	await fileUtil.writeFile(path.join(EMPTY_DIR_PATH, "abc.txt"), "abc123");
+	await fileUtil.writeFile(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat"), "DATA\nGOES\nHERE");
+
+	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir")), true);
+	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "abc.txt")), true);
+	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat")), true);
+
+	await fileUtil.emptyDir(EMPTY_DIR_PATH);
+
+	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "abc.txt")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat")), false);
+});
+
 Deno.test("exists", async () =>
 {
 	assertStrictEquals(await fileUtil.exists(path.join(FILES_DIR, "input.png")), true);
@@ -24,6 +42,25 @@ Deno.test("genTempPath", async () =>
 	assertStrictEquals(await fileUtil.exists(r), false);
 	assertStrictEquals((await fileUtil.genTempPath("/tmp")).startsWith("/tmp"), true);
 	assertStrictEquals((await fileUtil.genTempPath(undefined, ".png")).endsWith(".png"), true);
+});
+
+Deno.test("move", async () =>
+{
+	const tmpFilePath = await fileUtil.genTempPath();
+	await Deno.copyFile(path.join(FILES_DIR, "input.png"), path.join(tmpFilePath));
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
+	assertStrictEquals((await Deno.stat(tmpFilePath)).size, 3_328_508);
+	let destFilePath = await fileUtil.genTempPath();
+	await fileUtil.move(tmpFilePath, destFilePath);
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
+	assertStrictEquals(await fileUtil.exists(destFilePath), true);
+	assertStrictEquals((await Deno.stat(destFilePath)).size, 3_328_508);
+	await fileUtil.unlink(destFilePath);
+
+	await Deno.copyFile(path.join(FILES_DIR, "input.png"), path.join(tmpFilePath));
+	destFilePath = await fileUtil.genTempPath("/tmp");
+	await fileUtil.move(tmpFilePath, destFilePath);
+	await fileUtil.unlink(destFilePath);
 });
 
 Deno.test("readFile", async () =>	// eslint-disable-line sembiance/shorter-arrow-funs

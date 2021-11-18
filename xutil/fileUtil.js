@@ -9,6 +9,13 @@ export async function areEqual(a, b)
 	return !!status.success;
 }
 
+/** Empties the dirPath, deleting anything in it **/
+export async function emptyDir(dirPath)
+{
+	const filePaths = await tree(dirPath, {depth : 1});
+	await filePaths.parallelMap(async filePath => await unlink(filePath, {recursive : true}));
+}
+
 /** Returns true if the file/dir v exists, false otherwise */
 export async function exists(v)
 {
@@ -47,6 +54,25 @@ export async function genTempPath(prefix, suffix=".tmp")
 	while(await exists(r));
 
 	return r;
+}
+
+/** Safely moves a file from src to dest, will try to just rename it, but will copy and remove original if needed */
+export async function move(src, dest)
+{
+	if(src===dest)
+		throw new Error(`src and dest are identical: ${src}`);
+
+	if(await exists(dest))
+		await unlink(dest);
+	
+	await Deno.rename(src, dest).catch(async () =>
+	{
+		const tmpDest = await genTempPath(path.dirname(dest));
+		await Deno.copyFile(src, tmpDest);
+		await Deno.rename(tmpDest, dest);
+		if(await exists(dest))
+			await unlink(src);
+	});
 }
 
 /** Replaces the given findMe (which can be text or a regular expression) with replaceWith in the given filePath */
