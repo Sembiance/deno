@@ -6,7 +6,7 @@ import {} from "./object.js";
 import {} from "./string.js";
 
 const xu = {};
-xu.verbose = 3;
+xu.verbose = 0;
 
 xu.SECOND = 1000;
 xu.MINUTE = xu.SECOND*60;

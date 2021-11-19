@@ -26,6 +26,11 @@ export class WebServer
 		})();
 	}
 
+	respondWithErrorHandler(err)
+	{
+		xu.log`.respondWith errored out ${err}`;
+	}
+
 	async handleConn(conn)
 	{
 		const httpConn = Deno.serveHttp(conn);
@@ -38,7 +43,7 @@ export class WebServer
 			if(!handlers)
 			{
 				xu.log3`${this.host}:${this.port} unregistered request ${l}`;
-				await httpRequest.respondWith(new Response("404 not found", {status : 404}));
+				await httpRequest.respondWith(new Response("404 not found", {status : 404})).catch(this.respondWithErrorHandler);
 				continue;
 			}
 
@@ -46,14 +51,14 @@ export class WebServer
 			if(!route)
 			{
 				xu.log3`${this.host}:${this.port} invalid method for request ${l} expected ${Object.keys(handlers).join(", ")}`;
-				await httpRequest.respondWith(new Response("405 method not allowed", {status : 405}));
+				await httpRequest.respondWith(new Response("405 method not allowed", {status : 405})).catch(this.respondWithErrorHandler);
 				continue;
 			}
 			
 			xu.log3`${this.host}:${this.port} request ${l}`;
 			try
 			{
-				route.handler(httpRequest.request, r => httpRequest.respondWith(r)).then(response =>
+				route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(this.respondWithErrorHandler)).then(response =>
 				{
 					// if we are a detached route, then the handler will take care of calling the respondWith second arg on it's own
 					if(route.detached)
@@ -62,20 +67,20 @@ export class WebServer
 					if(!response || !(response instanceof Response))
 					{
 						xu.log1`${this.host}:${this.port} request handler ${l} returned an invalid response`;
-						return httpRequest.respondWith(new Response("no response found", {status : 500}));
+						return httpRequest.respondWith(new Response("no response found", {status : 500})).catch(this.respondWithErrorHandler);
 					}
 					
 					return httpRequest.respondWith(response);
 				}).catch(err =>
 				{
 					xu.log1`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-					return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500}));
+					return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(this.respondWithErrorHandler);
 				});
 			}
 			catch(err)
 			{
 				xu.log1`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500}));
+				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(this.respondWithErrorHandler);
 			}
 		}
 	}
