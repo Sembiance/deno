@@ -18,7 +18,7 @@ import {xu} from "xu";
  *		multiple			Whether or not multiple values can be specified for this argument
  *		required			Whether or not the argument is required
  */
-export function cmdInit({cmdid="", version="1.0.0", desc="", opts : _opts={}, args=[], testDenoArgs})
+export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _opts={}, args=[], testDenoArgs})
 {
 	const denoArgs = Array.from(testDenoArgs || Deno.args);
 	const opts = {..._opts, help : {desc : "Show programs help"}, version : {desc : "Show program version"}};
