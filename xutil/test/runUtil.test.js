@@ -1,5 +1,5 @@
 import {xu} from "xu";
-import {delay, assertStrictEquals, assert} from "std";
+import {delay, assertStrictEquals, assert, path} from "std";
 import * as runUtil from "../runUtil.js";
 import * as fileUtil from "../fileUtil.js";
 
@@ -43,6 +43,11 @@ Deno.test("run", async () =>
 	let outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("uname", [], {stdoutFilePath : outFilePath});
 	assertStrictEquals(await fileUtil.readFile(outFilePath), "Linux\n");
+	await fileUtil.unlink(outFilePath);
+
+	outFilePath = await fileUtil.genTempPath(undefined, ".pnm");
+	await runUtil.run("view64pnm", [path.join(xu.dirname(import.meta), "files", "Alid.ism")], {stdoutFilePath : outFilePath});
+	assertStrictEquals((await Deno.stat(outFilePath)).size, 192_015);
 	await fileUtil.unlink(outFilePath);
 
 	// stderrFilePath

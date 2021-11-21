@@ -1,6 +1,6 @@
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
-import {path, streams} from "std";
+import {path} from "std";
 
 /** Will run the given cmd and pass it the given args.
  * Options:
@@ -43,6 +43,20 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	{
 		runArgs.stdout = "inherit";
 		runArgs.stderr = "inherit";
+	}
+
+	// stdoutFilePath will override stdout liveOutput
+	if(stdoutFilePath)
+	{
+		const stdoutFile = await Deno.open(stdoutFilePath.startsWith("/") ? stdoutFilePath : path.join(runArgs.cwd || Deno.cwd(), stdoutFilePath), {write : true, createNew : true});
+		runArgs.stdout = stdoutFile.rid;
+	}
+
+	// stderrFilePath will override stderr liveOutput
+	if(stderrFilePath)
+	{
+		const stderrFile = await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runArgs.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true});
+		runArgs.stderr = stderrFile.rid;
 	}
 
 	let xvfbProc = null;
@@ -116,13 +130,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		return r;
 	}
 
-	// Create our output files if we are redirecting stdout or stderr
-	const stdoutFile = stdoutFilePath ? await Deno.create(stdoutFilePath) : null;
-	const stderrFile = stderrFilePath ? await Deno.create(stderrFilePath) : null;
 
 	// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
-	const stdoutPromise = liveOutput ? Promise.resolve() : (stdoutFilePath ? streams.copy(p.stdout, streams.writerFromStreamWriter(stdoutFile)) : p.output());
-	const stderrPromise = liveOutput ? Promise.resolve() : (stderrFilePath ? streams.copy(p.stderr, streams.writerFromStreamWriter(stderrFile)) : p.stderrOutput());
+	const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : p.output();
+	const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : p.stderrOutput();
 
 	// Wait for the process to finish (or be killed by the timeoutHandler)
 	const [status, stdoutResult, stderrResult] = await Promise.all([p.status(),	stdoutPromise,	stderrPromise]);
@@ -130,6 +141,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	// If we have a timeout still running, clear it
 	if(typeof timerid==="number")
 		clearTimeout(timerid);
+
+	// Ensure stdout/stderr are finished saving to disk if we are doing that. Not sure if this is needed or not.
+	//if(stdoutFilePath)
+	//	await Deno.fsync(runArgs.stdout);
+	//if(stderrFilePath)
+	//	await Deno.fsync(runArgs.stderr);
 
 	// Close the process
 	p.close();
@@ -144,24 +161,14 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	const r = {status, timedOut : (timeout && timerid===true)};
 
 	if(stdoutFilePath)
-	{
-		p.stdout.close();
-		stdoutFile.close();
-	}
+		Deno.close(runArgs.stdout);
 	else
-	{
 		r.stdout = new TextDecoder().decode(stdoutResult);
-	}
 
 	if(stderrFilePath)
-	{
-		p.stderr.close();
-		stderrFile.close();
-	}
+		Deno.close(runArgs.stderr);
 	else
-	{
 		r.stderr = new TextDecoder().decode(stderrResult);
-	}
 
 	return r;
 }
