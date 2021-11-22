@@ -42,6 +42,9 @@ Deno.test("genTempPath", async () =>
 	assertStrictEquals(await fileUtil.exists(r), false);
 	assertStrictEquals((await fileUtil.genTempPath("/tmp")).startsWith("/tmp"), true);
 	assertStrictEquals((await fileUtil.genTempPath(undefined, ".png")).endsWith(".png"), true);
+
+	const tempPaths = await [].pushSequence(1, 5000).parallelMap(() => fileUtil.genTempPath());
+	assertStrictEquals(tempPaths.unique().length, tempPaths.length);
 });
 
 Deno.test("move", async () =>

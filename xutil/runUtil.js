@@ -1,3 +1,4 @@
+/* eslint-disable brace-style */
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import {path} from "std";
@@ -73,7 +74,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
 		xvfbArgs.push("-xkbdir", "/usr/share/X11/xkb");	// Gentoo puts the xkb files here
 		xvfbArgs.push("-screen", "0", "1920x1080x24");
-		xvfbProc = Deno.run({cmd : ["Xvfb", ...xvfbArgs]});
+		xvfbProc = Deno.run({cmd : ["Xvfb", ...xvfbArgs], clearEnv : true, stdout : null, stderr : null, stdin : null});
+	
+		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*5}))
+			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 5 seconds`);
 
 		if(!runArgs.env)
 			runArgs.env = {};
@@ -90,85 +94,70 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let timerid = null;
 	function timeoutHandler()
 	{
-		try
-		{
-			p.kill(timeoutSignal);
-			if(detached)
-				p.close();
-		}
-		catch {}
+		try { p.kill(timeoutSignal); } catch {}
 		timerid = true;
 	}
 	if(timeout)
 		timerid = setTimeout(timeoutHandler, timeout);
 
+	let cbCalled = false;
+	const cb = async () =>
+	{
+		cbCalled = true;
+
+		// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
+		const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : p.output();
+		const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : p.stderrOutput();
+
+		// Wait for the process to finish (or be killed by the timeoutHandler)
+		const [status, stdoutResult, stderrResult] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {})]);
+
+		// If we have a timeout still running, clear it
+		if(typeof timerid==="number")
+			clearTimeout(timerid);
+		
+		if(xvfbProc)
+			await kill(xvfbProc, "SIGTERM");
+
+		// Close the process
+		try { p.close(); } catch {}
+
+		// Form our return data
+		const r = {status, timedOut : (timeout && timerid===true)};
+		if(stdoutFilePath)
+			Deno.close(runArgs.stdout);
+		else
+			r.stdout = new TextDecoder().decode(stdoutResult);
+
+		if(stderrFilePath)
+			Deno.close(runArgs.stderr);
+		else
+			r.stderr = new TextDecoder().decode(stderrResult);
+
+		return r;
+	};
+
 	if(detached)
 	{
-		// if we are detached, we need to kill xvfbProc and close stdout/stderr (if not liveOutput) after running
-		p.status().then(() =>
+		p.status().then(async () =>
 		{
-			// If we have a timeout still running, clear it
-			if(typeof timerid==="number")
-				clearTimeout(timerid);
-
-			if(!liveOutput)
-			{
-				p.stdout.close();
-				p.stderr.close();
-			}
-
-			if(xvfbProc)
-			{
-				xvfbProc.kill("SIGTERM");
-				xvfbProc.close();
-			}
+			if(!cbCalled)
+				await cb();
 		});
 
-		const r = {p};
+		const r = {p, cb};
 		if(xvfbPort)
 			r.xvfbPort = xvfbPort;
 		return r;
 	}
 
+	return await cb();
+}
 
-	// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
-	const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : p.output();
-	const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : p.stderrOutput();
-
-	// Wait for the process to finish (or be killed by the timeoutHandler)
-	const [status, stdoutResult, stderrResult] = await Promise.all([p.status(),	stdoutPromise,	stderrPromise]);
-
-	// If we have a timeout still running, clear it
-	if(typeof timerid==="number")
-		clearTimeout(timerid);
-
-	// Ensure stdout/stderr are finished saving to disk if we are doing that. Not sure if this is needed or not.
-	//if(stdoutFilePath)
-	//	await Deno.fsync(runArgs.stdout);
-	//if(stderrFilePath)
-	//	await Deno.fsync(runArgs.stderr);
-
-	// Close the process
-	p.close();
-
-	if(xvfbProc)
-	{
-		xvfbProc.kill("SIGTERM");
-		xvfbProc.close();
-	}
-
-	// Form our return data
-	const r = {status, timedOut : (timeout && timerid===true)};
-
-	if(stdoutFilePath)
-		Deno.close(runArgs.stdout);
-	else
-		r.stdout = new TextDecoder().decode(stdoutResult);
-
-	if(stderrFilePath)
-		Deno.close(runArgs.stderr);
-	else
-		r.stderr = new TextDecoder().decode(stderrResult);
-
-	return r;
+/** gracefully kills the given process p with signal */
+export async function kill(p, signal)
+{
+	try { p.kill(signal); } catch {}
+	try { await p.status(); } catch {}
+	try { p.close(); } catch {}
 }

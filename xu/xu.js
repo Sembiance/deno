@@ -27,15 +27,16 @@ xu.PB = xu.TB*1000;
 // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 xu.c =
 {
-	reset     : "\x1b[0m",
-	bold      : "\x1b[1m",
-	dim       : "\x1b[2m",
-	italic    : "\x1b[3m",
-	underline : "\x1b[4m",
-	blink     : "\x1b[5m",
-	reverse   : "\x1b[7m",
-	strike    : "\x1b[9m",
-	bg        :
+	reset       : "\x1b[0m",
+	bold        : "\x1b[1m",
+	dim         : "\x1b[2m",
+	italic      : "\x1b[3m",
+	underline   : "\x1b[4m",
+	blink       : "\x1b[5m",
+	reverse     : "\x1b[7m",
+	strike      : "\x1b[9m",
+	clearScreen : "\x1b[2J\x1b[H",	// blanks screen and returns cursor to home position
+	bg          :
 	{
 		black   : "\x1b[40m",
 
@@ -180,13 +181,19 @@ xu.trim = function trim(strs, ...vals)
 xu.waitUntil = async function waitUntil(fun, {interval, timeout}={})
 {
 	let i=0;
+	let timedOut = false;
 	const startedAt = timeout ? performance.now() : null;
 	while(!(await fun()))
 	{
 		await delay(interval || Math.min(5*(i++), xu.SECOND));
 		if(timeout && (performance.now()-startedAt)>timeout)
+		{
+			timedOut = true;
 			break;
+		}
 	}
+
+	return !timedOut;
 };
 
 /** returns the node equilivant __dirname when passed in import.meta */
@@ -198,7 +205,7 @@ xu.dirname = function dirname(meta)
 /** returns a nice pretty representation of val */
 xu.inspect = function inspect(val)
 {
-	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false});
+	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false});
 };
 
 /** xu.log`` and xu.log#(1-5)`` functions to only log if verbose level is set high enough */
