@@ -73,6 +73,12 @@ Deno.test("run-manyInstances", async () =>
 	assertStrictEquals(results.filter(result => result.includes("elapsed")).length, 1000);
 });
 
+Deno.test("run-manyInstances-virtualX", async () =>
+{
+	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
+	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
+});
+
 Deno.test("run-timeout", async () =>
 {
 	const beforeTime = performance.now();
@@ -97,12 +103,6 @@ Deno.test("run-virtualX", async () =>
 	assertStrictEquals(stderr.includes("Can't open display"), true, stderr);
 	({stderr} = await runUtil.run("xclock", ["--help"], {virtualX : true}));
 	assertStrictEquals(stderr.startsWith("Usage: xclock"), true, stderr);
-});
-
-Deno.test("run-virtualX-manyInstances", async () =>
-{
-	const results = (await Promise.all([].pushSequence(1, 100).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
-	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 100);
 });
 
 Deno.test("run-detached-killExternal", async () =>

@@ -3,6 +3,8 @@ import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import {path} from "std";
 
+const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
+
 /** Will run the given cmd and pass it the given args.
  * Options:
  *   cwd				The current working directory to run the program in
@@ -64,12 +66,20 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let xvfbPort = null;
 	if(virtualX || virtualXGLX)
 	{
-		let existingSessions = null;
+		await Deno.mkdir(XVFB_LOCK_DIR_PATH, {recursive : true});
+		
 		do
 		{
 			xvfbPort = Math.randomInt(10, 9999);
-			existingSessions = (await fileUtil.tree("/tmp/.X11-unix", {nodir : true, regex : /^X\d+/})).map(v => +path.basename(v).substring(1));
-		} while(existingSessions.includes(xvfbPort));
+			
+			// try and create a lock file for this port num
+			const f = await Deno.open(path.join(XVFB_LOCK_DIR_PATH, xvfbPort.toString()), {write : true, createNew : true}).catch(() => {});
+			if(!f || await fileUtil.exists(path.join("/tmp/.X11-unix", `X${xvfbPort}`)))
+				continue;
+
+			Deno.close(f.rid);
+			break;
+		} while(true);
 
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
 		xvfbArgs.push("-xkbdir", "/usr/share/X11/xkb");	// Gentoo puts the xkb files here
@@ -117,7 +127,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			clearTimeout(timerid);
 		
 		if(xvfbProc)
+		{
 			await kill(xvfbProc, "SIGTERM");
+			await fileUtil.unlink(path.join(XVFB_LOCK_DIR_PATH, xvfbPort.toString()));
+		}
 
 		// Close the process
 		try { p.close(); } catch {}
@@ -158,6 +171,6 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 export async function kill(p, signal)
 {
 	try { p.kill(signal); } catch {}
-	try { await p.status(); } catch {}
+	try { await p.status(); } catch {}	// allows the process to gracefully close before I close the handle
 	try { p.close(); } catch {}
 }
