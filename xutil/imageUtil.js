@@ -38,7 +38,7 @@ export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOn
 	const imageInfo = {width : wh[0], height : wh[1]};
 
 	// Because imagemagick is so damn slow at calculating info, we don't bother getting advanced info if the image is too large
-	if(widthHeightOnly || [imageInfo.width, imageInfo.height].some(v => v>=10000))
+	if(widthHeightOnly || [imageInfo.width, imageInfo.height].some(v => v>=2000))
 		return imageInfo;
 	
 	// Available properties: https://imagemagick.org/script/escape.php
@@ -53,7 +53,7 @@ export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOn
 		opaque          : "%[opaque]"
 	};
 
-	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", Object.entries(PROPS).map(([k, v]) => `${k}:${v}`).join("\\n"), `./${path.basename(imageFilePath)}`], {timeout, cwd : path.dirname(imageFilePath)}, this);
+	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", Object.entries(PROPS).map(([k, v]) => `${k}:${v}`).join("\\n"), `./${path.basename(imageFilePath)}`], {timeout, cwd : path.dirname(imageFilePath)});
 	if(stdout.length===0 || stdout.includes("corrupt image"))	// Old node check, may not need with deno:  || stdout.toLowerCase().startsWith("error: command failed")
 		return {...imageInfo, err : stderr};
 	
