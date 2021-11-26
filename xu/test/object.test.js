@@ -44,6 +44,15 @@ Deno.test("filterInPlace", () =>
 	assertStrictEquals(!Object.equals(a, b), true);
 });
 
+Deno.test("findReplace", async () =>
+{
+	const a = {abc : 123, hello : "world", sub : {bool : true, arr : [1, 2, {arrObj : 47}, 3], subObj : {subObjKey : 99}}};
+	const b = Object.clone(a);
+	assertEquals(a, b);
+	await Object.findReplace(b, (k, v) => typeof v==="number", (k, v) => (`${k}_${v*2}`));
+	assertEquals(b, {abc : "abc_246", hello : "world", sub : {bool : true, arr : [1, 2, {arrObj : "arrObj_94"}, 3], subObj : {subObjKey : "subObjKey_198"}}});
+});
+
 Deno.test("isObject", () =>
 {
 	assertStrictEquals(Object.isObject({abc : 123}), true);

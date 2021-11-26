@@ -4,7 +4,7 @@ import {createRequire} from "std";
 
 const require = createRequire(import.meta.url);
 const {globals : eslintGlobals } = require("/mnt/compendium/DevLab/common/eslint/shared-deno.eslintrc");
-const denoGlobals = Object.fromEntries(Array.from(Object.getOwnPropertyNames(globalThis)).sortMulti(v => v).map(v => ([v, "writable"])));
+const denoGlobals = Object.fromEntries(Array.from(Object.getOwnPropertyNames(globalThis)).sortMulti().map(v => ([v, "writable"])));
 
 if(!Object.equals(eslintGlobals, denoGlobals))
 {

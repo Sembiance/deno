@@ -80,6 +80,38 @@ if(!Object.filterInPlace)
 	};
 }
 
+/** Recursively searches the passed in object, calling async checkFun(k, v) for every key/val in the object. If checkFun() returns true, then the value is replaces with the result of async replaceFun(k, v)*/
+if(!Object.findReplace)
+{
+	Object.findReplace = async function findReplace(startObject, checkFun, replaceFun)
+	{
+		const seen = new Set();
+		const searchObjects = [startObject];
+		while(searchObjects.length>0)
+		{
+			const newObjects=[];
+			for(const o of searchObjects)
+			{
+				for(const [k, v] of Object.entries(o))
+				{
+					if(await checkFun(k, v))
+					{
+						o[k] = await replaceFun(k, v);
+					}
+					else if(v && typeof v==="object" && !seen.has(v))	// we don't use Object.isObject() so we can iterate through object-like things like arrays, etc
+					{
+						seen.add(v);
+						newObjects.push(v);
+					}
+				}
+			}
+			
+			searchObjects.clear();
+			searchObjects.push(...newObjects);
+		}
+	};
+}
+
 /** Returns 'true' if the val is an Object and NOT an Array */
 if(!Object.isObject)
 {
