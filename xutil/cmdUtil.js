@@ -48,7 +48,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 		const argOptPadding = Math.max("version".length, args.map(arg => arg.argid.length).max(), Object.entries(opts).map(([k, opt]) => k.length + (opt.hasValue ? " <value>".length : 0)).max()) + 8;
 
 		if(args.length>0)
-			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}`).join("\n")}`);
+			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}${arg.allowed ? ` (${arg.allowed.join(" | ")})` : ""}`).join("\n")}`);
 		
 		console.log(`\nOptions:\n${Object.entries(opts).map(([optid, opt]) =>
 			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}`).join("\n")}`);

@@ -60,6 +60,7 @@ xu.c =
 
 		// 256 colors
 		peach       : "\x1b[48;5;203m",
+		pink        : "\x1b[48;5;205m",
 		orange      : "\x1b[48;5;208m",
 		violet      : "\x1b[48;5;93m",
 		chartreuse  : "\x1b[48;5;190m",
@@ -92,6 +93,7 @@ xu.c =
 
 		// 256 colors
 		peach       : "\x1b[38;5;203m",
+		pink        : "\x1b[38;5;205m",
 		orange      : "\x1b[38;5;208m",
 		violet      : "\x1b[38;5;93m",
 		chartreuse  : "\x1b[38;5;190m",
@@ -238,7 +240,10 @@ for(const minVerbose of [0, 1, 2, 3, 4, 5])
 			}
 		});
 
-		console.log(r.join(""));
+		if(xu.logger)
+			xu.logger(r.join(""));
+		else
+			console.log(r.join(""));
 	};
 }
 

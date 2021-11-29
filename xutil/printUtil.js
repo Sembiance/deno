@@ -189,9 +189,9 @@ export function majorHeader(text, options={})
 	if(options.prefix)
 		r.push(options.prefix);
 
-	r.push(`${xu.cf.fg.cyan(`/${"-".repeat(text.length+2)}\\`)}\n`);
+	r.push(`${xu.cf.fg.cyan(`/${"-".repeat(text.decolor().length+2)}\\`)}\n`);
 	r.push(`${xu.cf.fg.cyan("| ")}${xu.cf.fg.white(text)}${xu.cf.fg.cyan(" |")}\n`);
-	r.push(`${xu.cf.fg.cyan(`\\${"-".repeat(text.length+2)}/`)}\n`);
+	r.push(`${xu.cf.fg.cyan(`\\${"-".repeat(text.decolor().length+2)}/`)}`);
 
 	if(options.suffix)
 		r.push(options.suffix);
@@ -208,7 +208,7 @@ export function minorHeader(text, options={})
 		r.push(options.prefix);
 
 	r.push(`${xu.cf.fg.white(text)}\n`);
-	r.push(`${xu.cf.fg.cyan("-".repeat(text.length))}\n`);
+	r.push(`${xu.cf.fg.cyan("-".repeat(text.decolor().length))}`);
 
 	if(options.suffix)
 		r.push(options.suffix);
