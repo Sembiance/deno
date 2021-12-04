@@ -95,7 +95,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	}
 
 	if(verbose)
-		xu.log`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${xu.inspect({...runArgs, cmd : []}).squeeze()}`;
+		console.log(`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${xu.inspect({...runArgs, cmd : []}).squeeze()}`);
 	
 	// Kick off the process
 	const p = Deno.run(runArgs);

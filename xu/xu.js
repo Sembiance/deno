@@ -4,9 +4,9 @@ import {} from "./math.js";
 import {} from "./number.js";
 import {} from "./object.js";
 import {} from "./string.js";
+import {} from "./uint8array.js";
 
 const xu = {};
-xu.verbose = 0;
 
 xu.SECOND = 1000;
 xu.MINUTE = xu.SECOND*60;
@@ -210,42 +210,57 @@ xu.inspect = function inspect(val)
 	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false});
 };
 
-/** xu.log`` and xu.log#(1-5)`` functions to only log if verbose level is set high enough */
-for(const minVerbose of [0, 1, 2, 3, 4, 5])
+/** Returns a log object that has xlog.<level>``; functions to only log if verbose level is set high enough */
+xu.xLog = function xLog(level="info", logger)
 {
-	xu[`log${minVerbose===0 ? "" : minVerbose}`] = (strs, ...vals) =>
+	const LEVELS = ["none", "fatal", "error", "warn", "info", "debug", "trace"];
+	const l = {level, logger};
+	l.atLeast = function atLeast(logLevel)
 	{
-		if(minVerbose>0 && xu.verbose<minVerbose)
-			return;
-
-		const r = [];
-		if(xu.verbose>=4)
-		{
-			const stackTrace = (new Error()).stack.split("\n");	// eslint-disable-line unicorn/error-message
-			const {filePath, lineNum} = (stackTrace[2].match(/\(?file:\/\/(?<filePath>[^):]+):?(?<lineNum>\d*):?\d*\)?$/) || {groups : {}}).groups;		// can add to beginning for methodName: ^\s+at (?<methodName>[^(]*) ?
-			r.push(`${fg.black(`${path.basename(filePath)}:${lineNum.padStart(3, " ")}`)}${fg.cyanDim(":")} `);
-		}
-		
-		strs.forEach(str =>
-		{
-			r.push(str);
-
-			if(vals.length>0)
-			{
-				const val = vals.shift();
-				if(typeof val==="string")
-					r.push(xu.cf.fg.greenDim(val));
-				else
-					r.push(xu.inspect(val));
-			}
-		});
-
-		if(xu.logger)
-			xu.logger(r.join(""));
-		else
-			console.log(r.join(""));
+		return LEVELS.indexOf(l.level)>=LEVELS.indexOf(logLevel);
 	};
-}
+
+	for(const levelName of LEVELS)
+	{
+		if(levelName==="none")
+			continue;
+			
+		l[levelName] = (strs, ...vals) =>
+		{
+			if(!l.atLeast(levelName))
+				return;
+
+			const r = [];
+			if(l.atLeast("debug"))
+			{
+				const stackTrace = (new Error()).stack.split("\n");	// eslint-disable-line unicorn/error-message
+				const {filePath, lineNum} = (stackTrace[2].match(/\(?file:\/\/(?<filePath>[^):]+):?(?<lineNum>\d*):?\d*\)?$/) || {groups : {}}).groups;		// can add to beginning for methodName: ^\s+at (?<methodName>[^(]*) ?
+				r.push(`${fg.black(`${path.basename(filePath)}:${lineNum.padStart(3, " ")}`)}${fg.cyanDim(":")} `);
+			}
+			
+			strs.forEach(str =>
+			{
+				r.push(str);
+
+				if(vals.length>0)
+				{
+					const val = vals.shift();
+					if(typeof val==="string")
+						r.push(xu.cf.fg.greenDim(val));
+					else
+						r.push(xu.inspect(val));
+				}
+			});
+
+			if(l.logger)
+				l.logger(r.join(""));
+			else
+				console.log(r.join(""));
+		};
+	}
+
+	return l;
+};
 
 const stdoutEncoder = new TextEncoder();
 xu.stdoutWrite = function stdoutWrite(str)

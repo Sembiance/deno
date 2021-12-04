@@ -85,15 +85,8 @@ export async function searchReplace(filePath, findMe, replaceWith)
 	if(!(await exists(filePath)))
 		return;
 	
-	const data = await readFile(filePath);
-	await writeFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
-}
-
-/** Reads all content from the given filePath and decodes it as encoding (default utf-8) */
-export async function readFile(filePath, encoding="utf-8")
-{
-	const data = await Deno.readFile(filePath);
-	return (encoding ? (new TextDecoder(encoding)).decode(data) : data);
+	const data = await Deno.readTextFile(filePath);
+	await Deno.writeTextFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
 }
 
 /** reads in byteCount bytes from filePath and returns a Uint8Array */
@@ -118,7 +111,7 @@ export async function readFileBytes(filePath, byteCount)
  */
 export async function tree(root, {nodir=false, nofile=false, regex, depth=Number.MAX_SAFE_INTEGER, _originalRoot=root}={})
 {
-	if(depth===0)
+	if(depth===0 || !(await exists(root)))
 		return [];
 
 	if(!(await Deno.stat(root))?.isDirectory)
@@ -148,10 +141,4 @@ export async function unlink(targetPath, o={})
 		return;
 	
 	return await Deno.remove(targetPath, o);
-}
-
-/** Reads all content from the given filePath and decodes it as encoding (default utf-8) */
-export async function writeFile(filePath, data, encoding="utf-8", {append=false}={})
-{
-	await Deno.writeFile(filePath, (encoding ? (new TextEncoder(encoding)).encode(data) : data), {append});
 }

@@ -50,7 +50,7 @@ Deno.test("findReplace", async () =>
 	const b = Object.clone(a);
 	assertEquals(a, b);
 	await Object.findReplace(b, (k, v) => typeof v==="number", (k, v) => (`${k}_${v*2}`));
-	assertEquals(b, {abc : "abc_246", hello : "world", sub : {bool : true, arr : [1, 2, {arrObj : "arrObj_94"}, 3], subObj : {subObjKey : "subObjKey_198"}}});
+	assertEquals(b, {abc : "abc_246", hello : "world", sub : {bool : true, arr : ["0_2", "1_4", {arrObj : "arrObj_94"}, "3_6"], subObj : {subObjKey : "subObjKey_198"}}});
 });
 
 Deno.test("isObject", () =>

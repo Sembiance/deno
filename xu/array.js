@@ -94,6 +94,21 @@ if(!Array.prototype.filterInPlace)
 	};
 }
 
+/** Async version of .filter()  */
+if(!Array.prototype.filterAsync)
+{
+	Array.prototype.filterAsync = async function filterAsync(fn)
+	{
+		const r = [];
+		for(const v of this)
+		{
+			if(await fn(v))
+				r.push(v);
+		}
+
+		return r;
+	};
+}
 /** Forces the passed in variable to be an Array. Just returns it if it already is an Array, otherwise it returns [v] */
 if(!Array.force)
 {
@@ -167,10 +182,10 @@ if(!Array.prototype.min)
 /** Runs the given fn in parallel for each item in the array, returning a mapped result. Set atOnce to limit how many run at a time */
 if(!Array.prototype.parallelMap)
 {
-	Array.prototype.parallelMap = async function parallelMap(fn, atOnce)
+	Array.prototype.parallelMap = async function parallelMap(fn, atOnce=Math.min(Math.floor(navigator.hardwareConcurrency/3), 10))
 	{
 		if(atOnce)
-			return await (new PQueue({concurrency : atOnce})).addAll(this.map(v => () => fn(v)));
+			return await (new PQueue({concurrency : atOnce})).addAll(this.map((v, i) => () => fn(v, i)));
 
 		return await Promise.all(this.map(fn));
 	};

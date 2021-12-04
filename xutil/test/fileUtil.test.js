@@ -15,8 +15,8 @@ Deno.test("emptyDir", async () =>
 {
 	const EMPTY_DIR_PATH = await fileUtil.genTempPath();
 	await Deno.mkdir(path.join(EMPTY_DIR_PATH, "subdir"), {recursive : true});
-	await fileUtil.writeFile(path.join(EMPTY_DIR_PATH, "abc.txt"), "abc123");
-	await fileUtil.writeFile(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat"), "DATA\nGOES\nHERE");
+	await Deno.writeTextFile(path.join(EMPTY_DIR_PATH, "abc.txt"), "abc123");
+	await Deno.writeTextFile(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat"), "DATA\nGOES\nHERE");
 
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir")), true);
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "abc.txt")), true);
@@ -66,11 +66,6 @@ Deno.test("move", async () =>
 	await fileUtil.unlink(destFilePath);
 });
 
-Deno.test("readFile", async () =>	// eslint-disable-line sembiance/shorter-arrow-funs
-{
-	assertStrictEquals(await fileUtil.readFile(path.join(FILES_DIR, "a.txt")), "abc\n");
-});
-
 Deno.test("readFileBytes", async () =>
 {
 	const a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4);
@@ -81,11 +76,11 @@ Deno.test("searchReplace", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
 	await Deno.copyFile("/mnt/compendium/DevLab/deno/xutil/test/files/ab.txt", tmpFilePath);
-	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nabc\n123\nxyz");
+	assertStrictEquals(await Deno.readTextFile(tmpFilePath), "prefix\nabc\n123\nxyz");
 	await fileUtil.searchReplace(tmpFilePath, "abc", "yah, something 777 else now");
-	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nyah, something 777 else now\n123\nxyz");
+	assertStrictEquals(await Deno.readTextFile(tmpFilePath), "prefix\nyah, something 777 else now\n123\nxyz");
 	await fileUtil.searchReplace(tmpFilePath, /\d+/g, "numbers");
-	assertStrictEquals(await fileUtil.readFile(tmpFilePath), "prefix\nyah, something numbers else now\nnumbers\nxyz");
+	assertStrictEquals(await Deno.readTextFile(tmpFilePath), "prefix\nyah, something numbers else now\nnumbers\nxyz");
 	await fileUtil.unlink(tmpFilePath);
 });
 
@@ -133,28 +128,19 @@ Deno.test("tree", async () =>
 
 	r = await fileUtil.tree(GLOB_DIR, {nofile : true, nodir : true});
 	assertStrictEquals(r.length, 0);
+
+	r = await fileUtil.tree("/some/path/that/does/not/exist");
+	assertStrictEquals(r.length, 0);
 });
 
 Deno.test("unlink", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
 	const data = "this is just\na test";
-	await fileUtil.writeFile(tmpFilePath, data);
+	await Deno.writeTextFile(tmpFilePath, data);
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
 	await fileUtil.unlink(tmpFilePath);
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
 	await fileUtil.unlink(tmpFilePath);	// yes, call it twice to ensure that no error is reported
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
 });
-
-Deno.test("writeFile", async () =>
-{
-	const tmpFilePath = await fileUtil.genTempPath();
-	const data = "this is just\na test";
-	await fileUtil.writeFile(tmpFilePath, data);
-	assertStrictEquals(await fileUtil.readFile(tmpFilePath), data);
-	await fileUtil.writeFile(tmpFilePath, "more", undefined, {append : true});
-	assertStrictEquals(await fileUtil.readFile(tmpFilePath), `${data}more`);
-	await fileUtil.unlink(tmpFilePath);
-});
-

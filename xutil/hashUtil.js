@@ -1,5 +1,4 @@
 import {xu} from "xu";
-import * as fileUtil from "./fileUtil.js";
 import {createHash} from "std";
 
 export function hashData(algorithm, data)
@@ -12,6 +11,6 @@ export function hashData(algorithm, data)
 export async function hashFile(algorithm, filePath)
 {
 	const hash = createHash(algorithm);
-	hash.update(await fileUtil.readFile(filePath, null));
+	hash.update(await Deno.readFile(filePath, null));
 	return hash.toString();
 }
