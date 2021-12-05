@@ -26,6 +26,15 @@ if(!Uint8Array.prototype.indexOfX)
 	};
 }
 
+/** returns len bytes at offset decoded as a string */
+if(!Uint8Array.prototype.getString)
+{
+	Uint8Array.prototype.getString = function getString(offset, len)
+	{
+		return new TextDecoder().decode(this.subarray(offset, offset+len));
+	};
+}
+
 /** Creates convienance methods for set/get int/uint values */
 for(const t of ["get", "set"])
 {

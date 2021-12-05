@@ -40,3 +40,10 @@ Deno.test("setUInt16BE", () =>
 	assertEquals(a.subarray(10, 12), Uint8Array.from([31, 64]));
 	assertStrictEquals(a.getUInt16BE(10), 8000);
 });
+
+Deno.test("getString", () =>
+{
+	assertStrictEquals(a.getString(48, 52), "Recorded with PERFECT SOUND from SunRize Industries.");
+	assertStrictEquals(a.getString(12, 4), "VHDR");
+});
+
