@@ -37,6 +37,12 @@ Deno.test("run-stdout", async () =>
 	assertStrictEquals(stdout, "Linux\n");
 });
 
+Deno.test("run-stdout-encoding", async () =>
+{
+	const {stdout} = await runUtil.run("unlzx", ["-v", path.join(xu.dirname(import.meta), "files", "test.lzx")], {stdoutEncoding : "latin1"});
+	assert(stdout.includes("mod._¡TSA!_Aiguanaguoman_v1.43"));
+});
+
 Deno.test("run-stderr", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
@@ -77,6 +83,13 @@ Deno.test("run-manyInstances-virtualX", async () =>
 {
 	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
 	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
+});
+
+Deno.test("run-stdinData", async () =>
+{
+	const msg = "this is just a hello world test";
+	const {stdout} = await runUtil.run("deno", [], {stdinData : `console.log("${msg}")`});
+	assert(stdout.includes(msg));
 });
 
 Deno.test("run-timeout", async () =>

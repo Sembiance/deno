@@ -259,6 +259,12 @@ xu.xLog = function xLog(level="info", logger)
 		};
 	}
 
+	/* returns a shallow copy, assigning a possible new log level but keeping the old logger function if present */
+	l.clone = function clone(newLogLevel)
+	{
+		return xu.xLog(newLogLevel || this.level, this.logger);
+	};
+
 	return l;
 };
 

@@ -12,6 +12,9 @@ const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
  *   env				An object of key : value pairs to be addded to the environment
  *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
+ *	 stdinData          If set, this will be sent to stdin
+ *   stdoutEncoding		If set, stdout will be decoded as this. Default: utf-8
+ *   stderrEncoding		If set, stderr will be decoded as this. Default: utf-8
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
@@ -20,9 +23,10 @@ const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  */
-export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], liveOutput, stdoutFilePath, stderrFilePath, timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], liveOutput, stdinData, stdoutEncoding="utf-8", stderrEncoding="utf-8", stdoutFilePath, stderrFilePath,
+	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
 {
-	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : "null"};
+	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : stdinData ? "piped" : "null"};
 
 	if(inheritEnv!==true)
 	{
@@ -100,6 +104,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	// Kick off the process
 	const p = Deno.run(runArgs);
 
+	if(stdinData)
+	{
+		await p.stdin.write(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
+		p.stdin.close();
+	}
+
 	// Start our timer
 	let timerid = null;
 	function timeoutHandler()
@@ -140,12 +150,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(stdoutFilePath)
 			Deno.close(runArgs.stdout);
 		else
-			r.stdout = new TextDecoder().decode(stdoutResult);
+			r.stdout = new TextDecoder(stdoutEncoding).decode(stdoutResult);
 
 		if(stderrFilePath)
 			Deno.close(runArgs.stderr);
 		else
-			r.stderr = new TextDecoder().decode(stderrResult);
+			r.stderr = new TextDecoder(stderrEncoding).decode(stderrResult);
 
 		return r;
 	};

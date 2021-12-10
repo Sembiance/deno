@@ -10,3 +10,4 @@ export {format as dateFormat, parse as dateParse} from "https://deno.land/std@0.
 export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertThrowsAsync} from "https://deno.land/std@0.114.0/testing/asserts.ts";
 export {decode as base64Decode, encode as base64Encode} from "https://deno.land/std@0.114.0/encoding/base64.ts";
 export {createRequire} from "https://deno.land/std@0.114.0/node/module.ts";
+export {readLines} from "https://deno.land/std@0.117.0/io/mod.ts";

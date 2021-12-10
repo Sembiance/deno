@@ -54,7 +54,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do
-		r = path.join(fullPrefix, `${Math.randomInt(0, 9999)}_${tempCounter++}${suffix}`);
+		r = path.join(fullPrefix, `${Deno.pid}_${Math.randomInt(0, 9999)}_${tempCounter++}${suffix}`);
 	while(await exists(r));
 
 	return r;
