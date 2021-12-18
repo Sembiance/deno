@@ -55,9 +55,21 @@ Deno.test("xlog-logger", () =>
 	xlog.fatal`nope, should not see`;
 	if(xlog.atLeast("trace"))
 		console.log("should NOT see");
-	assertEquals(debugLog, ["\nxlog test message", "\x1b[90mxu.test.js: 52\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxu.test.js: 53\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"]);	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape
+	assertEquals(debugLog, ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxu.test.js: 52\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxu.test.js: 53\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"]);	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape, max-len
 });
 
+Deno.test("xlog-mapper", () =>
+{
+	const debugLog = [];
+	const logger = v => debugLog.push(v);
+	const mapper = v => `PREFIX ${v} SUFFIX`;
+	const xlog = xu.xLog("info", {logger, mapper});
+	xlog.info`hello world`;
+	xlog.fatal`omg`;
+	assertStrictEquals(debugLog.length, 2);
+	assertStrictEquals(debugLog[0], "PREFIX hello world SUFFIX");
+	assertStrictEquals(debugLog[1].decolor(), "FATAL: PREFIX omg SUFFIX");
+});
 
 Deno.test("parseJSON", () =>
 {
@@ -126,12 +138,13 @@ Deno.test("color", () =>
 Deno.test("xlog", () =>
 {
 	const xlog = xu.xLog();
-	xlog.fatal`\nfatal message, should see`;
-	xlog.error`\nerror message, should see`;
-	xlog.warn`\nwarn message, should see`;
-	xlog.info`\ninfo message, should see`;
-	xlog.debug`\ndebug message, should NOT see`;
-	xlog.trace`\ntrace message, should NOT see`;
+	console.log("");
+	xlog.fatal`fatal message, should see`;
+	xlog.error`error message, should see`;
+	xlog.warn`warn message, should see`;
+	xlog.info`info message, should see`;
+	xlog.debug`debug message, should NOT see`;
+	xlog.trace`trace message, should NOT see`;
 	if(xlog.atLeast("info"))
 		console.log("should see");
 	if(xlog.atLeast("debug"))

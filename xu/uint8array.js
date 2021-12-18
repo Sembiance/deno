@@ -1,4 +1,16 @@
-
+/** Copies data from a region of the current array to the target */
+if(!Uint8Array.prototype.copy)
+{
+	Uint8Array.prototype.copy = function copy(target, targetStart=0, sourceStart=0, sourceEnd=null)
+	{
+		if(sourceEnd===null)
+			sourceEnd = this.length;	// eslint-disable-line no-param-reassign
+		
+		const sourceData = Uint8Array.from(this.subarray(sourceStart, sourceEnd));
+		for(let i=0;i<sourceData.length;i++)
+			target.setUInt8(targetStart+i, sourceData[i]);
+	};
+}
 
 /** Allows finding more advanced items such as strings or sub arrays */
 if(!Uint8Array.prototype.indexOfX)
@@ -29,9 +41,9 @@ if(!Uint8Array.prototype.indexOfX)
 /** returns len bytes at offset decoded as a string */
 if(!Uint8Array.prototype.getString)
 {
-	Uint8Array.prototype.getString = function getString(offset, len)
+	Uint8Array.prototype.getString = function getString(offset, len, encoding="utf-8")
 	{
-		return new TextDecoder().decode(this.subarray(offset, offset+len));
+		return new TextDecoder(encoding).decode(this.subarray(offset, offset+len));
 	};
 }
 

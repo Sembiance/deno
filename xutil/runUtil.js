@@ -1,7 +1,7 @@
 /* eslint-disable brace-style */
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
-import {path} from "std";
+import {path, readLines} from "std";
 
 const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
 
@@ -17,13 +17,15 @@ const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
  *   stderrEncoding		If set, stderr will be decoded as this. Default: utf-8
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
+ *   stdoutcb			If set, this function will be called for every 'line' read from stdout
+ *   stderrcb			If set, this function will be called for every 'line' read from stderr
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
  *   verbose            Set to true to output some details about the program
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  */
-export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], liveOutput, stdinData, stdoutEncoding="utf-8", stderrEncoding="utf-8", stdoutFilePath, stderrFilePath,
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput, stdinData, stdoutEncoding="utf-8", stderrEncoding="utf-8", stdoutFilePath, stderrFilePath, stdoutcb, stderrcb,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
 {
 	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : stdinData ? "piped" : "null"};
@@ -112,13 +114,47 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 	// Start our timer
 	let timerid = null;
-	function timeoutHandler()
+	async function timeoutHandler()
 	{
+		if(killChildren)	// requires kernel CONFIG_PROC_CHILDREN
+		{
+			const kids = [];
+			const getKids = async (pid, depth=0) =>
+			{
+				// get pid tids (task ids)
+				const tids = (await fileUtil.tree(`/proc/${pid}/task`, {depth : 1, nofile : true})).map(tidPath => path.basename(tidPath));
+				await tids.parallelMap(async tid =>
+				{
+					// get the children pids of the tid
+					const tidPidsRaw = (await Deno.readTextFile(`/proc/${pid}/task/${tid}/children`)).trim();
+					if(tidPidsRaw.length===0)
+						return;
+					const tidPids = tidPidsRaw.split(" ");
+					await tidPids.parallelMap(async tidPid => await getKids(tidPid, depth+1));
+					kids.push(...tidPids.map(tidPid => ({pid : tidPid, depth})));
+				});
+			};
+
+			await getKids(p.pid);
+
+			// sort the kids so that we kill the deepest ones first
+			kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid).forEach(pid => Deno.kill(pid, timeoutSignal));
+		}
 		try { p.kill(timeoutSignal); } catch {}
 		timerid = true;
 	}
 	if(timeout)
 		timerid = setTimeout(timeoutHandler, timeout);
+
+	const lineReader = async function(reader, cb)
+	{
+		for await(const line of readLines(reader))
+			await cb(line);
+		reader.close();
+	};
+
+	const stdoutcbPromise = stdoutcb ? lineReader(p.stdout, stdoutcb) : null;
+	const stderrcbPromise = stderrcb ? lineReader(p.stderr, stderrcb) : null;
 
 	let cbCalled = false;
 	const cb = async () =>
@@ -126,8 +162,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		cbCalled = true;
 
 		// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
-		const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : p.output();
-		const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : p.stderrOutput();
+		const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : stdoutcbPromise || p.output();
+		const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : stderrcbPromise || p.stderrOutput();
 
 		// Wait for the process to finish (or be killed by the timeoutHandler)
 		const [status, stdoutResult, stderrResult] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {})]);
@@ -178,7 +214,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 }
 
 /** gracefully kills the given process p with signal */
-export async function kill(p, signal)
+export async function kill(p, signal="SIGTERM")
 {
 	try { p.kill(signal); } catch {}
 	try { await p.status(); } catch {}	// allows the process to gracefully close before I close the handle

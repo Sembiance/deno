@@ -211,10 +211,10 @@ xu.inspect = function inspect(val)
 };
 
 /** Returns a log object that has xlog.<level>``; functions to only log if verbose level is set high enough */
-xu.xLog = function xLog(level="info", logger)
+xu.xLog = function xLog(level="info", {logger, mapper}={})
 {
 	const LEVELS = ["none", "fatal", "error", "warn", "info", "debug", "trace"];
-	const l = {level, logger};
+	const l = {level, logger, mapper};
 	l.atLeast = function atLeast(logLevel)
 	{
 		return LEVELS.indexOf(l.level)>=LEVELS.indexOf(logLevel);
@@ -252,17 +252,25 @@ xu.xLog = function xLog(level="info", logger)
 				}
 			});
 
+			let s = r.join("");
+			if(l.mapper)
+				s = l.mapper(s);
+			
+			const prefixColor = {warn : "yellow", error : "red", fatal : "red"}[levelName];
+			if(prefixColor)
+				s = `${fg[prefixColor]((levelName==="fatal" ? xu.c.blink : "") + levelName.toUpperCase())}${fg.cyan(":")} ${s}`;
+
 			if(l.logger)
-				l.logger(r.join(""));
+				l.logger(s);
 			else
-				console.log(r.join(""));
+				console.log(s);
 		};
 	}
 
 	/* returns a shallow copy, assigning a possible new log level but keeping the old logger function if present */
 	l.clone = function clone(newLogLevel)
 	{
-		return xu.xLog(newLogLevel || this.level, this.logger);
+		return xu.xLog(newLogLevel || this.level, {logger : this.logger, mapper : this.mapper});
 	};
 
 	return l;

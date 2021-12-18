@@ -4,6 +4,22 @@ import {assertEquals, assertStrictEquals, path} from "std";
 const a = await Deno.readFile(path.join(path.resolve((new URL(".", import.meta.url)).pathname), "files", "siren.sound"));
 assertStrictEquals(a.length, 1429);
 
+Deno.test("copy", () =>
+{
+	const b = Uint8Array.from(a);
+	assertStrictEquals(86, b[10]);
+	assertStrictEquals(88, b[11]);
+	assertStrictEquals(86, b[12]);
+	assertStrictEquals(72, b[13]);
+	assertStrictEquals(68, b[14]);
+	Uint8Array.from([0x50, 0x49, 0x48, 0x47, 0x02, 0x03, 0x04, 0x05]).copy(b, 10, 3);
+	assertStrictEquals(71, b[10]);
+	assertStrictEquals(2, b[11]);
+	assertStrictEquals(3, b[12]);
+	assertStrictEquals(4, b[13]);
+	assertStrictEquals(5, b[14]);
+});
+
 Deno.test("indexOfX", () =>
 {
 	assertStrictEquals(a.indexOfX("VHDR"), 12);

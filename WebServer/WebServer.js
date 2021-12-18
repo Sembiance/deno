@@ -1,23 +1,23 @@
 import {xu} from "xu";
-const xlog = xu.xLog();
 
 export class WebServer
 {
 	routes = {};
 	connections = [];
 
-	static create(host, port)
+	static create(host, port, {xlog=xu.xLog()}={})
 	{
 		const webServer = new WebServer();
 		webServer.host = host;
 		webServer.port = port;
+		webServer.xlog = xlog;
 
 		return webServer;
 	}
 
 	async start()
 	{
-		xlog.info`${this.host}:${this.port} starting...`;
+		this.xlog.info`${this.host}:${this.port} starting...`;
 		this.server = await Deno.listen({hostname : this.host, port : this.port});
 
 		(async () =>	// eslint-disable-line sembiance/shorter-arrow-funs
@@ -29,7 +29,7 @@ export class WebServer
 
 	respondWithErrorHandler(err)
 	{
-		xlog.error`.respondWith errored out ${err}`;
+		this.xlog.error`.respondWith errored out ${err}`;
 	}
 
 	async handleConn(conn)
@@ -43,7 +43,7 @@ export class WebServer
 			const handlers = this.routes[u.pathname];
 			if(!handlers)
 			{
-				xlog.warn`${this.host}:${this.port} unregistered request ${l}`;
+				this.xlog.warn`${this.host}:${this.port} unregistered request ${l}`;
 				await httpRequest.respondWith(new Response("404 not found", {status : 404})).catch(this.respondWithErrorHandler);
 				continue;
 			}
@@ -51,12 +51,12 @@ export class WebServer
 			const route = handlers[httpRequest.request.method];
 			if(!route)
 			{
-				xlog.warn`${this.host}:${this.port} invalid method for request ${l} expected ${Object.keys(handlers).join(", ")}`;
+				this.xlog.warn`${this.host}:${this.port} invalid method for request ${l} expected ${Object.keys(handlers).join(", ")}`;
 				await httpRequest.respondWith(new Response("405 method not allowed", {status : 405})).catch(this.respondWithErrorHandler);
 				continue;
 			}
 			
-			xlog.info`${this.host}:${this.port} request ${l}`;
+			this.xlog.info`${this.host}:${this.port} request ${l}`;
 			try
 			{
 				route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(this.respondWithErrorHandler)).then(response =>
@@ -67,20 +67,20 @@ export class WebServer
 
 					if(!response || !(response instanceof Response))
 					{
-						xlog.warn`${this.host}:${this.port} request handler ${l} returned an invalid response`;
+						this.xlog.warn`${this.host}:${this.port} request handler ${l} returned an invalid response`;
 						return httpRequest.respondWith(new Response("no response found", {status : 500})).catch(this.respondWithErrorHandler);
 					}
 					
 					return httpRequest.respondWith(response);
 				}).catch(err =>
 				{
-					xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
+					this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
 					return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(this.respondWithErrorHandler);
 				});
 			}
 			catch(err)
 			{
-				xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
+				this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
 				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(this.respondWithErrorHandler);
 			}
 		}
@@ -88,14 +88,14 @@ export class WebServer
 
 	stop()
 	{
-		xlog.info`${this.host}:${this.port} stopping...`;
+		this.xlog.info`${this.host}:${this.port} stopping...`;
 		if(this.server)
 		{
 			this.server.close();
 			delete this.server;
 		}
 
-		xlog.info`${this.host}:${this.port} closing ${this.connections.length} connections...`;
+		this.xlog.info`${this.host}:${this.port} closing ${this.connections.length} connections...`;
 		for(const connection of this.connections)
 		{
 			try { connection.close(); }

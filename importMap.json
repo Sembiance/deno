@@ -5,8 +5,11 @@
 		"xutil"     : "/mnt/compendium/DevLab/deno/xutil/xutil.js",
 		"std"       : "/mnt/compendium/DevLab/deno/std.js",
 		"denoLandX" : "/mnt/compendium/DevLab/deno/denoLandX.js",
+
 		"xpriv"     : "/mnt/compendium/DevLab/xpriv/xpriv.js",
 
-		"WebServer" : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js"
+		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",
+		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
+		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js"
 	}
 }

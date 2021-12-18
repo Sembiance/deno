@@ -1,5 +1,4 @@
 import {xu, fg} from "xu";
-import {fileUtil} from "xutil";
 import {path} from "std";
 
 const dataRaw = await Deno.readTextFile(path.join(xu.dirname(import.meta), "..", "denoLandX.js"));

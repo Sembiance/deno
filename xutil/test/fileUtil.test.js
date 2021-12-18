@@ -27,6 +27,8 @@ Deno.test("emptyDir", async () =>
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir")), false);
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "abc.txt")), false);
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat")), false);
+
+	await fileUtil.unlink(EMPTY_DIR_PATH);
 });
 
 Deno.test("exists", async () =>
@@ -64,6 +66,40 @@ Deno.test("move", async () =>
 	destFilePath = await fileUtil.genTempPath("/tmp");
 	await fileUtil.move(tmpFilePath, destFilePath);
 	await fileUtil.unlink(destFilePath);
+});
+
+Deno.test("moveAll", async () =>
+{
+	const srcDirPath = await fileUtil.genTempPath();
+	await Deno.mkdir(srcDirPath);
+	await Deno.copyFile(path.join(FILES_DIR, "input.png"), path.join(srcDirPath, "input.png"));
+	await Deno.copyFile(path.join(FILES_DIR, "sm.tar.gz"), path.join(srcDirPath, "sm.tar.gz"));
+	await Deno.mkdir(path.join(srcDirPath, "subdir"));
+	await Deno.copyFile(path.join(FILES_DIR, "TSCOMP.EXE"), path.join(srcDirPath, "subdir", "TSCOMP.EXE"));
+
+	assertStrictEquals(await fileUtil.exists(path.join(srcDirPath, "input.png")), true);
+	assertStrictEquals(await fileUtil.exists(path.join(srcDirPath, "sm.tar.gz")), true);
+	assertStrictEquals(await fileUtil.exists(path.join(srcDirPath, "subdir", "TSCOMP.EXE")), true);
+
+	const destDirPath = await fileUtil.genTempPath();
+	await Deno.mkdir(destDirPath);
+	
+	assertStrictEquals(await fileUtil.exists(path.join(destDirPath, "input.png")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(destDirPath, "sm.tar.gz")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(destDirPath, "subdir", "TSCOMP.EXE")), false);
+
+	await fileUtil.moveAll(srcDirPath, destDirPath);
+
+	assertStrictEquals(await fileUtil.exists(path.join(srcDirPath, "input.png")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(srcDirPath, "sm.tar.gz")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(srcDirPath, "subdir", "TSCOMP.EXE")), false);
+	
+	assertStrictEquals(await fileUtil.exists(path.join(destDirPath, "input.png")), true);
+	assertStrictEquals(await fileUtil.exists(path.join(destDirPath, "sm.tar.gz")), true);
+	assertStrictEquals(await fileUtil.exists(path.join(destDirPath, "subdir", "TSCOMP.EXE")), true);
+
+	await fileUtil.unlink(srcDirPath, {recursive : true});
+	await fileUtil.unlink(destDirPath, {recursive : true});
 });
 
 Deno.test("readFileBytes", async () =>

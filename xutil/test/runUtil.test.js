@@ -43,6 +43,25 @@ Deno.test("run-stdout-encoding", async () =>
 	assert(stdout.includes("mod._¡TSA!_Aiguanaguoman_v1.43"));
 });
 
+Deno.test("run-stdoutcb", async () =>
+{
+	let foundPS = false;
+	let lineCount = 0;
+	const stdoutcb = async line =>
+	{
+		lineCount++;
+		if(line.endsWith(" ps"))
+			foundPS = true;
+
+		await delay(100);
+	};
+
+	await runUtil.run("ps", [], {stdoutcb, detached : true});
+	await delay(xu.SECOND*2);
+	assertStrictEquals(foundPS, true);
+	assert(lineCount>=2);
+});
+
 Deno.test("run-stderr", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
@@ -126,8 +145,9 @@ Deno.test("run-detached-killExternal", async () =>
 	assert((performance.now()-beforeTime)<xu.SECOND);
 	beforeTime = performance.now();
 	await delay(xu.SECOND*3);
-	await runUtil.kill(p, "SIGTERM");
+	await runUtil.kill(p);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 3);
+	await delay(xu.SECOND);	// this gives the internal runUtil detached detector a chance to cleanup things
 });
 
 Deno.test("run-detached-output", async () =>

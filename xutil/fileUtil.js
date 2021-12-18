@@ -12,8 +12,8 @@ export async function areEqual(a, b)
 /** Empties the dirPath, deleting anything in it **/
 export async function emptyDir(dirPath)
 {
-	const filePaths = await tree(dirPath, {depth : 1});
-	await filePaths.parallelMap(async filePath => await unlink(filePath, {recursive : true}));
+	const srcPaths = await tree(dirPath, {depth : 1});
+	await srcPaths.parallelMap(async srcPath => await unlink(srcPath, {recursive : true}));
 }
 
 /** Returns true if the file/dir v exists, false otherwise */
@@ -36,12 +36,13 @@ export async function exists(v)
 }
 
 let TMP_DIR_PATH = null;
-let tempCounter = 0;
+const MAX_COUNTER = 46655;
+let TMP_COUNTER = 0;
 /** Finds a unique (at time of checking) temporary file path to use */
 export async function genTempPath(prefix, suffix=".tmp")
 {
-	if(tempCounter>=9999)
-		tempCounter = 0;
+	if(TMP_COUNTER>=MAX_COUNTER)
+		TMP_COUNTER = 0;
 
 	// One time initialization check to see if our preferred /mnt/ram/tmp directory exists or not
 	if(TMP_DIR_PATH===null)
@@ -54,7 +55,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do
-		r = path.join(fullPrefix, `${Deno.pid}_${Math.randomInt(0, 9999)}_${tempCounter++}${suffix}`);
+		r = path.join(fullPrefix, `${Deno.pid.toString(36)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(TMP_COUNTER++).toString(36)}${suffix}`);
 	while(await exists(r));
 
 	return r;
@@ -77,6 +78,15 @@ export async function move(src, dest)
 		if(await exists(dest))
 			await unlink(src);
 	});
+}
+
+/** Moves all the files/dirs within src to dest **/
+export async function moveAll(src, dest, {unlinkSrc})
+{
+	const srcPaths = await tree(src, {depth : 1});
+	await srcPaths.parallelMap(async srcPath => await move(srcPath, path.join(dest, path.basename(srcPath))));
+	if(unlinkSrc)
+		await unlink(src);
 }
 
 /** Replaces the given findMe (which can be text or a regular expression) with replaceWith in the given filePath */

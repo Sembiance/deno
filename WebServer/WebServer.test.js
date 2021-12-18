@@ -1,11 +1,11 @@
 import {xu} from "xu";
-import {assertThrowsAsync, assertStrictEquals, assert, delay} from "std";
+import {assertRejects, assertStrictEquals, assert, delay} from "std";
 import {WebServer} from "./WebServer.js";
 
 Deno.test("basic", async () =>
 {
 	const webServer = WebServer.create("127.0.0.1", 37291);
-	assertThrowsAsync(() => fetch("http://127.0.0.1:37291/test"));
+	assertRejects(() => fetch("http://127.0.0.1:37291/test"));
 	await webServer.start();
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 404);
