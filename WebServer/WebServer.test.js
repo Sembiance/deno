@@ -4,7 +4,7 @@ import {WebServer} from "./WebServer.js";
 
 Deno.test("basic", async () =>
 {
-	const webServer = WebServer.create("127.0.0.1", 37291);
+	const webServer = new WebServer("127.0.0.1", 37291);
 	assertRejects(() => fetch("http://127.0.0.1:37291/test"));
 	await webServer.start();
 	let a = await fetch("http://127.0.0.1:37291/test");

@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/catch-error-name */
 import {xu} from "xu";
 
 export class WebServer
@@ -5,14 +6,11 @@ export class WebServer
 	routes = {};
 	connections = [];
 
-	static create(host, port, {xlog=xu.xLog()}={})
+	constructor(host, port, {xlog=xu.xLog()}={})
 	{
-		const webServer = new WebServer();
-		webServer.host = host;
-		webServer.port = port;
-		webServer.xlog = xlog;
-
-		return webServer;
+		this.host = host;
+		this.port = port;
+		this.xlog = xlog;
 	}
 
 	async start()
@@ -44,7 +42,7 @@ export class WebServer
 			if(!handlers)
 			{
 				this.xlog.warn`${this.host}:${this.port} unregistered request ${l}`;
-				await httpRequest.respondWith(new Response("404 not found", {status : 404})).catch(this.respondWithErrorHandler);
+				await httpRequest.respondWith(new Response("404 not found", {status : 404})).catch(err => this.respondWithErrorHandler(err));
 				continue;
 			}
 
@@ -52,14 +50,15 @@ export class WebServer
 			if(!route)
 			{
 				this.xlog.warn`${this.host}:${this.port} invalid method for request ${l} expected ${Object.keys(handlers).join(", ")}`;
-				await httpRequest.respondWith(new Response("405 method not allowed", {status : 405})).catch(this.respondWithErrorHandler);
+				await httpRequest.respondWith(new Response("405 method not allowed", {status : 405})).catch(err => this.respondWithErrorHandler(err));
 				continue;
 			}
 			
-			this.xlog.info`${this.host}:${this.port} request ${l}`;
+			if(!route.logCheck || route.logCheck(httpRequest.request))
+				this.xlog.info`${this.host}:${this.port} request ${l}`;
 			try
 			{
-				route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(this.respondWithErrorHandler)).then(response =>
+				await route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(err => this.respondWithErrorHandler(err))).then(response =>
 				{
 					// if we are a detached route, then the handler will take care of calling the respondWith second arg on it's own
 					if(route.detached)
@@ -68,20 +67,20 @@ export class WebServer
 					if(!response || !(response instanceof Response))
 					{
 						this.xlog.warn`${this.host}:${this.port} request handler ${l} returned an invalid response`;
-						return httpRequest.respondWith(new Response("no response found", {status : 500})).catch(this.respondWithErrorHandler);
+						return httpRequest.respondWith(new Response("no response found", {status : 500})).catch(err => this.respondWithErrorHandler(err));
 					}
 					
 					return httpRequest.respondWith(response);
 				}).catch(err =>
 				{
 					this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-					return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(this.respondWithErrorHandler);
+					return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 				});
 			}
 			catch(err)
 			{
 				this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(this.respondWithErrorHandler);
+				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 			}
 		}
 	}
@@ -103,12 +102,13 @@ export class WebServer
 		}
 	}
 
-	add(pathname, handler, {method="GET", detached}={})
+	add(pathname, handler, {method="GET", detached, logCheck}={})
 	{
 		if(!Object.hasOwn(this.routes, pathname))
 			this.routes[pathname] = {};
 
-		this.routes[pathname][method] = {handler, detached};
+		this.xlog.info`Route ${method} ${pathname} added`;
+		this.routes[pathname][method] = {handler, detached, logCheck};
 	}
 
 	remove(route)

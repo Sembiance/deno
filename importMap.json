@@ -10,6 +10,9 @@
 
 		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
-		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js"
+		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
+		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
+
+		"thirdParty" : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js"
 	}
 }
