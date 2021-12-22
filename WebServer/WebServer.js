@@ -4,6 +4,7 @@ import {xu} from "xu";
 export class WebServer
 {
 	routes = {};
+	prefixRoutes = {};
 	connections = [];
 
 	constructor(host, port, {xlog=xu.xLog()}={})
@@ -38,7 +39,7 @@ export class WebServer
 		{
 			const u = new URL(httpRequest.request.url);
 			const l = `${httpRequest.request.method} ${u.pathname}`;
-			const handlers = this.routes[u.pathname];
+			const handlers = this.routes[u.pathname] || Object.entries(this.prefixRoutes).find(([prefix]) => u.pathname.startsWith(prefix))?.[1];
 			if(!handlers)
 			{
 				this.xlog.warn`${this.host}:${this.port} unregistered request ${l}`;
@@ -102,13 +103,14 @@ export class WebServer
 		}
 	}
 
-	add(pathname, handler, {method="GET", detached, logCheck}={})
+	add(pathname, handler, {method="GET", detached, logCheck, prefix}={})
 	{
-		if(!Object.hasOwn(this.routes, pathname))
-			this.routes[pathname] = {};
+		const ro = prefix ? this.prefixRoutes : this.routes;
+		if(!Object.hasOwn(ro, pathname))
+			ro[pathname] = {};
 
-		this.xlog.info`Route ${method} ${pathname} added`;
-		this.routes[pathname][method] = {handler, detached, logCheck};
+		this.xlog.info`Route ${method} ${pathname} added${prefix ? " (PREFIX ROUTE)" : ""}`;
+		ro[pathname][method] = {handler, detached, logCheck};
 	}
 
 	remove(route)

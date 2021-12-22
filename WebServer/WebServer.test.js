@@ -2,6 +2,20 @@ import {xu} from "xu";
 import {assertRejects, assertStrictEquals, assert, delay} from "std";
 import {WebServer} from "./WebServer.js";
 
+Deno.test("prefix", async () =>
+{
+	const portNum = Math.randomInt(30010, 39990);
+	const webServer = new WebServer("127.0.0.1", portNum);
+	await webServer.start();
+
+	webServer.add("/view", async () => (new Response("You browsed")), {prefix : true});	// eslint-disable-line require-await
+	const a = await fetch(`http://127.0.0.1:${portNum}/view/some/big/long/thing.txt`);
+	assertStrictEquals(a.status, 200);
+	assertStrictEquals(await a.text(), "You browsed");
+
+	webServer.stop();
+});
+
 Deno.test("basic", async () =>
 {
 	const webServer = new WebServer("127.0.0.1", 37291);
