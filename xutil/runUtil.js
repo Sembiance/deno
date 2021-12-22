@@ -12,6 +12,7 @@ const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
  *   env				An object of key : value pairs to be addded to the environment
  *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
+ *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe
  *	 stdinData          If set, this will be sent to stdin
  *   stdoutEncoding		If set, stdout will be decoded as this. Default: utf-8
  *   stderrEncoding		If set, stderr will be decoded as this. Default: utf-8
@@ -25,10 +26,13 @@ const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  */
-export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput, stdinData, stdoutEncoding="utf-8", stderrEncoding="utf-8", stdoutFilePath, stderrFilePath, stdoutcb, stderrcb,
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput,
+	stdinPipe, stdinData,
+	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
+	stderrEncoding="utf-8", stderrFilePath, stderrcb,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
 {
-	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : stdinData ? "piped" : "null"};
+	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData) ? "piped" : "null")};
 
 	if(inheritEnv!==true)
 	{

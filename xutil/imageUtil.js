@@ -5,7 +5,7 @@ import {path} from "std";
 /** Returns the [width, height] of the image at imageFilePath */
 export async function getWidthHeight(imageFilePath)
 {
-	const {stdout, stderr} = await runUtil.run("identify", ["-format", "%wx%h", `${imageFilePath}[0]`]);
+	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", "%wx%h", `./${path.basename(imageFilePath)}[0]`], {cwd : path.dirname(imageFilePath)});
 	
 	const parts = stdout.split("x");
 	if(!parts || parts.length!==2)

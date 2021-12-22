@@ -1,16 +1,12 @@
 import {xu} from "xu";
-import {createHash} from "std";
+import {crypto} from "std";		// eslint-disable-line no-redeclare
 
-export function hashData(algorithm, data)
+export async function hashData(algorithm, data)
 {
-	const hash = createHash(algorithm);
-	hash.update(data);
-	return hash.toString();
+	return (new Uint8Array(await crypto.subtle.digest(algorithm, data))).asHex();
 }
 
 export async function hashFile(algorithm, filePath)
 {
-	const hash = createHash(algorithm);
-	hash.update(await Deno.readFile(filePath, null));
-	return hash.toString();
+	return hashData(algorithm, await Deno.readFile(filePath, null));
 }

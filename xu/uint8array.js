@@ -1,4 +1,22 @@
-/** Copies data from a region of the current array to the target */
+/** returns a hex encoded string */
+if(!Uint8Array.prototype.asHex)
+{
+	const BYTE_TO_HEX = [];
+	for (let n=0;n<=0xFF;++n)
+		BYTE_TO_HEX.push(n.toString(16).padStart(2, "0"));
+
+	Uint8Array.prototype.asHex = function asHex()
+	{
+		const hexOctets = new Array(this.length);	// eslint-disable-line unicorn/no-new-array
+
+		for (let i=0;i<this.length;++i)
+			hexOctets[i] = BYTE_TO_HEX[this[i]];
+
+		return hexOctets.join("");
+	};
+}
+
+/** copies data from a region of the current array to the target */
 if(!Uint8Array.prototype.copy)
 {
 	Uint8Array.prototype.copy = function copy(target, targetStart=0, sourceStart=0, sourceEnd=null)
@@ -12,7 +30,7 @@ if(!Uint8Array.prototype.copy)
 	};
 }
 
-/** Allows finding more advanced items such as strings or sub arrays */
+/** allows finding more advanced items such as strings or sub arrays */
 if(!Uint8Array.prototype.indexOfX)
 {
 	Uint8Array.prototype.indexOfX = function indexOfX(x)
@@ -47,7 +65,7 @@ if(!Uint8Array.prototype.getString)
 	};
 }
 
-/** Creates convienance methods for set/get int/uint values */
+/** creates convienance methods for set/get int/uint values */
 for(const t of ["get", "set"])
 {
 	for(const x of [8, 16, 32, 64])
