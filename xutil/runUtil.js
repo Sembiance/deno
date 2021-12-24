@@ -1,6 +1,7 @@
 /* eslint-disable brace-style */
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
+import * as encodeUtil from "./encodeUtil.js";
 import {path, readLines} from "std";
 
 const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
@@ -170,7 +171,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : stderrcbPromise || p.stderrOutput();
 
 		// Wait for the process to finish (or be killed by the timeoutHandler)
-		const [status, stdoutResult, stderrResult] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {})]);
+		const [status, stdoutData, stderrData] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {})]);
 
 		// If we have a timeout still running, clear it
 		if(typeof timerid==="number")
@@ -190,12 +191,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(stdoutFilePath)
 			Deno.close(runArgs.stdout);
 		else
-			r.stdout = new TextDecoder(stdoutEncoding).decode(stdoutResult);
+			r.stdout = stdoutEncoding==="utf-8" ? new TextDecoder().decode(stdoutData) : await encodeUtil.decode(stdoutData, stdoutEncoding);
 
 		if(stderrFilePath)
 			Deno.close(runArgs.stderr);
 		else
-			r.stderr = new TextDecoder(stderrEncoding).decode(stderrResult);
+			r.stderr = stderrEncoding==="utf-8" ? new TextDecoder().decode(stderrData) : await encodeUtil.decode(stderrData, stderrEncoding);
 
 		return r;
 	};

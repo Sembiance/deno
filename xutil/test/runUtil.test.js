@@ -39,8 +39,11 @@ Deno.test("run-stdout", async () =>
 
 Deno.test("run-stdout-encoding", async () =>
 {
-	const {stdout} = await runUtil.run("unlzx", ["-v", path.join(xu.dirname(import.meta), "files", "test.lzx")], {stdoutEncoding : "latin1"});
+	let {stdout} = await runUtil.run("unlzx", ["-v", path.join(xu.dirname(import.meta), "files", "test.lzx")], {stdoutEncoding : "latin1"});
 	assert(stdout.includes("mod._¡TSA!_Aiguanaguoman_v1.43"));
+
+	({stdout} = await runUtil.run("unzip", ["-qz", path.join(xu.dirname(import.meta), "files", "p205.zip")], {stdoutEncoding : "CP437"}));
+	assert(stdout.includes("│ ▄▄▄   ▄▄     ▄▄▄   ─────────────────────────            Winston-Salem, NC │"));
 });
 
 Deno.test("run-stdoutcb", async () =>
