@@ -16,4 +16,5 @@ Deno.test("hashFile", async () =>
 {
 	assertStrictEquals(await hashUtil.hashFile("md5", TEST_FILE_PATH), TEST_FILE_MD5);
 	assertStrictEquals(await hashUtil.hashFile("blake3", TEST_FILE_PATH), "a3a6db28ae11c15e968f4b334aebf2f63e2af639a01affe55ccec1e65e1c3406");
+	assertStrictEquals(await hashUtil.hashFile("SHA-1", TEST_FILE_PATH), "9d2fc7d5d77169b9621bb5b76d965862df511c24");
 });

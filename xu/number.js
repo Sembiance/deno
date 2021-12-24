@@ -5,10 +5,10 @@ if(!Number.prototype.bytesToSize)
 	{
 		const bytes = this;	// eslint-disable-line consistent-this
 		if(bytes===0)
-			return "0b";
+			return "0 bytes";
 		
 		const i = +(Math.floor(Math.log(bytes) / Math.log(1000)));
-		return Math.round(bytes / (1000 ** i), 2) + ["b", "KB", "MB", "GB", "TB"][i];
+		return Math.round(bytes / (1000 ** i), 2) + [" bytes", "KB", "MB", "GB", "TB"][i];
 	};
 }
 

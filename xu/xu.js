@@ -179,6 +179,22 @@ xu.trim = function trim(strs, ...vals)
 	return r.join("").trim();
 };
 
+// Tries the passed in fn, returning whatever it returns. If it fails, will return the fallbackResult
+xu.tryFallback = function tryFallback(fn, fallbackResult)
+{
+	let r = null;
+	try
+	{
+		r = fn();
+	}
+	catch
+	{
+		r = fallbackResult;
+	}
+
+	return r;
+};
+
 /** waits until the given async function fun returns a truthy value. Exponential delay, starting at 5ms */
 xu.waitUntil = async function waitUntil(fun, {interval, timeout}={})
 {
