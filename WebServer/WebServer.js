@@ -22,7 +22,7 @@ export class WebServer
 		(async () =>	// eslint-disable-line sembiance/shorter-arrow-funs
 		{
 			for await(const conn of this.server)
-				this.handleConn(conn);
+				this.handleConn(conn).catch(err => this.xlog.error`${this.host}:${this.port} exception handling connection ${err}`);
 		})();
 	}
 
