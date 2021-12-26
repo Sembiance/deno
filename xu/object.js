@@ -13,6 +13,7 @@ if(!Object.clear)
 }
 
 /** Deep clones the given object. Options: skipKeys : ["keyNames", "to", "skip"], shallow : true|false */
+/** Doesn't handlc classes! See more detailed warning in xu.clone() */
 if(!Object.clone)
 {
 	Object.clone = function clone(o, {skipKeys=[], shallow=false}={})

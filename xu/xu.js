@@ -128,6 +128,9 @@ xu.bracket = text => `${fg.cyanDim("[")}${text}${fg.cyanDim("]")}`;
 xu.colon = text => `${fg.whiteDim(text)}${fg.cyanDim(":")} `;
 
 /** clone the given value. Options: skipKeys : ["keyNames", "to", "skip"], shallow : true|false */
+/** WARNING! This is not safe to use with classes. It will clone the class as an object, and thus it won't have all the properties */
+/** I should handle this by detecting it it's a class and then call it's .clone() function IF it has one, otherwise just copy it over as is */
+/** Sadly I kinda also need to do this in Object.clone(). here is how to detect a class: https://stackoverflow.com/a/43197340 */
 xu.clone = function clone(v, {skipKeys, shallow=false}={})
 {
 	return (Array.isArray(v) ? v.clone({shallow}) : (Object.isObject(v) ? Object.clone(v, {skipKeys, shallow}) : v));

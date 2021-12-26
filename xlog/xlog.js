@@ -24,7 +24,7 @@ export class XLog
 			if(levelName==="none")
 				continue;
 				
-			this[levelName] = function log(strs, ...vals)
+			this[levelName] = (strs, ...vals) =>
 			{
 				if(!this.atLeast(levelName))
 					return;

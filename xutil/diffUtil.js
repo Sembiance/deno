@@ -2,7 +2,7 @@ import {xu, fg} from "xu";
 
 export function diff(o, n, _options={})
 {
-	const options = xu.clone(_options);
+	const options = Object.assign({}, _options);
 	options.indent = (options.indent || 0) + 1;
 
 	if(Object.isObject(o))
