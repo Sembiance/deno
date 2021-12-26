@@ -42,35 +42,6 @@ Deno.test("inspect", () =>
 	assertStrictEquals(base64Encode(xu.inspect(o)), "ewogIGFiYzogG1szNm1bRnVuY3Rpb246IGFiY10bWzM5bSwKICB4eXo6IBtbMzNtZmFsc2UbWzM5bSwKICBudW1iZXJzOiBbIBtbMzNtMjMbWzM5bSwgG1szM20yMTMbWzM5bSwgG1szM20xMjUbWzM5bSwgG1szM20xMjM1MjM1MjMbWzM5bSwgG1szM20yMzQyMxtbMzltIF0sCiAgbW9yZVByb3BzOiB7IHN1Yk9iajogG1szMm0ia2V5cyIbWzM5bSwgYW5kTW9yZTogG1szMm0ibGl2ZVxubG9uZ1xuYW5kXG5wcm9zcGVyIhtbMzltIH0KfQ==");	// eslint-disable-line max-len
 });
 
-Deno.test("xlog-logger", () =>
-{
-	const xlog = xu.xLog();
-	const debugLog = [];
-	xlog.logger = v => debugLog.push(v);
-	xlog.warn`\nxlog test message`;
-	xlog.level = "trace";
-	xlog.debug`xlog test message with string: ${"hello"}`;
-	xlog.trace`xlog test message with number: ${47}`;
-	xlog.level = "none";
-	xlog.fatal`nope, should not see`;
-	if(xlog.atLeast("trace"))
-		console.log("should NOT see");
-	assertEquals(debugLog, ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxu.test.js: 52\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxu.test.js: 53\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"]);	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape, max-len
-});
-
-Deno.test("xlog-mapper", () =>
-{
-	const debugLog = [];
-	const logger = v => debugLog.push(v);
-	const mapper = v => `PREFIX ${v} SUFFIX`;
-	const xlog = xu.xLog("info", {logger, mapper});
-	xlog.info`hello world`;
-	xlog.fatal`omg`;
-	assertStrictEquals(debugLog.length, 2);
-	assertStrictEquals(debugLog[0], "PREFIX hello world SUFFIX");
-	assertStrictEquals(debugLog[1].decolor(), "FATAL: PREFIX omg SUFFIX");
-});
-
 Deno.test("parseJSON", () =>
 {
 	let a = '{"abc" : 123, "xyz" : [4, 7]}';
@@ -133,20 +104,4 @@ Deno.test("color", () =>
 	console.log(`color test: ${xu.cf.fg.magenta("magenta")} and regular here`);
 	const modifiers = ["bold", "underline", "blink", "reverse", "strike", "italic"];
 	Object.keys(xu.c.fg).forEach(colorName => console.log(`${xu.c.reset + colorName.padStart(7)}: ${`${xu.c.fg[colorName]}foreground ${modifiers.map(v => xu.c[v] + xu.c.fg[colorName] + v + xu.c.reset).join(" ")}`} ${`${xu.c.reset + xu.c.bg[colorName]}background`}`));
-});
-
-Deno.test("xlog", () =>
-{
-	const xlog = xu.xLog();
-	console.log("");
-	xlog.fatal`fatal message, should see`;
-	xlog.error`error message, should see`;
-	xlog.warn`warn message, should see`;
-	xlog.info`info message, should see`;
-	xlog.debug`debug message, should NOT see`;
-	xlog.trace`trace message, should NOT see`;
-	if(xlog.atLeast("info"))
-		console.log("should see");
-	if(xlog.atLeast("debug"))
-		console.log("should NOT see");
 });

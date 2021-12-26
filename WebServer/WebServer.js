@@ -1,5 +1,6 @@
 /* eslint-disable unicorn/catch-error-name */
 import {xu} from "xu";
+import {XLog} from "xlog";
 
 export class WebServer
 {
@@ -7,7 +8,7 @@ export class WebServer
 	prefixRoutes = {};
 	connections = [];
 
-	constructor(host, port, {xlog=xu.xLog()}={})
+	constructor(host, port, {xlog=new XLog()}={})
 	{
 		this.host = host;
 		this.port = port;

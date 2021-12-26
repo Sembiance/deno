@@ -12,6 +12,7 @@
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
+		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
 
 		"thirdParty" : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js"
 	}
