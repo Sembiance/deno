@@ -1,11 +1,6 @@
 import {xu} from "../xu.js";
 import {base64Encode, delay, assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "std";
 
-Deno.test("dirname", () =>	// eslint-disable-line sembiance/shorter-arrow-funs
-{
-	assertStrictEquals(xu.dirname(import.meta), "/mnt/compendium/DevLab/deno/xu/test");
-});
-
 Deno.test("clone", () =>
 {
 	const doubleSub = {num : 47};
@@ -23,6 +18,11 @@ Deno.test("clone", () =>
 	assertEquals(xu.clone(a).sub.doubleSub, doubleSub);
 	assertStrictEquals(xu.clone(b, {shallow : true}).at(-1), sub);
 	assertEquals(xu.clone(b, {shallow : false}).at(-1), sub);
+});
+
+Deno.test("dirname", () =>	// eslint-disable-line sembiance/shorter-arrow-funs
+{
+	assertStrictEquals(xu.dirname(import.meta), "/mnt/compendium/DevLab/deno/xu/test");
 });
 
 Deno.test("freeze", () =>
