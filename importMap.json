@@ -8,9 +8,10 @@
 
 		"xpriv"     : "/mnt/compendium/DevLab/xpriv/xpriv.js",
 
+		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
+		"typesense"        : "/mnt/compendium/DevLab/deno/Typesense/Typesense.js",
 		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
-		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
 		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
 
