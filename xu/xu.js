@@ -5,7 +5,6 @@ import {} from "./number.js";
 import {} from "./object.js";
 import {} from "./string.js";
 import {} from "./uint8array.js";
-import {} from "./url.js";
 
 const xu = {};
 

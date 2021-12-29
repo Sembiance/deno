@@ -29,7 +29,7 @@ export class WebServer
 
 	respondWithErrorHandler(err)
 	{
-		this.xlog.error`.respondWith errored out ${err}`;
+		this.xlog.warn`.respondWith had an error which we caught ${err}`;
 	}
 
 	async handleConn(conn)
