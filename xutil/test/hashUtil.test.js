@@ -10,6 +10,7 @@ Deno.test("hashData", async () =>
 {
 	const rawData = await Deno.readFile(TEST_FILE_PATH);
 	assertStrictEquals(await hashUtil.hashData("md5", rawData), TEST_FILE_MD5);
+	assertStrictEquals(await hashUtil.hashData("SHA-1", "Hello, World!"), "0a0a9f2a6772942557ab5355d76af442f8f65e01");
 });
 
 Deno.test("hashFile", async () =>
