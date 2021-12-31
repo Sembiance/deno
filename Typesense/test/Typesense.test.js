@@ -92,7 +92,7 @@ Deno.test("documents", async () =>
 	const t = newTypesense();
 	await t.collections.create(NAME, FIELDS);
 
-	const indexResult = await t.documents.index(NAME, DOC);
+	let indexResult = await t.documents.index(NAME, DOC);
 	assert(Object.hasOwn(indexResult, "id"));
 	assertStrictEquals(indexResult.size, DOC.size);
 	assertEquals(indexResult, {id : indexResult.id, ...DOC});
@@ -102,13 +102,17 @@ Deno.test("documents", async () =>
 	assertStrictEquals(retrieveResult.size, DOC.size);
 	assertEquals(retrieveResult, {id : indexResult.id, ...DOC});
 
-	const dropResult = await t.documents.drop(NAME, indexResult.id);
+	let dropResult = await t.documents.drop(NAME, indexResult.id);
 	assert(Object.hasOwn(dropResult, "id"));
 	assertStrictEquals(dropResult.size, DOC.size);
 	assertEquals(dropResult, {id : indexResult.id, ...DOC});
 
 	retrieveResult = await t.documents.retrieve(NAME, indexResult.id);
 	assertStrictEquals(retrieveResult.message, `Could not find a document with id: ${indexResult.id}`);
+
+	indexResult = await t.documents.index(NAME, DOC);
+	dropResult = await t.documents.dropByFilter(NAME, `itemid:${DOC.itemid}`);
+	assertEquals(dropResult, { num_deleted : 1});
 
 	await t.collections.drop(NAME);
 });

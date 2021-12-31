@@ -35,6 +35,7 @@ export class Typesense
 	documents = {
 		async index(collectionName, doc) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents`, {method : "POST", headers : this.headers(true), body : JSON.stringify(doc)})).json(); },
 		async drop(collectionName, docid) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/${docid}`, {method : "DELETE", headers : this.headers()})).json(); },
+		async dropByFilter(collectionName, dropFilter) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents?batch_size=1000&filter_by=${dropFilter.encodeURLPath()}`, {method : "DELETE", headers : this.headers()})).json(); },
 		async retrieve(collectionName, docid) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/${docid}`, {method : "GET", headers : this.headers()})).json(); },
 		async search(collectionName, o)
 		{
