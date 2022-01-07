@@ -20,7 +20,7 @@ export class WebServer
 		this.xlog.info`${this.host}:${this.port} starting...`;
 		this.server = await Deno.listen({hostname : this.host, port : this.port});
 
-		(async () =>	// eslint-disable-line sembiance/shorter-arrow-funs
+		(async () =>	// eslint-disable-line sembiance/shorter-arrow-funs, no-floating-promise/no-floating-promise
 		{
 			for await(const conn of this.server)
 				this.handleConn(conn).catch(err => this.xlog.error`${this.host}:${this.port} exception handling connection ${err}`);

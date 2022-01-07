@@ -1,5 +1,5 @@
 import {xu} from "xu";
-import {crypto} from "std";		// eslint-disable-line no-redeclare
+import {crypto} from "std";
 
 export async function hashData(algorithm, dataRaw)
 {

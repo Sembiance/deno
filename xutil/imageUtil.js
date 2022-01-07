@@ -9,7 +9,7 @@ export async function getWidthHeight(imageFilePath)
 	
 	const parts = stdout.split("x");
 	if(!parts || parts.length!==2)
-		return Promise.reject(new Error(`identify failed to return proper width/height ${stdout} for image ${imageFilePath} with stderr: ${stderr}`));
+		throw new Error(`identify failed to return proper width/height ${stdout} for image ${imageFilePath} with stderr: ${stderr}`);
 
 	return parts.map(v => +v);
 }

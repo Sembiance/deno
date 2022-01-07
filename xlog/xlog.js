@@ -8,12 +8,13 @@ export class XLog
 {
 	logLines = [];
 
-	constructor(level="info", {logger, mapper, logFilePath}={})
+	constructor(level="info", {logger, mapper, logFilePath, noANSI}={})
 	{
 		this.level = level;
 		this.logger = logger;
 		this.mapper = mapper;
 		this.logFilePath = logFilePath;
+		this.noANSI = noANSI;
 		this.signalHandler = async () => await this.flush();
 
 		if(this.logFilePath)
@@ -66,7 +67,7 @@ export class XLog
 					this.logger(s);
 				
 				if(!this.logFilePath && !this.logger)
-					console.log(s);
+					console.log(noANSI ? s.decolor() : s);
 			};
 		}
 	}
@@ -88,6 +89,9 @@ export class XLog
 
 	atLeast(logLevel)
 	{
+		if(this.level==="none")
+			return false;
+
 		return LEVELS.indexOf(this.level)>=LEVELS.indexOf(logLevel);
 	}
 

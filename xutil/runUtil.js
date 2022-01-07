@@ -4,8 +4,6 @@ import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import {path, readLines} from "std";
 
-const XVFB_LOCK_DIR_PATH = "/mnt/ram/deno/xvfb";
-
 /** Will run the given cmd and pass it the given args.
  * Options:
  *   cwd				The current working directory to run the program in
@@ -77,28 +75,14 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let xvfbPort = null;
 	if(virtualX || virtualXGLX)
 	{
-		await Deno.mkdir(XVFB_LOCK_DIR_PATH, {recursive : true});
-		
-		do
-		{
-			xvfbPort = Math.randomInt(10, 9999);
-			
-			// try and create a lock file for this port num
-			const f = await Deno.open(path.join(XVFB_LOCK_DIR_PATH, xvfbPort.toString()), {write : true, createNew : true}).catch(() => {});
-			if(!f || await fileUtil.exists(path.join("/tmp/.X11-unix", `X${xvfbPort}`)))
-				continue;
-
-			Deno.close(f.rid);
-			break;
-		} while(true);
-
+		xvfbPort = +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim();
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
 		xvfbArgs.push("-xkbdir", "/usr/share/X11/xkb");	// Gentoo puts the xkb files here
 		xvfbArgs.push("-screen", "0", "1920x1080x24");
 		xvfbProc = Deno.run({cmd : ["Xvfb", ...xvfbArgs], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"});
 	
-		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*5}))
-			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 5 seconds`);
+		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*20}))
+			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 20 seconds`);
 
 		if(!runArgs.env)
 			runArgs.env = {};
@@ -178,10 +162,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			clearTimeout(timerid);
 		
 		if(xvfbProc)
-		{
 			await kill(xvfbProc, "SIGTERM");
-			await fileUtil.unlink(path.join(XVFB_LOCK_DIR_PATH, xvfbPort.toString()));
-		}
 
 		// Close the process
 		try { p.close(); } catch {}

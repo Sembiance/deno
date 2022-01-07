@@ -1,4 +1,4 @@
-import {path, assertEquals, assertStrictEquals} from "std";
+import {path, assertEquals, assertStrictEquals, assert} from "std";
 import * as fileUtil from "../fileUtil.js";
 
 const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
@@ -157,10 +157,10 @@ Deno.test("tree", async () =>
 	]);
 
 	r = await fileUtil.tree(GLOB_DIR, {nofile : true});
-	assertEquals(r, [
+	assert(r.includesAll([
 		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir"),
 		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir")
-	]);
+	]));
 
 	r = await fileUtil.tree(GLOB_DIR, {nofile : true, nodir : true});
 	assertStrictEquals(r.length, 0);

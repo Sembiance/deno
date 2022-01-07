@@ -81,7 +81,7 @@ export async function move(src, dest)
 }
 
 /** Moves all the files/dirs within src to dest **/
-export async function moveAll(src, dest, {unlinkSrc})
+export async function moveAll(src, dest, {unlinkSrc}={})
 {
 	const srcPaths = await tree(src, {depth : 1});
 	await srcPaths.parallelMap(async srcPath => await move(srcPath, path.join(dest, path.basename(srcPath))));
