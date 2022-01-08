@@ -2,7 +2,7 @@
 
 depend() {
     need net
-    use dns
+    use dns netmount
 }
 
 start() {
