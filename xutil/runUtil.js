@@ -13,8 +13,8 @@ import {path, readLines} from "std";
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
  *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe
  *	 stdinData          If set, this will be sent to stdin
- *   stdoutEncoding		If set, stdout will be decoded as this. Default: utf-8
- *   stderrEncoding		If set, stderr will be decoded as this. Default: utf-8
+ *   stdoutEncoding		If set, stdout will be decoded as this. Pass "binary" for raw UInt8Array data. Default: utf-8
+ *   stderrEncoding		If set, stderr will be decoded as this. Pass "binary" for raw UInt8Array data. Default: utf-8
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
  *   stdoutcb			If set, this function will be called for every 'line' read from stdout
@@ -172,12 +172,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(stdoutFilePath)
 			Deno.close(runArgs.stdout);
 		else
-			r.stdout = stdoutEncoding==="utf-8" ? new TextDecoder().decode(stdoutData) : await encodeUtil.decode(stdoutData, stdoutEncoding);
+			r.stdout = stdoutEncoding==="utf-8" ? new TextDecoder().decode(stdoutData) : (stdoutEncoding==="binary" ? stdoutData : await encodeUtil.decode(stdoutData, stdoutEncoding));
 
 		if(stderrFilePath)
 			Deno.close(runArgs.stderr);
 		else
-			r.stderr = stderrEncoding==="utf-8" ? new TextDecoder().decode(stderrData) : await encodeUtil.decode(stderrData, stderrEncoding);
+			r.stderr = stderrEncoding==="utf-8" ? new TextDecoder().decode(stderrData) : (stderrEncoding==="binary" ? stderrData : await encodeUtil.decode(stderrData, stderrEncoding));
 
 		return r;
 	};
