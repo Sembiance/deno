@@ -2,7 +2,7 @@
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
-import {path, readLines} from "std";
+import {path, readLines, streams} from "std";
 
 /** Will run the given cmd and pass it the given args.
  * Options:
@@ -97,7 +97,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 	if(stdinData)
 	{
-		await p.stdin.write(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
+		await streams.writeAll(p.stdin, typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
 		p.stdin.close();
 	}
 
