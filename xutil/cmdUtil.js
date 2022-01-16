@@ -11,6 +11,7 @@ import {xu} from "xu";
  * 		hasValue			Set to true if this option takes a value (otherwise the option is simply a boolean toggle)
  * 		required			Set to true to require this option be set
  *      short				Single letter to use as a short name. Default is first letter of the key (optid). Can set to null/undefined to omit short
+ *      multiple            Whether or not multiple values can be specified for this option
  *	 args				An array of objects representing the arguments this command takes. Each one has properties:
  *      allowed				An array of approved values
  * 		argid				The argument name/id
@@ -45,18 +46,34 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 		if(desc.length>0)
 			console.log(`\n${desc}`);
 
-		const argOptPadding = Math.max("version".length, args.map(arg => arg.argid.length).max(), Object.entries(opts).map(([k, opt]) => k.length + (opt.hasValue ? " <value>".length : 0)).max()) + 8;
+		const argOptPadding = Math.max("version".length, args.map(arg => arg.argid.length).max(), Object.entries(opts).map(([k, opt]) => k.length + (opt.hasValue ? " <value>".length : 0) + (opt.multiple ? 4 : 0)).max()) + 8;
 
 		if(args.length>0)
 			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}${arg.allowed ? ` (${arg.allowed.join(" | ")})` : ""}`).join("\n")}`);
 		
 		console.log(`\nOptions:\n${Object.entries(opts).map(([optid, opt]) =>
-			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}`).join("\n")}`);
+			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}${opt.multiple ? " ..." : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}`).join("\n")}`);
 
 		Deno.exit(0);
 	}
 
 	const argv = {};
+
+	function assignOptionValue(optid, optValue)
+	{
+		const opt = opts[optid];
+		if(Object.hasOwn(argv, optid))
+		{
+			if(!opt.multiple)
+				return showUsage(`Multiple values not allowed for option: ${optid}`);
+
+			argv[optid].push(optValue);
+		}
+		else
+		{
+			argv[optid] = opt.multiple ? [optValue] : optValue;
+		}
+	}
 
 	// First handle our options
 	let curOptid = null;
@@ -67,7 +84,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 
 		if(curOptid)
 		{
-			argv[curOptid] = denoArg;
+			assignOptionValue(curOptid, denoArg);
 			curOptid = null;
 			continue;
 		}
@@ -98,9 +115,9 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 			return showUsage(`No such option: ${optid}`);
 
 		if(!opt.hasValue && !Object.hasOwn(opt, "defaultValue"))
-			argv[optid] = true;
+			assignOptionValue(optid, true);
 		else if(denoArg.startsWith(`${isShort ? "-" : "--"}${optid}=`))
-			argv[optid] = denoArg.substring(equalLoc+1);
+			assignOptionValue(optid, denoArg.substring(equalLoc+1));
 		else
 			curOptid = optid;
 	}
