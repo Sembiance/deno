@@ -6,6 +6,9 @@ const require = createRequire(import.meta.url);
 const {globals : eslintGlobals } = require("/mnt/compendium/DevLab/common/eslint/shared-deno.eslintrc");
 const denoGlobals = Object.fromEntries(Array.from(Object.getOwnPropertyNames(globalThis)).sortMulti().map(v => ([v, "writable"])));
 
+// extras that are conditionaly enabled with --v8-flags
+denoGlobals.gc = "writable";	// --expose-gc
+
 if(!Object.equals(eslintGlobals, denoGlobals))
 {
 	console.log(`${JSON.stringify(denoGlobals)},	// eslint-disable-line max-len, key-spacing, comma-spacing`);

@@ -65,6 +65,23 @@ Deno.test("stdoutcb", async () =>
 	assert(lineCount>=2);
 });
 
+Deno.test("stdoutcb2", async () =>
+{
+	let lineCount = 0;
+	let seenLastLine = false;
+	const stdoutcb = async line =>	// eslint-disable-line require-await
+	{
+		lineCount++;
+		if(xu.parseJSON(line).rel==="Strip Poker de Luxe_artwork_thumb.jpg")
+			seenLastLine = true;
+	};
+
+	await runUtil.run("gunzip", ["-c", path.join(xu.dirname(import.meta), "files", "468.jsonl.gz")], {stdoutcb});
+
+	assertStrictEquals(lineCount, 11);
+	assertStrictEquals(seenLastLine, true);
+});
+
 Deno.test("stderr", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
