@@ -8,7 +8,7 @@ Deno.test("getInfo", async () =>
 	const info = await videoUtil.getInfo(path.join(FILES_DIR, "video.mp4"));
 	assertStrictEquals(info.width, 1920);
 	assertStrictEquals(info.height, 1080);
-	assertStrictEquals(info.duration, 67.25);
+	assertStrictEquals(info.duration, 67250);
 	assertStrictEquals(info.fps, 23.976);
 	assertStrictEquals(info.bitrate, 2_703_208);
 	assertStrictEquals(info.codec, "ffh264");

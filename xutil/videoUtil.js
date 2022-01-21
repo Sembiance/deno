@@ -19,7 +19,7 @@ export async function getInfo(videoFilePath)
 			return;
 
 		if(parts[0]==="ID_LENGTH")
-			info.duration = +parts[1];
+			info.duration = (+parts[1])*xu.SECOND;
 		if(parts[0]==="ID_VIDEO_BITRATE")
 			info.bitrate = +parts[1];
 		if(parts[0]==="ID_VIDEO_WIDTH")

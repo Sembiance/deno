@@ -10,10 +10,10 @@ export class HTML
 		this.baseDirPath = _baseDirPath;
 	}
 
-	async render(subPath, data={})
+	async render(subPath, data={}, {cache}={})
 	{
 		const self=this;
-		const requirePath = path.join(this.baseDirPath, `${subPath}.js?v=${Deno.pid.toString(36)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(V_COUNTER++).toString(36)}`);
+		const requirePath = path.join(this.baseDirPath, `${subPath}.js${cache ? "" : `?v=${Deno.pid.toString(36)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(V_COUNTER++).toString(36)}`}`);
 		const {default : renderer} = await import(requirePath);
 		const htmlRaw = await renderer(data, {
 			html : this.html.bind(this),

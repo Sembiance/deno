@@ -62,7 +62,7 @@ Deno.test("secondsAsHumanReadable", () =>
 	assertStrictEquals(c.secondsAsHumanReadable({short : true, maxParts : 2}), rc);
 
 	const d = Number(0.5);
-	const rd = "500ms";
+	const rd = "0.50s";
 	assertStrictEquals(d.secondsAsHumanReadable({short : true}), rd);
 
 	const e = Number(1_209_601);
@@ -76,7 +76,7 @@ Deno.test("secondsAsHumanReadable", () =>
 	assertStrictEquals(f.secondsAsHumanReadable({short : true}), rf);
 
 	const g = Number(0.232);
-	const rg = "232ms";
+	const rg = "0.23s";
 	assertStrictEquals(g.secondsAsHumanReadable({short : true}), rg);
 });
 

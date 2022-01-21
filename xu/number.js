@@ -220,6 +220,9 @@ if(!Number.prototype.secondsAsHumanReadable)
 	{
 		if(this===0)
 			return short ? "0s" : "0 seconds";
+		
+		if(this<1)
+			return `${this.toFixed(2)}${short ? "s" : " seconds"}`;
 			
 		const r = [];
 		let left = this;	// eslint-disable-line consistent-this
@@ -239,12 +242,6 @@ if(!Number.prototype.secondsAsHumanReadable)
 			left -= qty*v;
 			r.push(`${qty.toLocaleString(lang)}${short ? s : ` ${n}${qty>1 || qty===0 ? "s" : ""}`}`);
 		});
-
-		if(left>0 && r.length===0)
-		{
-			const qty = left*1000;
-			r.push(`${qty.toLocaleString(lang)}${short ? "ms" : ` millisecond${qty>1 || qty===0 ? "s" : ""}`}`);
-		}
 
 		return r.slice(0, maxParts).join(short ? "" : ", ");
 	};
