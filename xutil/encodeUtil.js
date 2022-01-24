@@ -3,7 +3,7 @@ import {streams} from "std";
 
 // uses iconv to decode the data with encoding fromEncoding and converts to UTF-8
 // for a list of valid encodings, run: iconv --list
-// NOTE: Custom dexvert patch was added to add RISCOS support: https://en.wikipedia.org/wiki/RISC_OS_character_set
+// NOTE: Custom dexvert patch was added to add RISCOS and ATARI-ST support
 // Detect encoding of a file visually: https://base64.guru/tools/character-encoding
 export async function decode(data, fromEncoding)
 {

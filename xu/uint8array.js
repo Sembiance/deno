@@ -65,6 +65,16 @@ if(!Uint8Array.prototype.getString)
 	};
 }
 
+/** returns len bytes at offset decoded as a string */
+if(!Uint8Array.prototype.getPascalString)
+{
+	Uint8Array.prototype.getPascalString = function getString(offset, encoding="utf-8")
+	{
+		const len = this[offset];
+		return new TextDecoder(encoding).decode(this.subarray(offset+1, offset+1+len));
+	};
+}
+
 /** creates convienance methods for set/get int/uint values */
 for(const t of ["get", "set"])
 {

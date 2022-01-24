@@ -19,6 +19,8 @@ import {path, readLines, streams} from "std";
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
  *   stdoutcb			If set, this function will be called for every 'line' read from stdout
  *   stderrcb			If set, this function will be called for every 'line' read from stderr
+ *   stdoutNull			If set, stdout will be set to "null" thus preventing any output from being buffered.
+ *   stderrNull			If set, stderr will be set to "null" thus preventing any output from being buffered.
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
  *   verbose            Set to true to output some details about the program
@@ -27,6 +29,7 @@ import {path, readLines, streams} from "std";
  */
 export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput,
 	stdinPipe, stdinData,
+	stdoutNull, stderrNull,
 	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
 	stderrEncoding="utf-8", stderrFilePath, stderrcb,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
@@ -70,6 +73,11 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		const stderrFile = await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runArgs.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true});
 		runArgs.stderr = stderrFile.rid;
 	}
+
+	if(stdoutNull)
+		runArgs.stdout = "null";
+	if(stderrNull)
+		runArgs.stderr = "null";
 
 	let xvfbProc = null;
 	let xvfbPort = null;
