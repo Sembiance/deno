@@ -3,10 +3,10 @@
 // Also, you must run `await initDOMParser();` before you can use DOMParser
 export {initParser as initDOMParser, DOMParser} from "https://deno.land/x/deno_dom@v0.1.21-alpha/deno-dom-wasm-noinit.ts";
 
-export {parse as xmlParse, stringify as xmlStringify} from "https://deno.land/x/xml@2.0.3/mod.ts";
+export {parse as xmlParse, stringify as xmlStringify} from "https://deno.land/x/xml@2.0.4/mod.ts";
 
 // These require seperate import/export lines due to 'export var from' not being available yet: https://github.com/tc39/proposal-export-default-from/issues
 import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";
 export {PQueue};	// eslint-disable-line unicorn/prefer-export-from
 
-export {connect as redisConnect} from "https://deno.land/x/redis@v0.25.0/mod.ts";
+export {connect as redisConnect} from "https://deno.land/x/redis@v0.25.2/mod.ts";

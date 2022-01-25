@@ -8,7 +8,7 @@ if(!Number.prototype.bytesToSize)
 			return "0 bytes";
 		
 		const i = +(Math.floor(Math.log(bytes) / Math.log(1000)));
-		return Math.round(bytes / (1000 ** i), 2) + [" bytes", "KB", "MB", "GB", "TB"][i];
+		return Math.round(bytes / (1000 ** i), 2) + ["b", "KB", "MB", "GB", "TB"][i];
 	};
 }
 

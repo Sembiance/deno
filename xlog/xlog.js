@@ -72,6 +72,22 @@ export class XLog
 		}
 	}
 
+	timeStart(strs, ...vals)
+	{
+		this.timePoint = performance.now();
+		this.info(strs, ...vals);
+	}
+
+	elapsed(strs, ...vals)
+	{
+		if(!Object.hasOwn(this, "timePoint"))
+			return this.timeStart(strs, ...vals);
+
+		const elapsed = performance.now()-this.timePoint;
+		this.timePoint = performance.now();
+		this.info([`(elapsed ${(elapsed/xu.SECOND).secondsAsHumanReadable()}) ${strs[0]}`, ...strs.slice(1)], ...vals);
+	}
+
 	cleanup()
 	{
 		Deno.removeSignalListener("SIGUSR2", this.signalHandler);

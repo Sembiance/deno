@@ -77,6 +77,23 @@ Deno.test("flush-via-signal", async () =>
 	xlog.cleanup();
 });
 
+Deno.test("elapsed", async () =>
+{
+	const xlog = new XLog();
+	xlog.timeStart`This is a ${"test"} of the start ${47} time system`;
+	xlog.elapsed`Should be zero ${0} seconds elapsed`;
+	await delay(1000);
+	xlog.elapsed`Should be one ${1} second elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+});
+
 Deno.test("xlog", () =>
 {
 	const xlog = new XLog();
