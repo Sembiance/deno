@@ -235,4 +235,15 @@ xu.stdoutWrite = function stdoutWrite(str)
 	Deno.stdout.writeSync(stdoutEncoder.encode(str));
 };
 
+/** returns a random ASCII name in the format PID_RANDOM INT_COUNTER INCR where each number is represented as base-36 ASCII A-Za-z0-9 */
+const MAX_COUNTER = 46655;
+let TMP_COUNTER = 0;
+xu.randStr = function randStr()
+{
+	if(TMP_COUNTER>=MAX_COUNTER)
+		TMP_COUNTER = 0;
+
+	return `${Deno.pid.toString(36)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(TMP_COUNTER++).toString(36)}`;
+};
+
 export { xu, fg };

@@ -1,8 +1,6 @@
 import {xu} from "xu";
 import {path} from "std";
 
-const MAX_COUNTER = 46655;
-let V_COUNTER = 0;
 export class HTML
 {
 	constructor(_baseDirPath)
@@ -13,7 +11,7 @@ export class HTML
 	async render(subPath, data={}, {cache}={})
 	{
 		const self=this;
-		const requirePath = path.join(this.baseDirPath, `${subPath}.js${cache ? "" : `?v=${Deno.pid.toString(36)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(V_COUNTER++).toString(36)}`}`);
+		const requirePath = path.join(this.baseDirPath, `${subPath}.js${cache ? "" : `?v=${xu.randStr()}`}`);
 		const {default : renderer} = await import(requirePath);
 		const htmlRaw = await renderer(data, {
 			html : this.html.bind(this),

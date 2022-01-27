@@ -36,14 +36,9 @@ export async function exists(v)
 }
 
 let TMP_DIR_PATH = null;
-const MAX_COUNTER = 46655;
-let TMP_COUNTER = 0;
 /** Finds a unique (at time of checking) temporary file path to use */
 export async function genTempPath(prefix, suffix=".tmp")
 {
-	if(TMP_COUNTER>=MAX_COUNTER)
-		TMP_COUNTER = 0;
-
 	// One time initialization check to see if our preferred /mnt/ram/tmp directory exists or not
 	if(TMP_DIR_PATH===null)
 	{
@@ -55,7 +50,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do
-		r = path.join(fullPrefix, `${Deno.pid.toString(36)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(TMP_COUNTER++).toString(36)}${suffix}`);
+		r = path.join(fullPrefix, `${xu.randStr()}${suffix}`);
 	while(await exists(r));
 
 	return r;
