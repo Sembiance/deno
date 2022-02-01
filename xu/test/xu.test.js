@@ -97,8 +97,15 @@ Deno.test("waitUntil", async () =>
 	assertStrictEquals(counter, 6);
 
 	// 1 second timeout
-	const beforeTime = performance.now();
+	let beforeTime = performance.now();
 	await xu.waitUntil(() => false, {timeout : xu.SECOND*2});
+	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
+
+	// non-async function
+	test = null;
+	beforeTime = performance.now();
+	setTimeout(() => { test = true; }, xu.SECOND*2);
+	await xu.waitUntil(() => !!test);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 });
 
