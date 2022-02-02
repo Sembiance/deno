@@ -7,10 +7,10 @@ export class RateLimitedQueue
 	times = [];
 	queue = [];
 
-	// limit the queue to <per> ops per <interval>
-	constructor(per, interval)
+	// limit the queue to <per> ops per <period>
+	constructor(per, period)
 	{
-		this.interval = interval;
+		this.period = period;
 		this.per = per;
 	}
 
@@ -36,12 +36,12 @@ export class RateLimitedQueue
 			// now we have something in the queue, let's check to see if we should wait until we act
 			const rightNow = performance.now();
 
-			// filter out any times outside of our interval
-			this.times.filterInPlace(t => (rightNow-t)<this.interval);
+			// filter out any times outside of our period
+			this.times.filterInPlace(t => (rightNow-t)<this.period);
 
-			// if we have more outstanding calls in our interval than per, wait
+			// if we have more outstanding calls in our period than per, wait
 			if(this.times.length>=this.per)
-				await delay((this.interval-(rightNow-this.times.at(-1)))+1);
+				await delay((this.period-(rightNow-this.times.at(-1)))+1);
 			
 			// add our current time to the times
 			this.times.unshift(performance.now());
