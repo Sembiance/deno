@@ -59,6 +59,9 @@ export async function genTempPath(prefix, suffix=".tmp")
 /** Safely moves a file from src to dest, will try to just rename it, but will copy and remove original if needed */
 export async function move(src, dest)
 {
+	if(!(await exists(src)))
+		return;
+		
 	if(src===dest)
 		throw new Error(`src and dest are identical: ${src}`);
 
