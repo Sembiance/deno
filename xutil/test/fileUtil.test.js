@@ -1,8 +1,11 @@
 import {path, assertEquals, assertStrictEquals, assert} from "std";
 import * as fileUtil from "../fileUtil.js";
+import * as runUtil from "../runUtil.js";
 
 const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
 const GLOB_DIR = path.join(FILES_DIR, "globTest", "A_dir_with[brackets]_and?(parenthesis)");
+
+const JSONL_LINES = ["abc123", {obj : 123, abc : "123"}, {omg : true, num : 129_321_512_231}];
 
 Deno.test("areEqual", async () =>
 {
@@ -108,6 +111,20 @@ Deno.test("readFileBytes", async () =>
 	assertEquals(a, new Uint8Array([0x89, 0x50, 0x4E, 0x47]));
 });
 
+Deno.test("readJSONLFile", async () =>
+{
+	const lines = [];
+	await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl"), line => lines.push(line));
+	assertEquals(JSONL_LINES, lines);
+
+	lines.clear();
+	await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl.gz"), line => lines.push(line));
+	assertEquals(JSONL_LINES, lines);
+
+	assertEquals(JSONL_LINES, await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl")));
+	assertEquals(JSONL_LINES, await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl.gz")));
+});
+
 Deno.test("searchReplace", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
@@ -179,4 +196,18 @@ Deno.test("unlink", async () =>
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
 	await fileUtil.unlink(tmpFilePath);	// yes, call it twice to ensure that no error is reported
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);
+});
+
+Deno.test("writeJSONLFile", async () =>
+{
+	let tmpFilePath = await fileUtil.genTempPath(undefined, ".jsonl");
+	await fileUtil.writeJSONLFile(tmpFilePath, JSONL_LINES);
+	assertStrictEquals(await fileUtil.areEqual(tmpFilePath, path.join(FILES_DIR, "test.jsonl")), true);
+	await fileUtil.unlink(tmpFilePath);
+
+	tmpFilePath = await fileUtil.genTempPath(undefined, ".jsonl.gz");
+	await fileUtil.writeJSONLFile(tmpFilePath, JSONL_LINES);
+	const {stdout} = await runUtil.run("gunzip", ["-c", tmpFilePath]);
+	assertEquals(JSONL_LINES.map(v => JSON.stringify(v)).join("\n"), stdout.trim());
+	await fileUtil.unlink(tmpFilePath);
 });

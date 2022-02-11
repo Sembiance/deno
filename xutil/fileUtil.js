@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import * as runUtil from "./runUtil.js";
-import {path} from "std";
+import {path, readLines, streams} from "std";
 
 /** returns true if files a and b are equals. Calls out to 'cmp' due to how optimized that program is for speed */
 export async function areEqual(a, b)
@@ -97,6 +97,37 @@ export async function searchReplace(filePath, findMe, replaceWith)
 	await Deno.writeTextFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
 }
 
+/** Reads in a JSON L file, line by line, calling async cb(line) for each line read */
+export async function readJSONLFile(filePath, cb)
+{
+	const lines = [];
+	if(!cb)
+	{
+		cb = line =>	// eslint-disable-line no-param-reassign
+		{
+			if(!line)
+				return;
+			
+			lines.push(line);
+		};
+	}
+
+	if(filePath.toLowerCase().endsWith(".gz"))
+	{
+		await runUtil.run("gunzip", ["-c", filePath], {stdoutcb : async line =>	await cb(xu.parseJSON(line), line)});
+	}
+	else
+	{
+		const file = await Deno.open(filePath);
+		for await(const line of readLines(file))
+			await cb(xu.parseJSON(line), line);
+		file.close();
+	}
+
+	if(lines.length>0)
+		return lines;
+}
+
 /** reads in byteCount bytes from filePath and returns a Uint8Array */
 export async function readFileBytes(filePath, byteCount)
 {
@@ -149,4 +180,21 @@ export async function unlink(targetPath, o={})
 		return;
 	
 	return await Deno.remove(targetPath, o);
+}
+
+/** writes all the 'lines' as JSON L file to filePath */
+export async function writeJSONLFile(filePath, lines)
+{
+	const gz = filePath.toLowerCase().endsWith(".gz");
+	
+	const file = await Deno.open(gz ? path.join(path.dirname(filePath), path.basename(filePath, ".gz")) : filePath, {create : true, write : true, truncate : true});
+	const encoder = new TextEncoder();
+
+	for(const line of lines)
+		await streams.writeAll(file, encoder.encode(`${JSON.stringify(line)}\n`));
+
+	file.close();
+
+	if(gz)
+		runUtil.run("gzip", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
 }
