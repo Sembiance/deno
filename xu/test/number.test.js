@@ -1,4 +1,4 @@
-import {} from "../number.js";
+import {xu} from "../xu.js";
 import {assertEquals, assertStrictEquals} from "std";
 
 Deno.test("bytesToSize", () =>
@@ -85,4 +85,27 @@ Deno.test("setBit", () =>
 	const a = Number(47);
 	const ra = Number(63);
 	assertStrictEquals(ra, a.setBit(4));
+});
+
+Deno.test("toClock", () =>
+{
+	let a = Number((xu.MINUTE*2) + (xu.SECOND*16));
+	let r = "2:16";
+	assertStrictEquals(a.toClock(), r);
+
+	a = Number((xu.MINUTE*2) + (xu.SECOND*16) + 100);
+	r = "2:16.100";
+	assertStrictEquals(a.toClock(), r);
+
+	a = Number((xu.HOUR*2) + (xu.MINUTE*37) + (xu.SECOND*59) + 847);
+	r = "2:37:59.847";
+	assertStrictEquals(a.toClock(), r);
+
+	a = Number((xu.HOUR*7));
+	r = "7:00:00";
+	assertStrictEquals(a.toClock(), r);
+
+	a = Number((xu.MINUTE*5));
+	r = "5:00";
+	assertStrictEquals(a.toClock(), r);
 });

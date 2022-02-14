@@ -255,3 +255,32 @@ if(!Number.prototype.setBit)
 		return this | (1 << loc);	// eslint-disable-line no-bitwise
 	};
 }
+
+if(!Number.prototype.toClock)
+{
+	Number.prototype.toClock = function toClock()
+	{
+		const r = [];
+		let left = this;	// eslint-disable-line consistent-this
+		[3_600_000, 60000, 1000].forEach(v =>
+		{
+			if(left===0 || left<v)
+			{
+				if(r.length>0)
+					r.push(":00");
+				return;
+			}
+			
+			const qty = Math.floor(left/v);
+			left -= qty*v;
+			if(r.length>0)
+				r.push(":");
+			r.push(`${qty.toString().padStart(r.length===0 ? 1 : 2, "0")}`);
+		});
+	
+		if(left)
+			r.push(`.${left}`);
+
+		return r.join("");
+	};
+}

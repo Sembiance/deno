@@ -10,6 +10,7 @@ import {path, readLines, streams} from "std";
  *   detached			Don't wait for the command to finish, return the Process once launched
  *   env				An object of key : value pairs to be addded to the environment
  *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
+ *   killChildren		Kill children of the process as well
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
  *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe
  *	 stdinData          If set, this will be sent to stdin
