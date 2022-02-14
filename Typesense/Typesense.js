@@ -41,7 +41,8 @@ export class Typesense
 		{
 			const query = Object.entries(o).map(([k, v]) => `${k}=${v.toString().encodeURLPath()}`).join("&");
 			return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/search?${query}`, {method : "GET", headers : this.headers()})).json();
-		}
+		},
+		async update(collectionName, docid, doc) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/${docid}`, {method : "PATCH", headers : this.headers(true), body : JSON.stringify(doc)})).json(); }
 	};
 
 	async health() { return await (await fetch(`${this.serverURL}/health`, {method : "GET", headers : this.headers()})).json(); }
