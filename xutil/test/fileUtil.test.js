@@ -1,3 +1,4 @@
+/* eslint-disable sembiance/shorter-arrow-funs */
 import {path, assertEquals, assertStrictEquals, assert} from "std";
 import * as fileUtil from "../fileUtil.js";
 import * as runUtil from "../runUtil.js";
@@ -50,6 +51,11 @@ Deno.test("genTempPath", async () =>
 
 	const tempPaths = await [].pushSequence(1, 5000).parallelMap(() => fileUtil.genTempPath());
 	assertStrictEquals(tempPaths.unique().length, tempPaths.length);
+});
+
+Deno.test("gunzip", async () =>
+{
+	assertStrictEquals(new TextDecoder().decode(await fileUtil.gunzip(path.join(FILES_DIR, "gzipped.gz"))), "prefix\nabc\n123\nxyz");
 });
 
 Deno.test("move", async () =>

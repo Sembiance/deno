@@ -56,6 +56,12 @@ export async function genTempPath(prefix, suffix=".tmp")
 	return r;
 }
 
+/** Will gunzip the given filePath */
+export async function gunzip(filePath)
+{
+	return await streams.readAll(streams.readerFromStreamReader(await (await Deno.open(filePath)).readable.pipeThrough(new DecompressionStream("gzip")).getReader()));
+}
+
 /** Safely moves a file from src to dest, will try to just rename it, but will copy and remove original if needed */
 export async function move(src, dest)
 {

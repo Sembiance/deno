@@ -1,14 +1,15 @@
 /** Converts a given number of bytes into KB/MB/GB/TB. From: https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript */
 if(!Number.prototype.bytesToSize)
 {
-	Number.prototype.bytesToSize = function bytesToSize()
+	Number.prototype.bytesToSize = function bytesToSize(precision)
 	{
 		const bytes = this;	// eslint-disable-line consistent-this
 		if(bytes===0)
 			return "0 bytes";
 		
 		const i = +(Math.floor(Math.log(bytes) / Math.log(1000)));
-		return Math.round(bytes / (1000 ** i), 2) + ["b", "KB", "MB", "GB", "TB"][i];
+		const num = bytes / (1000 ** i);
+		return (precision ? num.toFixed(precision) : Math.round(num)) + ["b", "KB", "MB", "GB", "TB"][i];
 	};
 }
 

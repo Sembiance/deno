@@ -6,7 +6,7 @@ Deno.test("bytesToSize", () =>
 	let a = Number(128_939_123);
 	assertStrictEquals(a.bytesToSize(), "129MB");
 	a = Number(47);
-	assertStrictEquals(a.bytesToSize(), "47 bytes");
+	assertStrictEquals(a.bytesToSize(), "47b");
 });
 
 Deno.test("clearBit", () =>
