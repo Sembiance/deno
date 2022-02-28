@@ -42,6 +42,31 @@ export class Typesense
 			const query = Object.entries(o).map(([k, v]) => `${k}=${v.toString().encodeURLPath()}`).join("&");
 			return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/search?${query}`, {method : "GET", headers : this.headers()})).json();
 		},
+		// if async cb is set, it will be called once for each 'page' of results (not guaranteed to be in order unless serial is set to true). If it's not set, searchAll() will return a big array of all hits
+		async searchAll(collectionName, o, {cb, serial, atOnce=20}={})
+		{
+			const searchResults=[];
+
+			const firstPage = await this.documents.search(collectionName, {page : 1, ...o});
+			if(cb)
+				await cb(firstPage);
+			else
+				searchResults.push(...firstPage);
+
+			if(firstPage.found>250)
+			{
+				await [].pushSequence(2, Math.ceil(firstPage.found/250)).parallelMap(async page =>
+				{
+					const pageResult = await this.documents.search(collectionName, {page, ...o});
+					if(cb)
+						await cb(pageResult);
+					else
+						searchResults.push(...pageResult);
+				}, serial ? 1 : atOnce);
+			}
+
+			return searchResults;
+		},
 		async update(collectionName, docid, doc) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/${docid}`, {method : "PATCH", headers : this.headers(true), body : JSON.stringify(doc)})).json(); }
 	};
 
