@@ -8,6 +8,7 @@
 
 		"xpriv"     : "/mnt/compendium/DevLab/xpriv/xpriv.js",
 
+		"GAPI"			   : "/mnt/compendium/DevLab/deno/GAPI/GAPI.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"RateLimitedQueue" : "/mnt/compendium/DevLab/deno/RateLimitedQueue/RateLimitedQueue.js",
 		"typesense"        : "/mnt/compendium/DevLab/deno/Typesense/Typesense.js",

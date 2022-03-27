@@ -17,5 +17,3 @@ Deno.test("rateLimitedQueue", async () =>
 
 	await rlq.stop();
 });
-
-

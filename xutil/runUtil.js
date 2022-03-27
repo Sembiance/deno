@@ -215,3 +215,15 @@ export async function kill(p, signal="SIGTERM")
 	try { await p.status(); } catch {}	// allows the process to gracefully close before I close the handle
 	try { p.close(); } catch {}
 }
+
+// returns args needed to call a sub deno script
+export function denoArgs(...args)
+{
+	return ["run", "--import-map", "/mnt/compendium/DevLab/deno/importMap.json", "--no-check", "--unstable", "--allow-read", "--allow-write", "--allow-env", "--allow-run", ...args];
+}
+
+// returns env needed to properly run deno scripts
+export function denoEnv()
+{
+	return {DENO_DIR : "/mnt/compendium/.deno"};
+}

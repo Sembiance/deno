@@ -20,6 +20,7 @@ export class RateLimitedQueue
 		await p;
 	}
 
+	// while this is an async function, it should be run 'in the background' so you shouldn't 'await' on this
 	async start()
 	{
 		this.status = "running";

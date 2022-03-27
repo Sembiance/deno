@@ -197,9 +197,15 @@ if(!Array.prototype.pushSequence)
 	Array.prototype.pushSequence = function pushSequence(start, end)
 	{
 		if(end>=start)
-			this.push(...Array.from(Array((end-start)+1).keys(), v => v+start));
+		{
+			for(let i=start;i<=end;i++)
+				this.push(i);
+		}
 		else
-			this.push(...Array.from(Array((start-end)+1).keys(), v => v+end).reverse());
+		{
+			for(let i=start;i>=end;i--)
+				this.push(i);
+		}
 		
 		return this;
 	};

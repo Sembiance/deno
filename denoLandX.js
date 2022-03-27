@@ -10,3 +10,5 @@ import PQueue from "https://deno.land/x/p_queue@1.0.1/mod.ts";
 export {PQueue};	// eslint-disable-line unicorn/prefer-export-from
 
 export {connect as redisConnect} from "https://deno.land/x/redis@v0.25.2/mod.ts";
+
+export {create as jwtCreate, getNumericDate} from "https://deno.land/x/djwt@v2.4/mod.ts";
