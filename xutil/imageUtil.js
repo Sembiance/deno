@@ -65,7 +65,7 @@ export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOn
 	const BOOLS = ["opaque"];
 	for(const imgLine of imgLines)
 	{
-		const lineProps = (imgLine.match(/(?<name>[^:]+):(?<value>.*)$/) || {}).groups;
+		const lineProps = (imgLine.match(/(?<name>[^:]+):(?<value>.*)$/) || {})?.groups;
 		if(!lineProps || !Object.hasOwn(PROPS, lineProps.name))
 			continue;
 		

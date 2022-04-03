@@ -7,6 +7,7 @@ import {XLog} from "xlog";
 export class GAPI
 {
 	authExpiresAt = 0;
+	authorizing = false;
 
 	constructor({serviceKeyFilePath, scopes=[], ratePeriod=xu.MINUTE, ratePer=1800, xlog=new XLog("error")}={})
 	{
@@ -22,21 +23,25 @@ export class GAPI
 		this.rlq.start();
 	}
 
+	async init()
+	{
+		this.serviceKeyData = xu.parseJSON(await Deno.readTextFile(this.serviceKeyFilePath));
+
+		const keyDecoded = base64Decode(this.serviceKeyData.private_key.replaceAll("\n", "").slice("-----BEGIN PRIVATE KEY-----".length, -"-----END PRIVATE KEY-----".length));
+		this.key = await crypto.subtle.importKey("pkcs8", keyDecoded, {name : "RSASSA-PKCS1-v1_5", hash : "SHA-256"}, true, ["sign"]);
+		this.xlog.debug`Crypto key imported`;
+	}
+
 	// https://developers.google.com/identity/protocols/oauth2/service-account#authorizingrequests
 	async auth()
 	{
-		// make sure I have a proper key first
-		if(!this.key)
+		if(this.authorizing)
 		{
-			this.serviceKeyData = xu.parseJSON(await Deno.readTextFile(this.serviceKeyFilePath));
-
-			const keyDecoded = base64Decode(this.serviceKeyData.private_key.replaceAll("\n", "").slice("-----BEGIN PRIVATE KEY-----".length, -"-----END PRIVATE KEY-----".length));
-			this.key = await crypto.subtle.importKey("pkcs8", keyDecoded, {name : "RSASSA-PKCS1-v1_5", hash : "SHA-256"}, true, ["sign"]);
-			this.xlog.debug`Crypto key imported`;
+			await xu.waitUntil(() => !this.authorizing);
 		}
-
-		if(performance.now()>=this.authExpiresAt)
+		else if(performance.now()>=this.authExpiresAt)
 		{
+			this.authorizing = true;
 			this.xlog.debug`Re-authorizing...`;
 			
 			const jwt = await jwtCreate( {alg : "RS256", typ : "JWT"}, {
@@ -56,6 +61,7 @@ export class GAPI
 			
 			this.token = oAuthData.access_token;
 			this.authExpiresAt = (performance.now()+(oAuthData.expires_in*xu.SECOND))-xu.MINUTE;
+			this.authorizing = false;
 		}
 
 		return {Authorization : `Bearer ${this.token}`};
