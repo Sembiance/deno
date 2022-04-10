@@ -124,6 +124,14 @@ Deno.test("manyInstances-virtualX", async () =>
 	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
 });
 
+Deno.test("stdinFilePath", async () =>
+{
+	const outFilePath = await fileUtil.genTempPath();
+	await runUtil.run("zlib-flate", ["-uncompress"], {stdoutFilePath : outFilePath, stdinFilePath : path.join(xu.dirname(import.meta), "files", "test.zlib")});
+	assertStrictEquals(Deno.statSync(outFilePath).size, 15302);
+	await fileUtil.unlink(outFilePath);
+});
+
 Deno.test("stdinData", async () =>
 {
 	const msg = "this is just a hello world test";

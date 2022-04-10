@@ -16,6 +16,7 @@ import {path, readLines, streams} from "std";
  *	 stdinData          If set, this will be sent to stdin
  *   stdoutEncoding		If set, stdout will be decoded as this. Pass "binary" for raw UInt8Array data. Default: utf-8
  *   stderrEncoding		If set, stderr will be decoded as this. Pass "binary" for raw UInt8Array data. Default: utf-8
+ *   stdinFilePath		If set, the data in the file path specified will be piped to the process stdin
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
  *   stdoutcb			If set, this function will be called for every 'line' read from stdout
@@ -29,13 +30,13 @@ import {path, readLines, streams} from "std";
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  */
 export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput,
-	stdinPipe, stdinData,
+	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
 	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
 	stderrEncoding="utf-8", stderrFilePath, stderrcb,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
 {
-	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData) ? "piped" : "null")};
+	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData || stdinFilePath) ? "piped" : "null")};
 
 	if(inheritEnv!==true)
 	{
@@ -104,7 +105,14 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	// Kick off the process
 	const p = Deno.run(runArgs);
 
-	if(stdinData)
+	if(stdinFilePath)
+	{
+		const stdinFile = await Deno.open(stdinFilePath);
+		await streams.copy(stdinFile, p.stdin);
+		stdinFile.close();
+		p.stdin.close();
+	}
+	else if(stdinData)
 	{
 		await streams.writeAll(p.stdin, typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
 		p.stdin.close();
