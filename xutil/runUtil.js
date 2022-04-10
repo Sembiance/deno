@@ -227,11 +227,20 @@ export async function kill(p, signal="SIGTERM")
 // returns args needed to call a sub deno script
 export function denoArgs(...args)
 {
-	return ["run", "--import-map", "/mnt/compendium/DevLab/deno/importMap.json", "--no-check", "--unstable", "--allow-read", "--allow-write", "--allow-env", "--allow-run", ...args];
+	return ["run",
+		"--v8-flags=--max-old-space-size=32768,--enable-experimental-regexp-engine-on-excessive-backtracks",
+		"--import-map", "/mnt/compendium/DevLab/deno/importMap.json",
+		"--no-check", "--unstable",
+		"--allow-read", "--allow-write", "--allow-env", "--allow-run", "--allow-net", ...args];
 }
 
 // returns env needed to properly run deno scripts
 export function denoEnv()
 {
 	return {DENO_DIR : "/mnt/compendium/.deno"};
+}
+
+export function denoRunOpts()
+{
+	return {env : denoEnv()};
 }
