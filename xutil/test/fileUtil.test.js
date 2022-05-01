@@ -1,5 +1,5 @@
 /* eslint-disable sembiance/shorter-arrow-funs */
-import {path, assertEquals, assertStrictEquals, assert} from "std";
+import {path, assertEquals, assertStrictEquals, assert, base64Encode} from "std";
 import * as fileUtil from "../fileUtil.js";
 import * as runUtil from "../runUtil.js";
 
@@ -131,15 +131,21 @@ Deno.test("readJSONLFile", async () =>
 	assertEquals(JSONL_LINES, await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl.gz")));
 });
 
+Deno.test("readTextFile", async () =>
+{
+	const text = await fileUtil.readTextFile("/mnt/compendium/DevLab/deno/xutil/test/files/desktop.ini");
+	assertEquals(base64Encode(text), "Wy5TaGVsbENsYXNzSW5mb10NCkNvbmZpcm1GaWxlT3A9MA0KDQpbezhCRUJCMjkwLTUyRDAtMTFkMC1CN0Y0LTAwQzA0RkQ3MDZFQ31dDQpNZW51TmFtZT0mUO+/vWdpbmFzIGVuIG1pbmlhdHVyYQ0KVG9vbFRpcFRleHQ9JlDvv71naW5hcyBlbiBtaW5pYXR1cmENCkhlbHBUZXh0PU11ZXN0cmEgbG9zIGVsZW1lbnRvcyB1dGlsaXphbmRvIGxhIHZpc3RhIGRlIHDvv71naW5hcyBlbiBtaW5pYXR1cmEuDQpBdHRyaWJ1dGVzPTB4NjAwMDAwMDANCg0KW0V4dFNoZWxsRm9sZGVyVmlld3NdDQp7OEJFQkIyOTAtNTJEMC0xMWQwLUI3RjQtMDBDMDRGRDcwNkVDfT17OEJFQkIyOTAtNTJEMC0xMWQwLUI3RjQtMDBDMDRGRDcwNkVDfQ0K");	// eslint-disable-line max-len
+});
+
 Deno.test("searchReplace", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
 	await Deno.copyFile("/mnt/compendium/DevLab/deno/xutil/test/files/ab.txt", tmpFilePath);
-	assertStrictEquals(await Deno.readTextFile(tmpFilePath), "prefix\nabc\n123\nxyz");
+	assertStrictEquals(await fileUtil.readTextFile(tmpFilePath), "prefix\nabc\n123\nxyz");
 	await fileUtil.searchReplace(tmpFilePath, "abc", "yah, something 777 else now");
-	assertStrictEquals(await Deno.readTextFile(tmpFilePath), "prefix\nyah, something 777 else now\n123\nxyz");
+	assertStrictEquals(await fileUtil.readTextFile(tmpFilePath), "prefix\nyah, something 777 else now\n123\nxyz");
 	await fileUtil.searchReplace(tmpFilePath, /\d+/g, "numbers");
-	assertStrictEquals(await Deno.readTextFile(tmpFilePath), "prefix\nyah, something numbers else now\nnumbers\nxyz");
+	assertStrictEquals(await fileUtil.readTextFile(tmpFilePath), "prefix\nyah, something numbers else now\nnumbers\nxyz");
 	await fileUtil.unlink(tmpFilePath);
 });
 

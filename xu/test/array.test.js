@@ -134,7 +134,7 @@ Deno.test("parallelMap", async () =>
 	assertEquals(r, [2, 4, 6, 8, 10]);
 
 	beforeTime = performance.now();
-	r = await a.parallelMap(fn);
+	r = await a.parallelMap(fn, a.length);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/1000), 1);
 	assertEquals(r, [2, 4, 6, 8, 10]);
 });

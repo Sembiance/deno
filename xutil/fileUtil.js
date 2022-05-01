@@ -99,7 +99,7 @@ export async function searchReplace(filePath, findMe, replaceWith)
 	if(!(await exists(filePath)))
 		return;
 	
-	const data = await Deno.readTextFile(filePath);
+	const data = await readTextFile(filePath);
 	await Deno.writeTextFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
 }
 
@@ -142,6 +142,12 @@ export async function readFileBytes(filePath, byteCount)
 	await Deno.read(f.rid, buf);
 	Deno.close(f.rid);
 	return buf;
+}
+
+/** reads in the entire file at filePath and converts to encoding. This is because Deno.readTextFile as of 1.21 will throw an exception on ANY invalid UTF-8 chars which is NOT ideal */
+export async function readTextFile(filePath, encoding="utf-8")
+{
+	return new TextDecoder(encoding).decode(await Deno.readFile(filePath));
 }
 
 /** Returns a recursive list of all files and directories contained in dirPath.

@@ -95,7 +95,7 @@ Deno.test("stdoutFilePath", async () =>
 {
 	let outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("uname", [], {stdoutFilePath : outFilePath});
-	assertStrictEquals(await Deno.readTextFile(outFilePath), "Linux\n");
+	assertStrictEquals(await fileUtil.readTextFile(outFilePath), "Linux\n");
 	await fileUtil.unlink(outFilePath);
 
 	outFilePath = await fileUtil.genTempPath(undefined, ".pnm");
@@ -108,7 +108,7 @@ Deno.test("stderrFilePath", async () =>
 {
 	const outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"], {stderrFilePath : outFilePath});
-	assertStrictEquals(await Deno.readTextFile(outFilePath), `cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
+	assertStrictEquals(await fileUtil.readTextFile(outFilePath), `cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
 	await fileUtil.unlink(outFilePath);
 });
 

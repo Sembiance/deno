@@ -132,7 +132,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 				await tids.parallelMap(async tid =>
 				{
 					// get the children pids of the tid
-					const tidPidsRaw = (await Deno.readTextFile(`/proc/${pid}/task/${tid}/children`)).trim();
+					const tidPidsRaw = (await fileUtil.readTextFile(`/proc/${pid}/task/${tid}/children`)).trim();
 					if(tidPidsRaw.length===0)
 						return;
 					const tidPids = tidPidsRaw.split(" ");

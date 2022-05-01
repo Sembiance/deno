@@ -66,6 +66,28 @@ Deno.test("trim", () =>
 	assertStrictEquals(r, "This is just\na test of the xu trimming");
 });
 
+Deno.test("tryFallback", () =>
+{
+	const returnsValue = () => 47;
+	const throwsException = () => { throw new Error("should not see"); };	// eslint-disable-line sembiance/shorter-arrow-funs
+
+	assertStrictEquals(xu.tryFallback(returnsValue, 999), 47);
+	assertStrictEquals(xu.tryFallback(throwsException, 47), 47);
+});
+
+Deno.test("tryFallbackAsync", async () =>
+{
+	const returnsValue = () => 47;
+	const throwsException = () => { throw new Error("should not see"); };	// eslint-disable-line sembiance/shorter-arrow-funs
+	const asyncReturnsValue = async () => { await delay(50); return 47; };
+	const asyncThrowsException = async () => { await delay(50); throw new Error("should not see"); };
+
+	assertStrictEquals(await xu.tryFallbackAsync(returnsValue, 999), 47);
+	assertStrictEquals(await xu.tryFallbackAsync(throwsException, 47), 47);
+	assertStrictEquals(await xu.tryFallbackAsync(asyncReturnsValue, 999), 47);
+	assertStrictEquals(await xu.tryFallbackAsync(asyncThrowsException, 47), 47);
+});
+
 Deno.test("waitUntil", async () =>
 {
 	// default conditions

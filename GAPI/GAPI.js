@@ -1,4 +1,5 @@
 import {xu} from "xu";
+import {fileUtil} from "xutil";
 import {RateLimitedQueue} from "RateLimitedQueue";
 import {base64Decode} from "std";
 import {jwtCreate, getNumericDate} from "denoLandX";
@@ -25,7 +26,7 @@ export class GAPI
 
 	async init()
 	{
-		this.serviceKeyData = xu.parseJSON(await Deno.readTextFile(this.serviceKeyFilePath));
+		this.serviceKeyData = xu.parseJSON(await fileUtil.readTextFile(this.serviceKeyFilePath));
 
 		const keyDecoded = base64Decode(this.serviceKeyData.private_key.replaceAll("\n", "").slice("-----BEGIN PRIVATE KEY-----".length, -"-----END PRIVATE KEY-----".length));
 		this.key = await crypto.subtle.importKey("pkcs8", keyDecoded, {name : "RSASSA-PKCS1-v1_5", hash : "SHA-256"}, true, ["sign"]);

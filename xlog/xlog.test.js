@@ -48,7 +48,7 @@ Deno.test("flush", async () =>
 	xlog.trace`xlog test message with number: ${47}`;
 	await xlog.flush(logFilePath);
 
-	assertEquals(await Deno.readTextFile(logFilePath), "WARN: \nxlog test message\nxlog.test.js: 41: xlog test message with string: hello\nxlog.test.js: 48: xlog test message with number: 47\n");
+	assertEquals(await fileUtil.readTextFile(logFilePath), "WARN: \nxlog test message\nxlog.test.js: 41: xlog test message with string: hello\nxlog.test.js: 48: xlog test message with number: 47\n");
 	await fileUtil.unlink(logFilePath);
 	xlog.cleanup();
 });
@@ -72,7 +72,7 @@ Deno.test("flush-via-signal", async () =>
 	Deno.kill(Deno.pid, "SIGUSR2");
 	await delay(1000);	// give the flush time to finish since we are doing it async via a kill SIGUSR2 signal
 
-	assertEquals(await Deno.readTextFile(logFilePath), "WARN: \nxlog test message\nxlog.test.js: 62: xlog test message with string: hello\nxlog.test.js: 70: xlog test message with number: 47\n");
+	assertEquals(await fileUtil.readTextFile(logFilePath), "WARN: \nxlog test message\nxlog.test.js: 62: xlog test message with string: hello\nxlog.test.js: 70: xlog test message with number: 47\n");
 	await fileUtil.unlink(logFilePath);
 	xlog.cleanup();
 });

@@ -186,15 +186,18 @@ xu.trim = function trim(strs, ...vals)
 xu.tryFallback = function tryFallback(fn, fallbackResult)
 {
 	let r = null;
-	try
-	{
-		r = fn();
-	}
-	catch
-	{
-		r = fallbackResult;
-	}
+	try { r = fn(); }
+	catch { r = fallbackResult; }
 
+	return r;
+};
+
+// Tries the passed in fn, returning whatever it returns. If it fails, will return the fallbackResult
+xu.tryFallbackAsync = async function tryFallbackAsync(fn, fallbackResult)
+{
+	let r = null;
+	try { r = await fn(); }
+	catch { r = fallbackResult; }
 	return r;
 };
 
