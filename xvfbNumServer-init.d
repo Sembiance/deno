@@ -8,7 +8,7 @@ depend() {
 start() {
     ebegin "Starting xvfbNumServer"
     start-stop-daemon --start --background --chdir /mnt/compendium/DevLab/deno --make-pidfile --pidfile /var/run/xvfbNumServer.pid \
-    --exec /usr/bin/deno -- run --v8-flags=--max-old-space-size=32768,--expose-gc --import-map /mnt/compendium/DevLab/deno/importMap.json --unstable --allow-net --allow-read xvfbNumServer.js
+    --exec /usr/bin/deno -- run --v8-flags=--max-old-space-size=32768,--expose-gc --import-map /mnt/compendium/DevLab/deno/importMap.json --unstable --allow-net --allow-read --allow-env xvfbNumServer.js
     eend $?
 }
 

@@ -1,5 +1,5 @@
 import {} from "../string.js";
-import {base64Encode, base64Decode, assertStrictEquals} from "std";
+import {base64Encode, base64Decode, assertStrictEquals, delay} from "std";
 
 Deno.test("capitalize", () =>
 {
@@ -42,6 +42,17 @@ Deno.test("repeat", () =>
 	const a = "hi";
 	const r = "hihihihihi";
 	assertStrictEquals(r, a.repeat(5));
+});
+
+Deno.test("replaceAsync", async () =>
+{
+	const a = "abc 123 xyz 999 omg";
+	const r = "abc 246 xyz 1998 omg";
+	assertStrictEquals(r, await a.replaceAsync(/(?<num>\d+)/g, async (m, num) =>
+	{
+		await delay(200);
+		return (+num)*2;
+	}));
 });
 
 Deno.test("strip", () =>

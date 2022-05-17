@@ -101,6 +101,18 @@ if(!String.prototype.isNumber)
 	};
 }
 
+/** async version of String.prototype.replace() */
+if(!String.prototype.replaceAsync)
+{
+	String.prototype.replaceAsync = async function replaceAsync(regex, asyncFn)
+	{
+		const promises = [];
+		this.replace(regex, (...args) => promises.push(asyncFn(...args)));
+		const data = await Promise.all(promises);
+		return this.replace(regex, () => data.shift());
+	};
+}
+
 /** Reverses a string */
 if(!String.prototype.reverse)
 {
