@@ -113,8 +113,11 @@ Deno.test("moveAll", async () =>
 
 Deno.test("readFileBytes", async () =>
 {
-	const a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4);
+	let a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4);
 	assertEquals(a, new Uint8Array([0x89, 0x50, 0x4E, 0x47]));
+
+	a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4, -8);
+	assertEquals(a, new Uint8Array([0x49, 0x45, 0x4E, 0x44]));
 });
 
 Deno.test("readJSONLFile", async () =>

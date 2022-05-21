@@ -76,6 +76,7 @@ if(!Uint8Array.prototype.getPascalString)
 }
 
 /** creates convienance methods for set/get int/uint values */
+/** getUInt32LE() */
 for(const t of ["get", "set"])
 {
 	for(const x of [8, 16, 32, 64])

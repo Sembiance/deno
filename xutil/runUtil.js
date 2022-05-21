@@ -230,7 +230,7 @@ export function denoArgs(...args)
 	return ["run",
 		"--v8-flags=--max-old-space-size=32768,--enable-experimental-regexp-engine-on-excessive-backtracks",
 		"--import-map", "/mnt/compendium/DevLab/deno/importMap.json",
-		"--no-check", "--unstable",
+		"--no-check", "--no-config", "--unstable",
 		"--allow-read", "--allow-write", "--allow-env", "--allow-run", "--allow-net", ...args];
 }
 

@@ -135,9 +135,11 @@ export async function readJSONLFile(filePath, cb)
 }
 
 /** reads in byteCount bytes from filePath and returns a Uint8Array */
-export async function readFileBytes(filePath, byteCount)
+export async function readFileBytes(filePath, byteCount, offset=null)
 {
 	const f = await Deno.open(filePath);
+	if(offset!==null)
+		await Deno.seek(f.rid, offset, offset<0 ? 2 : 0);
 	const buf = new Uint8Array(byteCount);
 	await Deno.read(f.rid, buf);
 	Deno.close(f.rid);
