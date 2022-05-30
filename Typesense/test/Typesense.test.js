@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import {xu} from "xu";
-import {assertStrictEquals, assertEquals, assert} from "std";
+import {assertStrictEquals, assertEquals, assert, path} from "std";
 import {Typesense} from "../Typesense.js";
 
 const NAME = "test";
@@ -15,7 +15,9 @@ const FIELDS =
 	{ name : "label", type : "string[]", optional : true },
 	{ name : "formatid", type : "string", facet : true, optional : true }
 ];
+
 const DOC = {filename : "spacemusic.au", content : "Fish, plankton, sea greens and protein from the sea!", size : xu.TB+(xu.GB*20.37123), nsfw : 3, animated : true, itemid : 47, label : ["big", "orange", "tabby"]};
+const DOC2 = {filename : "test.gif", content : "Some other content", size : xu.KB*7, nsfw : 1, animated : false, itemid : 1, label : ["some", "keyword"]};
 
 function newTypesense()
 {
@@ -113,6 +115,31 @@ Deno.test("documents", async () =>
 	indexResult = await t.documents.index(NAME, DOC);
 	dropResult = await t.documents.dropByFilter(NAME, `itemid:${DOC.itemid}`);
 	assertEquals(dropResult, { num_deleted : 1});
+
+	await t.collections.drop(NAME);
+});
+
+Deno.test("import", async () =>
+{
+	const t = newTypesense();
+	await t.collections.create(NAME, FIELDS);
+
+	const importResults = await t.documents.import(NAME, path.join(xu.dirname(import.meta), "import.jsonl"));
+	assertStrictEquals(importResults.length, 2);
+	for(const importResult of importResults)
+		assertStrictEquals(importResult.success, true);
+
+	let searchResult = await t.documents.search(NAME, {q : "plankton", query_by : "content"});
+	assertStrictEquals(searchResult.page, 1);
+	assertStrictEquals(searchResult.found, 1);
+	assertStrictEquals(searchResult.hits.length, 1);
+	assertEquals(searchResult.hits[0].document, {id : searchResult.hits[0].document.id, ...DOC});
+
+	searchResult = await t.documents.search(NAME, {q : "test.gif", query_by : "filename"});
+	assertStrictEquals(searchResult.page, 1);
+	assertStrictEquals(searchResult.found, 1);
+	assertStrictEquals(searchResult.hits.length, 1);
+	assertEquals(searchResult.hits[0].document, {id : searchResult.hits[0].document.id, ...DOC2});
 
 	await t.collections.drop(NAME);
 });
