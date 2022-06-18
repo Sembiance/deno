@@ -199,6 +199,9 @@ Deno.test("tree", async () =>
 
 	r = await fileUtil.tree("/some/path/that/does/not/exist");
 	assertStrictEquals(r.length, 0);
+
+	r = await fileUtil.tree(path.join(FILES_DIR, "hugeDirTree"), {nodir : true});
+	assertStrictEquals(r.length, 130_282);
 });
 
 Deno.test("unlink", async () =>

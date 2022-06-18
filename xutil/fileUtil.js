@@ -181,7 +181,13 @@ export async function tree(root, {nodir=false, nofile=false, regex, depth=Number
 			r.push(entryPath);
 
 		if(entry.isDirectory)
-			r.push(...await tree(entryPath, {nodir, nofile, regex, _originalRoot, depth : depth-1}));
+		{
+			const subEntries = await tree(entryPath, {nodir, nofile, regex, _originalRoot, depth : depth-1});
+
+			// I used to just do r.push(...subEntries) but if subEntries is huge like 100,000+ files, we get a maximum call stack error. So we do it this way instead
+			for(const subEntry of subEntries)
+				r.push(subEntry);
+		}
 	}
 
 	return r;
