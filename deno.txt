@@ -6,6 +6,8 @@
        STD DOCS: https://deno.land/std
 NODE OS to DENO: https://medium.com/deno-the-complete-reference/os-module-denos-equivalent-of-node-js-cdd66c61cee1
 
+DENO RUST via WASM: https://deno.com/blog/wasmbuild
+
    FFI RUST DOCS: https://deno.land/manual/runtime/ffi_api
 FFI RUST Example: https://github.com/hironichu/sys
 
@@ -18,13 +20,3 @@ import {various, stuff} from "std";
 import {DOMParser, PQueue, xmlParse} from "denoLandX";
 
 
-/------------\
-| TO CONVERT |
-\------------/
-DevLab/apps/redis-key-stats
-DevLab/apps/redisRunScript
-DevLab/apps/ripCD
-DevLab/apps/searchMyCode
-DevLab/apps/tagflacs
-ovelay/util/
-sys/sembiance/.config/awesome/
