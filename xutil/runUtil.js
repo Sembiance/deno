@@ -85,7 +85,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let xvfbPort = null;
 	if(virtualX || virtualXGLX)
 	{
-		xvfbPort = +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim();
+		xvfbPort = await xu.tryFallbackAsync(async () => +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim(), Math.randomInt(10, 59999));
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
 		xvfbArgs.push("-xkbdir", "/usr/share/X11/xkb");	// Gentoo puts the xkb files here
 		xvfbArgs.push("-screen", "0", "1920x1080x24");

@@ -16,6 +16,7 @@
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
 		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
+		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
 
 		"thirdParty" : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js"
 	}
