@@ -114,7 +114,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	}
 	else if(stdinData)
 	{
-		await streams.writeAll(p.stdin, typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
+		await p.stdin.write(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
 		p.stdin.close();
 	}
 

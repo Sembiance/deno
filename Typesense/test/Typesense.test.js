@@ -147,6 +147,7 @@ Deno.test("import", async () =>
 Deno.test("search", async () =>
 {
 	const t = newTypesense();
+	await t.collections.drop(NAME);
 	await t.collections.create(NAME, FIELDS);
 	await t.documents.index(NAME, DOC);
 

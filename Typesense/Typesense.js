@@ -43,8 +43,12 @@ export class Typesense
 		async retrieve(collectionName, docid) { return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/${docid}`, {method : "GET", headers : this.headers()})).json(); },
 		async search(collectionName, o)
 		{
-			const query = Object.entries(o).map(([k, v]) => `${k}=${v.toString().encodeURLPath()}`).join("&");
-			return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/search?${query}`, {method : "GET", headers : this.headers()})).json();
+			const search = { collection : collectionName, ...o };
+			return (await (await fetch(`${this.serverURL}/multi_search?query_by=${o.query_by.encodeURLPath()}`, {method : "POST", headers : this.headers(true), body : JSON.stringify({searches : [search]})})).json()).results[0];
+
+			// We now do a multi_search just so we can get around the 4000 character limit on the URL query parameter. Below is the old /search implentation
+			//const query = Object.entries(o).map(([k, v]) => `${k}=${v.toString().encodeURLPath()}`).join("&");
+			//return await (await fetch(`${this.serverURL}/collections/${collectionName}/documents/search?${query}`, {method : "GET", headers : this.headers()})).json();
 		},
 		// if async cb is set, it will be called once for each 'page' of results (not guaranteed to be in order unless serial is set to true). If it's not set, searchAll() will return a big array of all hits
 		async searchAll(collectionName, o, {cb, serial, atOnce=20, maxPages=Number.MAX_SAFE_INTEGER}={})
