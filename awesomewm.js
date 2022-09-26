@@ -1,5 +1,6 @@
 import {xu} from "xu";
 import {runUtil} from "xutil";
+import {delay} from "std";
 
 export async function runAwesomeCode(code)
 {
@@ -85,7 +86,7 @@ export async function runTerminal(cmd)
 	return r;
 }
 
-export async function runTerminalCommand(wid, cmd, {newTab=false}={})
+export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0}={})
 {
 	if(newTab)
 		await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "shift+Down"], {inheritEnv : true});
@@ -99,6 +100,8 @@ export async function runTerminalCommand(wid, cmd, {newTab=false}={})
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Left"], {inheritEnv : true});
 	}
 
+	if(cmdDelay)
+		await delay(cmdDelay);
 	await runUtil.run("xdotool", ["keyup", "Shift_L", "Shift_R", "Control_L", "Control_R", "Meta_L", "Meta_R", "Alt_L", "Alt_R", "Super_L", "Super_R", "Hyper_L", "Hyper_R"], {inheritEnv : true});
 }
 

@@ -240,7 +240,7 @@ export function denoEnv()
 	return {DENO_DIR : "/mnt/compendium/.deno"};
 }
 
-export function denoRunOpts()
+export function denoRunOpts(o={})
 {
-	return {env : denoEnv()};
+	return {env : denoEnv(), ...o};
 }

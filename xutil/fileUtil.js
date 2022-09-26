@@ -157,6 +157,7 @@ export async function readTextFile(filePath, encoding="utf-8")
  *  regex	If set, the relative path from the root must match this regex to be included
  * 	nodir	Set to true to omit directories from the results
  *  nofile	Set to true to omit files from the results
+ *  depth   Maximum levels deep to look. Default, infinite.
  *
  * Deno's fs.expandGlob() isn't anywhere close to being ready for prime time usage, lots of weird bugs (glob is hard to get right)
  * Likewise, fs.walk() suffers from issues such as throwing exceptions whenever it encounters non-standard files, such as sockets
@@ -216,5 +217,5 @@ export async function writeJSONLFile(filePath, lines)
 	file.close();
 
 	if(gz)
-		runUtil.run("gzip", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
+		await runUtil.run("gzip", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
 }
