@@ -22,6 +22,7 @@ export class UInt8ArrayReader
 	getEndianness(swap) { return swap ? (this.endianness==="BE" ? "LE" : "BE") : this.endianness; }
 
 	length() { return this.arr.length; }
+	remaining() { return this.arr.length-this.pos; }
 	eof() { return this.pos>=this.arr.length; }
 	skip(v) { this.pos+=v; }
 	setPOS(v) { this.pos = v; }
@@ -30,11 +31,19 @@ export class UInt8ArrayReader
 		return `0x${[].pushSequence(this.pos, this.pos+(len-1)).map(v => this.arr.getUInt8(v).toString(16).toUpperCase()).join("")}`;
 	}
 
+	// Writes out len bytes to disk at filePath
+	async writeToDisk(len, filePath) { await Deno.writeFile(filePath, Uint8Array.from(this.arr.subarray(this.pos, this.post(len)))); }
+
 	// Returns a new UInt8ArrayReader that is made up of a subsection of the current buf
-	sub(len) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(this.pos, this.post(len)))); }
+	sub(len) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(this.pos, this.post(len))), {endianness : this.endianness}); }
 
 	// Reads a string of the given len with the given encoding
-	str(len, encoding="ascii") { return this.arr.getString(this.pos, this.post(len), encoding); }
+	str(len, encoding="ascii")
+	{
+		const r = this.arr.getString(this.pos, len, encoding);
+		this.skip(len);
+		return r;
+	}
 
 	// Reads a signed or unsigned byte
 	int8() { return this.arr.getInt8(this.pre(1)); }

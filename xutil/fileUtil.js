@@ -203,7 +203,7 @@ export async function unlink(targetPath, o={})
 	return await Deno.remove(targetPath, o);
 }
 
-/** writes all the 'lines' as JSON L file to filePath */
+/** writes all the 'lines' (array of Objects) as JSON L file to filePath */
 export async function writeJSONLFile(filePath, lines)
 {
 	const gz = filePath.toLowerCase().endsWith(".gz");
