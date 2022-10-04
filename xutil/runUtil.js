@@ -47,9 +47,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	
 	if(env)
 	{
-		if(!runArgs.env)
-			runArgs.env = {};
-		
+		runArgs.env ||= {};
 		Object.assign(runArgs.env, Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()]))));
 	}
 
@@ -94,8 +92,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*20}))
 			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 20 seconds`);
 
-		if(!runArgs.env)
-			runArgs.env = {};
+		runArgs.env ||= {};
 		runArgs.env.DISPLAY = `:${xvfbPort}`;
 	}
 

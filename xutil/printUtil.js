@@ -12,8 +12,7 @@ export function columnizeObject(o, options={})
 	if(options.header)
 		rows.unshift(options.header);
 
-	if(options.alignment)
-		options.alignment = options.alignment.map(a => a.charAt(0).toLowerCase());
+	options.alignment &&= options.alignment.map(a => a.charAt(0).toLowerCase());
 
 	const maxColSizes = [];
 	rows.forEach(row => row.forEach((col, i) => { maxColSizes[i] = Math.max((maxColSizes[i] || 0), `${(col)}`.decolor().length); }));

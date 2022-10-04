@@ -107,16 +107,13 @@ export async function searchReplace(filePath, findMe, replaceWith)
 export async function readJSONLFile(filePath, cb)
 {
 	const lines = [];
-	if(!cb)
+	cb ||= line =>	// eslint-disable-line no-param-reassign
 	{
-		cb = line =>	// eslint-disable-line no-param-reassign
-		{
-			if(!line)
-				return;
-			
-			lines.push(line);
-		};
-	}
+		if(!line)
+			return;
+		
+		lines.push(line);
+	};
 
 	if(filePath.toLowerCase().endsWith(".gz"))
 	{
