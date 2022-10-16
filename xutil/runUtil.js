@@ -138,10 +138,13 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 				});
 			};
 
-			await getKids(p.pid);
+			await getKids(p.pid).catch(() => {});
 
 			// sort the kids so that we kill the deepest ones first
-			kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid).forEach(pid => Deno.kill(pid, timeoutSignal));
+			kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid).forEach(pid =>
+			{
+				try { Deno.kill(pid, timeoutSignal); } catch {}
+			});
 		}
 		try { p.kill(timeoutSignal); } catch {}
 		timerid = true;
