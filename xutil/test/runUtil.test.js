@@ -124,6 +124,13 @@ Deno.test("manyInstances-virtualX", async () =>
 	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
 });
 
+Deno.test("stdinFullBuffer", async () =>
+{
+	// ensure the full buffer of search.lst is sent to iconv, otherwise the result is truncated
+	const {stdout} = await runUtil.run("iconv", ["-c", "-f", "CP437", "-t", "UTF-8"], {stdinData : await Deno.readFile(path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files", "search.lst"))});
+	assertStrictEquals(stdout.length, 82995);
+});
+
 Deno.test("stdinFilePath", async () =>
 {
 	const outFilePath = await fileUtil.genTempPath();

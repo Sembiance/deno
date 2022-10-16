@@ -1,4 +1,5 @@
 import {xu} from "xu";
+import {streams} from "std";
 
 // uses iconv to decode the data with encoding fromEncoding and converts to UTF-8
 // for a list of valid encodings, run: iconv --list
@@ -11,7 +12,7 @@ export async function decode(data, fromEncoding)
 		cmd = ["petcat", "-nh", "-text"];	// from app-emulation/vice
 
 	const p = Deno.run({cmd, clearEnv : true, stdout : "piped", stderr : "piped", stdin : "piped"});
-	await p.stdin.write(typeof data==="string" ? new TextEncoder().encode(data) : data);
+	await streams.writeAll(p.stdin, typeof data==="string" ? new TextEncoder().encode(data) : data);
 	p.stdin.close();
 	const [, stdoutResult] = await Promise.all([p.status().catch(() => {}),	p.output().catch(() => {}),	p.stderrOutput().catch(() => {})]);
 	try { p.close(); } catch {}	// eslint-disable-line brace-style

@@ -172,21 +172,25 @@ export async function tree(root, {nodir=false, nofile=false, regex, depth=Number
 		throw new TypeError(`regex must be an actual RegExp to avoid all sorts of edge cases when matching`);
 
 	const r = [];
-	for await(const entry of Deno.readDir(root))
+	try
 	{
-		const entryPath = path.join(root, entry.name);
-		if((!regex || regex.test(path.relative(_originalRoot, entryPath))) && ((entry.isDirectory && !nodir) || (!entry.isDirectory && !nofile)))
-			r.push(entryPath);
-
-		if(entry.isDirectory)
+		for await(const entry of Deno.readDir(root))	// if root dir is removed while traversing, this will throw an exception
 		{
-			const subEntries = await tree(entryPath, {nodir, nofile, regex, _originalRoot, depth : depth-1});
+			const entryPath = path.join(root, entry.name);
+			if((!regex || regex.test(path.relative(_originalRoot, entryPath))) && ((entry.isDirectory && !nodir) || (!entry.isDirectory && !nofile)))
+				r.push(entryPath);
 
-			// I used to just do r.push(...subEntries) but if subEntries is huge like 100,000+ files, we get a maximum call stack error. So we do it this way instead
-			for(const subEntry of subEntries)
-				r.push(subEntry);
+			if(entry.isDirectory)
+			{
+				const subEntries = await tree(entryPath, {nodir, nofile, regex, _originalRoot, depth : depth-1});
+
+				// I used to just do r.push(...subEntries) but if subEntries is huge like 100,000+ files, we get a maximum call stack error. So we do it this way instead
+				for(const subEntry of subEntries)
+					r.push(subEntry);
+			}
 		}
 	}
+	catch {}
 
 	return r;
 }
