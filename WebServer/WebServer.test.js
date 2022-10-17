@@ -42,6 +42,7 @@ Deno.test("basic", async () =>
 		await delay(xu.SECOND);
 		throw new Error("unknown error omg");
 	});
+	console.log("Exception should be thrown:");
 	a = await fetch("http://127.0.0.1:37291/throwsException");
 	assertStrictEquals(a.status, 500);
 	let r = await a.text();
@@ -71,6 +72,7 @@ Deno.test("basic", async () =>
 	assertStrictEquals(r, "sysop mania");
 
 	webServer.add("/detachedThrowsNoAsync", () => { throw new Error("detached error msg"); }, {detached : true, method : "POST"});	// eslint-disable-line sembiance/shorter-arrow-funs
+	console.log("Exception should be thrown:");
 	r = await (await fetch(`http://127.0.0.1:37291/detachedThrowsNoAsync`, {method : "POST", headers : { "content-type" : "application/json" }, body : JSON.stringify({abc : 123, hello : "world"})})).text();
 	assert(r.startsWith("error"));
 

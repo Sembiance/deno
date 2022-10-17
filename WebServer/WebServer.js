@@ -6,7 +6,6 @@ export class WebServer
 {
 	routes = {};
 	prefixRoutes = {};
-	connections = [];
 
 	constructor(host, port, {xlog=new XLog()}={})
 	{
@@ -34,9 +33,8 @@ export class WebServer
 
 	async handleConn(conn)
 	{
-		const httpConn = Deno.serveHttp(conn);
-		this.connections.push(httpConn);
-		for await(const httpRequest of httpConn)
+		this.httpConn = Deno.serveHttp(conn);
+		for await(const httpRequest of this.httpConn)
 		{
 			const u = new URL(httpRequest.request.url);
 			const l = `${httpRequest.request.method} ${u.pathname}`;
@@ -90,17 +88,16 @@ export class WebServer
 	stop()
 	{
 		this.xlog.info`${this.host}:${this.port} stopping...`;
+		if(this.httpConn)
+		{
+			this.httpConn.close();
+			delete this.httpConn;
+		}
+		
 		if(this.server)
 		{
 			this.server.close();
 			delete this.server;
-		}
-
-		this.xlog.info`${this.host}:${this.port} closing ${this.connections.length} connections...`;
-		for(const connection of this.connections)
-		{
-			try { connection.close(); }
-			catch {}
 		}
 	}
 
