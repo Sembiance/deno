@@ -1,11 +1,13 @@
 import {xu} from "xu";
 import {assertRejects, assertStrictEquals, assert, delay} from "std";
+import {runUtil} from "xutil";
+import {XLog} from "xlog";
 import {WebServer} from "./WebServer.js";
 
 Deno.test("prefix", async () =>
 {
 	const portNum = Math.randomInt(30010, 39990);
-	const webServer = new WebServer("127.0.0.1", portNum);
+	const webServer = new WebServer("127.0.0.1", portNum, {xlog : new XLog("error")});
 	await webServer.start();
 
 	webServer.add("/view", async () => (new Response("You browsed")), {prefix : true});	// eslint-disable-line require-await
@@ -16,9 +18,26 @@ Deno.test("prefix", async () =>
 	webServer.stop();
 });
 
+Deno.test("external", async () =>
+{
+	const portNum = Math.randomInt(30010, 39990);
+	const webServer = new WebServer("127.0.0.1", portNum, {xlog : new XLog("error")});
+	await webServer.start();
+
+	webServer.add("/view", async () => (new Response("You browsed")), {prefix : true});	// eslint-disable-line require-await
+
+	await [].pushSequence(1, 100).parallelMap(async () =>
+	{
+		const {stdout} = await runUtil.run("curl", [`http://127.0.0.1:${portNum}/view/some/big/long/thing.txt`]);
+		assertStrictEquals(stdout, "You browsed");
+	});
+
+	webServer.stop();
+});
+
 Deno.test("basic", async () =>
 {
-	const webServer = new WebServer("127.0.0.1", 37291);
+	const webServer = new WebServer("127.0.0.1", 37291, {xlog : new XLog("error")});
 	assertRejects(() => fetch("http://127.0.0.1:37291/test"));
 	await webServer.start();
 	let a = await fetch("http://127.0.0.1:37291/test");

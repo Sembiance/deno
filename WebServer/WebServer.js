@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/catch-error-name */
 import {xu} from "xu";
 import {XLog} from "xlog";
+import {delay} from "std";
 
 export class WebServer
 {
@@ -12,6 +13,7 @@ export class WebServer
 		this.host = host;
 		this.port = port;
 		this.xlog = xlog;
+		this.stopping = false;
 	}
 
 	async start()
@@ -19,11 +21,58 @@ export class WebServer
 		this.xlog.info`${this.host}:${this.port} starting...`;
 		this.server = await Deno.listen({hostname : this.host, port : this.port});
 
-		(async () =>	// eslint-disable-line sembiance/shorter-arrow-funs, no-floating-promise/no-floating-promise
+		this.handleConnections();
+	}
+
+	async handleConnections()
+	{
+		const httpConns = new Set();
+		while(true)
 		{
-			for await(const conn of this.server)
-				this.handleConn(conn).catch(err => this.xlog.error`${this.host}:${this.port} exception handling connection ${err}`);
-		})();
+			try
+			{
+				const httpConn = Deno.serveHttp(await this.server.accept());
+				httpConns.add(httpConn);
+				(async () =>	// eslint-disable-line no-floating-promise/no-floating-promise
+				{
+					while(!this.stopping)
+					{
+						try
+						{
+							const requestEvent = await httpConn.nextRequest();
+							if(!requestEvent)
+							{
+								httpConn.close();	// just in case
+								httpConns.delete(httpConn);
+								break;
+							}
+
+							this.handleRequest(requestEvent).catch(err => this.xlog.error`${this.host}:${this.port} exception handling connection ${err}`);
+						}
+						catch
+						{
+							httpConn.close();	// just in case
+							httpConns.delete(httpConn);
+							break;
+						}
+					}
+				})();
+			}
+			catch(err)
+			{
+				this.xlog.warn`Listener closed with ${httpConns.size.toLocaleString()} open HTTP connections with error: ${err}`;
+				for(const v of httpConns)
+					v.close();
+				
+				if(this.stopping)
+					break;
+				
+				// If we are not stopping, then server close unexpectedly, let's try and re-listen
+				this.xlog.error`Unexpected close of listener. Delaying and attempting to start up again`;
+				await delay(xu.SECOND*5);
+				this.handleConnections();
+			}
+		}
 	}
 
 	respondWithErrorHandler(err)
@@ -31,74 +80,61 @@ export class WebServer
 		this.xlog.warn`.respondWith had an error which we caught ${err}`;
 	}
 
-	async handleConn(conn)
+	async handleRequest(httpRequest)
 	{
-		this.httpConn = Deno.serveHttp(conn);
-		for await(const httpRequest of this.httpConn)
+		const u = new URL(httpRequest.request.url);
+		const l = `${httpRequest.request.method} ${u.pathname}`;
+		const handlers = this.routes[u.pathname] || Object.entries(this.prefixRoutes).find(([prefix]) => u.pathname.startsWith(prefix))?.[1];
+		if(!handlers)
 		{
-			const u = new URL(httpRequest.request.url);
-			const l = `${httpRequest.request.method} ${u.pathname}`;
-			const handlers = this.routes[u.pathname] || Object.entries(this.prefixRoutes).find(([prefix]) => u.pathname.startsWith(prefix))?.[1];
-			if(!handlers)
-			{
-				this.xlog.warn`${this.host}:${this.port} unregistered request ${l}`;
-				await httpRequest.respondWith(new Response("404 not found", {status : 404})).catch(err => this.respondWithErrorHandler(err));
-				continue;
-			}
+			this.xlog.warn`${this.host}:${this.port} unregistered request ${l}`;
+			return await httpRequest.respondWith(new Response("404 not found", {status : 404})).catch(err => this.respondWithErrorHandler(err));
+		}
 
-			const route = handlers[httpRequest.request.method];
-			if(!route)
+		const route = handlers[httpRequest.request.method];
+		if(!route)
+		{
+			this.xlog.warn`${this.host}:${this.port} invalid method for request ${l} expected ${Object.keys(handlers).join(", ")}`;
+			return await httpRequest.respondWith(new Response("405 method not allowed", {status : 405})).catch(err => this.respondWithErrorHandler(err));
+		}
+		
+		if(!route.logCheck || route.logCheck(httpRequest.request))
+			this.xlog.info`${this.host}:${this.port} request ${l}`;
+		try
+		{
+			await route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(err => this.respondWithErrorHandler(err))).then(response =>
 			{
-				this.xlog.warn`${this.host}:${this.port} invalid method for request ${l} expected ${Object.keys(handlers).join(", ")}`;
-				await httpRequest.respondWith(new Response("405 method not allowed", {status : 405})).catch(err => this.respondWithErrorHandler(err));
-				continue;
-			}
-			
-			if(!route.logCheck || route.logCheck(httpRequest.request))
-				this.xlog.info`${this.host}:${this.port} request ${l}`;
-			try
-			{
-				await route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(err => this.respondWithErrorHandler(err))).then(response =>
-				{
-					// if we are a detached route, then the handler will take care of calling the respondWith second arg on it's own
-					if(route.detached)
-						return;
+				// if we are a detached route, then the handler will take care of calling the respondWith second arg on it's own
+				if(route.detached)
+					return;
 
-					if(!response || !(response instanceof Response))
-					{
-						this.xlog.warn`${this.host}:${this.port} request handler ${l} returned an invalid response`;
-						return httpRequest.respondWith(new Response("no response found", {status : 500})).catch(err => this.respondWithErrorHandler(err));
-					}
-					
-					return httpRequest.respondWith(response);
-				}).catch(err =>
+				if(!response || !(response instanceof Response))
 				{
-					this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-					return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
-				});
-			}
-			catch(err)
+					this.xlog.warn`${this.host}:${this.port} request handler ${l} returned an invalid response`;
+					return httpRequest.respondWith(new Response("no response found", {status : 500})).catch(err => this.respondWithErrorHandler(err));
+				}
+				
+				return httpRequest.respondWith(response);
+			}).catch(err =>
 			{
 				this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
 				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
-			}
+			});
+		}
+		catch(err)
+		{
+			this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
+			return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 		}
 	}
 
 	stop()
 	{
 		this.xlog.info`${this.host}:${this.port} stopping...`;
-		if(this.httpConn)
-		{
-			this.httpConn.close();
-			delete this.httpConn;
-		}
-		
-		if(this.server)
-		{
-			this.server.close();
-			delete this.server;
-		}
+
+		this.stopping = true;
+		this.server.close();
+		delete this.server;
 	}
 
 	add(pathname, handler, {method="GET", detached, logCheck, prefix}={})
@@ -116,3 +152,4 @@ export class WebServer
 		delete this.routes[route];
 	}
 }
+
