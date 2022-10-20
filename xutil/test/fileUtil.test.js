@@ -132,6 +132,12 @@ Deno.test("readJSONLFile", async () =>
 
 	assertEquals(JSONL_LINES, await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl")));
 	assertEquals(JSONL_LINES, await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl.gz")));
+
+	let count=0;
+	let totalSize=0;
+	await fileUtil.readJSONLFile(path.join(FILES_DIR, "5622.jsonl.gz"), o => { count++; totalSize += o.size; });
+	assertStrictEquals(totalSize, 3_186_404_318);
+	assertStrictEquals(count, 144_254);
 });
 
 Deno.test("readTextFile", async () =>
