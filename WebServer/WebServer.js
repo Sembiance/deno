@@ -47,7 +47,7 @@ export class WebServer
 								break;
 							}
 
-							this.handleRequest(requestEvent).catch(err => this.xlog.error`${this.host}:${this.port} exception handling connection ${err}`);
+							this.handleRequest(requestEvent).catch(err => this.xlog.warn`${this.host}:${this.port} exception handling connection ${err}`);
 						}
 						catch
 						{
@@ -117,13 +117,13 @@ export class WebServer
 				return httpRequest.respondWith(response);
 			}).catch(err =>
 			{
-				this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
+				this.xlog.warn`${this.host}:${this.port} request handler ${l} threw error ${err}`;
 				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 			});
 		}
 		catch(err)
 		{
-			this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
+			this.xlog.warn`${this.host}:${this.port} request handler ${l} threw error ${err}`;
 			return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 		}
 	}
