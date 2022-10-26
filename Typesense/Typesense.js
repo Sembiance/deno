@@ -44,7 +44,11 @@ export class Typesense
 		async search(collectionName, o)
 		{
 			const search = { collection : collectionName, ...o };
-			return (await (await fetch(`${this.serverURL}/multi_search?query_by=${o.query_by.encodeURLPath()}`, {method : "POST", headers : this.headers(true), body : JSON.stringify({searches : [search]})})).json()).results[0];
+			const searchResults = await (await fetch(`${this.serverURL}/multi_search?query_by=${o.query_by.encodeURLPath()}`, {method : "POST", headers : this.headers(true), body : JSON.stringify({searches : [search]})})).json();
+			if(!searchResults.results?.length)
+				return searchResults;
+
+			return searchResults.results[0];
 
 			// We now do a multi_search just so we can get around the 4000 character limit on the URL query parameter. Below is the old /search implentation
 			//const query = Object.entries(o).map(([k, v]) => `${k}=${v.toString().encodeURLPath()}`).join("&");

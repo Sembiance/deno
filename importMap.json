@@ -8,6 +8,7 @@
 
 		"xpriv"     : "/mnt/compendium/DevLab/xpriv/xpriv.js",
 
+		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
 		"GAPI"			   : "/mnt/compendium/DevLab/deno/GAPI/GAPI.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"RateLimitedQueue" : "/mnt/compendium/DevLab/deno/RateLimitedQueue/RateLimitedQueue.js",
@@ -16,7 +17,7 @@
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
 		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
-		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
+		"xwork"            : "/mnt/compendium/DevLab/deno/xwork/xwork.js",
 
 		"thirdParty" : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js"
 	}

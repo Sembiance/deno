@@ -8,6 +8,7 @@ export class XLog
 {
 	logLines = [];
 
+	// noANSI does not need to be set if you have a logFilePath or logger set
 	constructor(level="info", {logger, mapper, logFilePath, noANSI}={})
 	{
 		this.level = level;
@@ -96,11 +97,13 @@ export class XLog
 	/* will flush the current logLines to filePath */
 	async flush()
 	{
-		if(!this.logFilePath)
+		if(!this.logFilePath || this.logLines.length===0)
 			return;
 
-		await Deno.writeTextFile(this.logFilePath, this.logLines.join("").decolor(), {append : true});
+		const logLinesCopy = this.logLines.slice();
 		this.logLines.clear();
+
+		await Deno.writeTextFile(this.logFilePath, logLinesCopy.join("").decolor(), {append : true});
 	}
 
 	atLeast(logLevel)
