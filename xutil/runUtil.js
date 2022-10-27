@@ -102,19 +102,6 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	// Kick off the process
 	const p = Deno.run(runArgs);
 
-	if(stdinFilePath)
-	{
-		const stdinFile = await Deno.open(stdinFilePath);
-		await streams.copy(stdinFile, p.stdin);
-		stdinFile.close();
-		p.stdin.close();
-	}
-	else if(stdinData)
-	{
-		await streams.writeAll(p.stdin, typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData);
-		p.stdin.close();
-	}
-
 	// Start our timer
 	let timerid = null;
 	async function timeoutHandler()
@@ -171,8 +158,23 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : stdoutcbPromise || p.output();
 		const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : stderrcbPromise || p.stderrOutput();
 
+		let stdinPromise = null;
+		if(stdinFilePath)
+		{
+			const stdinFile = await Deno.open(stdinFilePath);
+			stdinPromise = streams.copy(stdinFile, p.stdin).finally(() => { stdinFile.close(); p.stdin.close(); });
+		}
+		else if(stdinData)
+		{
+			stdinPromise = streams.writeAll(p.stdin, typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData).finally(() => p.stdin.close());
+		}
+		else
+		{
+			stdinPromise = Promise.resolve();
+		}
+
 		// Wait for the process to finish (or be killed by the timeoutHandler)
-		const [status, stdoutData, stderrData] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {})]);
+		const [status, stdoutData, stderrData] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {}), stdinPromise]);
 
 		// If we have a timeout still running, clear it
 		if(typeof timerid==="number")

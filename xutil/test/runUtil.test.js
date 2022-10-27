@@ -31,7 +31,7 @@ Deno.test("liveOutput", async () =>
 	assertStrictEquals(status.code, 0);
 });
 
-Deno.test("stdout", async () =>
+Deno.test("stdoutBasic", async () =>
 {
 	const {stdout} = await runUtil.run("uname");
 	assertStrictEquals(stdout, "Linux\n");
@@ -144,6 +144,16 @@ Deno.test("stdinData", async () =>
 	const msg = "this is just a hello world test";
 	const {stdout} = await runUtil.run("deno", [], {stdinData : `console.log("${msg}")`});
 	assert(stdout.includes(msg));
+});
+
+Deno.test("stdinData-with-stdoutBlock", async () =>
+{
+	// Ok, so this is a weird one. 'petcat' will not accept any stdin data if you haven't started reading stdout data
+	// This only happens on chatsubo, not on my local machine. I'm not sure why.
+	// So I had to make sure that runUtil.run started reading stdout and stderr BEFORE it sent stdin data, which is probably how I should have been doing it all along anyways
+	// This test just verifies this is working, but again it only fails on chatsubo, not on my local machine
+	const {stdout} = await runUtil.run("petcat", ["-nh", "-text"], {stdinData : await Deno.readFile(path.join(xu.dirname(import.meta), "files", "g>wellen"))});
+	assertStrictEquals(stdout.length, 37552);
 });
 
 Deno.test("timeout", async () =>
