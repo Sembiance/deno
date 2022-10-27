@@ -10,11 +10,12 @@ export async function decode(data, fromEncoding)
 	let cmd = ["iconv", "-c", "-f", fromEncoding, "-t", "UTF-8"];
 	if(fromEncoding==="PETSCII")
 		cmd = ["petcat", "-nh", "-text"];	// from app-emulation/vice
-
+	
 	const p = Deno.run({cmd, clearEnv : true, stdout : "piped", stderr : "piped", stdin : "piped"});
-	await streams.writeAll(p.stdin, typeof data==="string" ? new TextEncoder().encode(data) : data);
-	p.stdin.close();
-	const [, stdoutResult] = await Promise.all([p.status().catch(() => {}),	p.output().catch(() => {}),	p.stderrOutput().catch(() => {})]);
+	const stdoutPromise = p.output().catch(() => {});
+	const stderrPromise = p.stderrOutput().catch(() => {});
+	const stdinPromise = streams.writeAll(p.stdin, typeof data==="string" ? new TextEncoder().encode(data) : data).finally(() => p.stdin.close());
+	const [,, stdoutResult] = await Promise.all([stdinPromise, p.status().catch(() => {}),	stdoutPromise, stderrPromise]);
 	try { p.close(); } catch {}	// eslint-disable-line brace-style
 	return new TextDecoder("UTF-8").decode(stdoutResult);
 }
