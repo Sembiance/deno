@@ -245,3 +245,12 @@ export function denoRunOpts(o={})
 {
 	return {env : denoEnv(), ...o};
 }
+
+export async function checkNumserver(dontExit)
+{
+	const numserverAvaialble = !!(await xu.tryFallbackAsync(async () => +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim(), 0));
+	if(!numserverAvaialble && !dontExit)
+		Deno.exit(console.error(`numserver not running, exiting`));
+	
+	return numserverAvaialble;
+}
