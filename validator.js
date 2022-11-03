@@ -48,7 +48,7 @@ function validate(basePrefix, suffix, o, schema)
 						throw new Error(`${prefix} value [${v}] expected to be one of type [${prop.type.map(t => (typeof t==="string" ? t : t.name)).join("], [")}] but got [${typeof v}] ${suffix}`);
 					
 					if(prop.type.includes("string") && typeof v==="string")
-						assert(v.length>0, `${prefix} array value [${v}] expected to to not be empty ${suffix}`);
+						assert(v.length>0, `${prefix} array value [${v}] expected to not be empty ${suffix}`);
 				});
 			}
 			else
