@@ -1,5 +1,8 @@
+/* eslint-disable no-param-reassign */
 import {xu} from "xu";
-import {streams} from "std";
+import {path} from "std";
+
+let run = null;
 
 // uses iconv to decode the data with encoding fromEncoding and converts to UTF-8
 // for a list of valid encodings, run: iconv --list
@@ -7,19 +10,93 @@ import {streams} from "std";
 // Detect encoding of a file visually: https://base64.guru/tools/character-encoding
 export async function decode(data, fromEncoding)
 {
-	let cmd = ["iconv", "-c", "-f", fromEncoding, "-t", "UTF-8"];
+	if(!run)
+		({run} = await import(path.join(xu.dirname(import.meta), "runUtil.js")));
+
+	let cmdArgs = ["iconv", ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
 	if(fromEncoding==="PETSCII")
-		cmd = ["petcat", "-nh", "-text"];	// from app-emulation/vice
-	
-	const p = Deno.run({cmd, clearEnv : true, stdout : "piped", stderr : "piped", stdin : "piped"});
-	const stdoutPromise = p.output().catch(() => {});
-	const stderrPromise = p.stderrOutput().catch(() => {});
-	const stdinPromise = streams.writeAll(p.stdin, typeof data==="string" ? new TextEncoder().encode(data) : data).finally(() => p.stdin.close());
-	const [,, stdoutResult] = await Promise.all([stdinPromise, p.status().catch(() => {}),	stdoutPromise, stderrPromise]);
-	try { p.close(); } catch {}	// eslint-disable-line brace-style
-	return new TextDecoder("UTF-8").decode(stdoutResult);
+		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
+
+	const {stdout} = await run(cmdArgs[0], cmdArgs[1], {stdinData : data});
+	return stdout;
 }
 
-// https://en.wikipedia.org/wiki/Mac_OS_Roman
-const MACOS_ROMAN_EXTENDED = ["Ä", "Å", "Ç", "É", "Ñ", "Ö", "Ü", "á", "à", "â", "ä", "ã", "å", "ç", "é", "è", "ê", "ë", "í", "ì", "î", "ï", "ñ", "ó", "ò", "ô", "ö", "õ", "ú", "ù", "û", "ü", "†", "°", "¢", "£", "§", "•", "¶", "ß", "®", "©", "™", "´", "¨", "≠", "Æ", "Ø", "∞", "±", "≤", "≥", "¥", "µ", "∂", "∑", "∏", "π", "∫", "ª", "º", "Ω", "æ", "ø", "¿", "¡", "¬", "√", "ƒ", "≈", "∆", "«", "»", "…", " ", "À", "Ã", "Õ", "Œ", "œ", "–", "—", "“", "”", "‘", "’", "÷", "◊", "ÿ", "Ÿ", "⁄", "€", "‹", "›", "ﬁ", "ﬂ", "‡", "·", "‚", "„", "‰", "Â", "Ê", "Á", "Ë", "È", "Í", "Î", "Ï", "Ì", "Ó", "Ô", "Ⓐ", "Ò", "Ú", "Û", "Ù", "ı", "ˆ", "˜", "¯", "˘", "˙", "˚", "¸", "˝", "˛", "ˇ"];	// eslint-disable-line max-len
-export {MACOS_ROMAN_EXTENDED};
+let MACINTOSH = null;
+// processors is an array of arrays: [ [matcher, replacer], ... ]
+// matcher should be a RegExp that ALWAYS matches the START of a string
+// replacer(match.groups) should return a byte number that the match represents
+export async function decodeMacintoshFilename({filename, processors=[], region="roman"})
+{
+	if(!MACINTOSH)
+		({default : MACINTOSH} = await import(path.join(xu.dirname(import.meta), "encodeData", "macintosh.js")));
+
+	// first, convert the filename into an array of bytes, leveraging the processors
+	const bytes = [];
+	while(filename.length)
+	{
+		let byte = null;
+
+		// check if any of our matchers match
+		for(const [matcher, replacer] of processors)
+		{
+			const match = filename.match(matcher);
+			if(match)
+			{
+				byte = replacer(match.groups);
+				if(byte!==null)
+				{
+					filename = filename.slice(match[0].length);
+					break;
+				}
+			}
+		}
+
+		// fallback to just getting the char code of the character
+		if(byte===null)
+		{
+			byte = filename.charCodeAt(0);
+			filename = filename.slice(1);
+		}
+		
+		bytes.push(byte);
+	}
+
+	// now form a new filename based on the bytes
+	const r = [];
+	for(let i=0;i<bytes.length;i++)
+	{
+		let c = null;
+
+		// if region is japan, it might be a two byte character, so try that first
+		if(region==="japan" && i<(bytes.length-1))
+		{
+			c = MACINTOSH[region][new Uint8Array([bytes[i], bytes[i+1]]).getUInt16BE()];
+			if(c)
+				i++;
+		}
+		c ??= MACINTOSH[region][bytes[i]] ?? String.fromCharCode(bytes[i]);
+		
+		r.push(c);
+	}
+
+	return r.join("");
+}
+
+// ENSURE that all regexes match at the START of the string!
+export const macintoshFilenameProcessors =
+{
+	octal      :
+	[
+		[/^\//, () => "⁄".charCodeAt(0)],	// Mac files can contain forward slashes, so we replace them with a unicode fraction slash
+		[/^\\ /, () => " ".charCodeAt(0)],
+		[/^\\t/, () => "\t".charCodeAt(0)],
+		[/^\\r/, () => "\r".charCodeAt(0)],
+		[/^\\n/, () => "\n".charCodeAt(0)],
+		[/^\\(?<code>\d{3})/, ({code}) => Number.parseInt(code, 8)]
+	],
+	percentHex :
+	[
+		[/^%%/, () => "%".charCodeAt(0)],	// While I haven't encountered this in the wild yet (unar/resource_dasm), it's the only way I figure they can properly encode a natural percent sign
+		[/^%(?<code>[A-Fa-f\d]{2})/, ({code}) => Number.parseInt(code, 16)]
+	]
+};
