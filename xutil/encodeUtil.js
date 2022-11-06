@@ -66,15 +66,16 @@ export async function decodeMacintoshFilename({filename, processors=[], region="
 	for(let i=0;i<bytes.length;i++)
 	{
 		let c = null;
+		const byte = bytes[i];
 
 		// if region is japan, it might be a two byte character, so try that first
 		if(region==="japan" && i<(bytes.length-1))
 		{
-			c = MACINTOSH[region][new Uint8Array([bytes[i], bytes[i+1]]).getUInt16BE()];
+			c = MACINTOSH[region][new Uint8Array([byte, bytes[i+1]]).getUInt16BE()];
 			if(c)
 				i++;
 		}
-		c ??= MACINTOSH[region][bytes[i]] ?? String.fromCharCode(bytes[i]);
+		c ??= MACINTOSH[region][byte] ?? ((byte<0x20 || byte===0x7F) ? "□" : String.fromCharCode(byte));
 		
 		r.push(c);
 	}
@@ -87,11 +88,20 @@ export const macintoshFilenameProcessors =
 {
 	octal      :
 	[
-		[/^\//, () => "⁄".charCodeAt(0)],	// Mac files can contain forward slashes, so we replace them with a unicode fraction slash
+		// Mac files can contain forward slashes, so we replace them with a unicode fraction slash
+		[/^\//, () => "⁄".charCodeAt(0)],
+
+		// these special escapes hfsutils produces. See: https://github.com/Distrotech/hfsutils/blob/f8525637d55fddcf9a457d1ee433c3fd39c7d59c/hls.c#L266
 		[/^\\ /, () => " ".charCodeAt(0)],
+		[/^\\"/, () => '"'.charCodeAt(0)],
 		[/^\\t/, () => "\t".charCodeAt(0)],
 		[/^\\r/, () => "\r".charCodeAt(0)],
 		[/^\\n/, () => "\n".charCodeAt(0)],
+		[/^\\b/, () => "⍾".charCodeAt(0)],
+		[/^\\f/, () => "␌".charCodeAt(0)],
+		[/^\\\\/, () => "\\".charCodeAt(0)],
+
+		// 3 digit octal code
 		[/^\\(?<code>\d{3})/, ({code}) => Number.parseInt(code, 8)]
 	],
 	percentHex :

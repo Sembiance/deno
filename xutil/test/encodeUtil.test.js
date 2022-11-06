@@ -38,5 +38,9 @@ Deno.test("decodeMacintoshFilename-octal", async () =>
 {
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "Demo\\ Vault\\ \\304", processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), "Demo Vault ƒ");
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "test\\ of\\tthe\\rsystem\\nohyah", processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), "test of⇥the↵system␤ohyah");
+	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "hrm\\bbell\\fform feed\\\\backslash\\\"quoted\\\"not", processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), "hrm⍾bell␌form feed\\backslash\"quoted\"not");
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "Un/Comment", processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), "Un⁄Comment");
+	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "\\001\\001TattleINIT", processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), "□□TattleINIT");
+	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "QD\\1773D", processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), "QD□3D");
+	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : `\\"Collapse\\"\\ plug-ins\\ coming`, processors : encodeUtil.macintoshFilenameProcessors.octal, region : "roman"}), `"Collapse" plug-ins coming`);
 });
