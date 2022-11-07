@@ -29,9 +29,15 @@ Deno.test("decode-macjp", async () =>
 	assertStrictEquals(base64Encode(r), "TWFjaW50b3NoIEhEOkRlc2t0b3AgRm9sZGVyOlJBTkRPTSBET1QgQ0QtUk9NOu++ieevt8Os776JX+++ie++hO++iWjvvoli776JZ8Oq776Y6YSZCgpNYWNpbnRvc2ggSEQ6RGVza3RvcCBGb2xkZXI6UkFORE9NIERPVCBDRC1ST006776J56+3w6zvvolf776J776E776JaO++iWLvvolnw6oCw6/vva4KCk1hY2ludG9zaCBIRDpEZXNrdG9wIEZvbGRlcjpSQU5ET00gRE9UIENELVJPTTrvvonnr7fDrO++iV/vvonvvoTvvolo776JYu++iWfomZTptbIKCk1hY2ludG9zaCBIRDpEZXNrdG9wIEZvbGRlcjpSQU5ET00gRE9UIENELVJPTTrvvonnr7fDrO++iV/vvonvvoTvvolo776JYu++iWfDohgKCk1hY2ludG9zaCBIRDpEZXNrdG9wIEZvbGRlcjpSQU5ET00gRE9UIENELVJPTTrvvonnr7fDrO++iV/vvonvvoTvvolo776JYu++iWfDox7Ds2UKCk1hY2ludG9zaCBIRDpEZXNrdG9wIEZvbGRlcjpSQU5ET00gRE9UIENELVJPTTrvvonnr7fDrO++iV/vvonvvoTvvolo776JYu++iWfnp6fDrO++hgoKTWFjaW50b3NoIEhEOkRlc2t0b3AgRm9sZGVyOlJBTkRPTSBET1QgQ0QtUk9NOu++ieevt8Os776JX+++ie++hO++iWjvvoli776JZ+++iVjvvol8776FW+++iWPvvodQCgpNYWNpbnRvc2ggSEQ6RGVza3RvcCBGb2xkZXI6UkFORE9NIERPVCBDRC1ST006776J56+3w6zvvolf776J776E776JaO++iWLvvoln6bqdw6QYCgpNYWNpbnRvc2ggSEQ6RGVza3RvcCBGb2xkZXI6UkFORE9NIERPVCBDRC1ST006776J56+3w6zvvolf776J776E776JaO++iWLvvolnw6zvvobDr++9rgoKTWFjaW50b3NoIEhEOkRlc2t0b3AgRm9sZGVyOlJBTkRPTSBET1QgQ0QtUk9NOu++ieevt8Os776JX+++ie++hO++iWjvvoli776JZ+++ie++he++iUPvvonDrAoKTWFjaW50b3NoIEhEOkRlc2t0b3AgRm9sZGVyOlJBTkRPTSBET1QgQ0QtUk9NOu++ieevt8Os776JX+++ie++hO++iWjvvoli776JZ+++iU7vvonooZlX776JYu++iWcKCgo=");
 });
 
+Deno.test("decodeMacintoshFilename-romanUTF8", async () =>
+{
+	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "01-1-tiff-éËíÀ‰ªäG", processors : encodeUtil.macintoshFilenameProcessors.romanUTF8, region : "japan"}), "01-1-tiff-手塚莉絵");
+});
+
 Deno.test("decodeMacintoshFilename-percentHex", async () =>
 {
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "Test%%aabbcc", processors : encodeUtil.macintoshFilenameProcessors.percentHex, region : "roman"}), "Test%aabbcc");
+	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "01-1-tiff-%8e%e8%92%cb%e4%bb%8aG", processors : encodeUtil.macintoshFilenameProcessors.percentHex, region : "japan"}), "01-1-tiff-手塚莉絵");
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "LoopDeLoop%c4", processors : encodeUtil.macintoshFilenameProcessors.percentHex, region : "roman"}), "LoopDeLoopƒ");
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "Icon\r.rsrc hello\tworld  good\nbye", processors : encodeUtil.macintoshFilenameProcessors.percentHex, region : "roman"}), "Icon↵.rsrc hello⇥world  good␤bye");
 	assertStrictEquals(await encodeUtil.decodeMacintoshFilename({filename : "JoliPhone Pro 3.5 d%8emo", processors : encodeUtil.macintoshFilenameProcessors.percentHex, region : "roman"}), "JoliPhone Pro 3.5 démo");

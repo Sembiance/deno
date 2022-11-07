@@ -88,6 +88,16 @@ export async function decodeMacintoshFilename({filename, processors=[], region="
 // ENSURE that all regexes match at the START of the string!
 export const macintoshFilenameProcessors =
 {
+	// this one will convert UTF8 files that were mistakenly converted to Roman back into bytes
+	romanUTF8 :
+	[
+		[/^(?<c>.)/, ({c}) =>
+		{
+			const romanByte = Object.fromEntries(Object.entries(MACINTOSH.roman).map(([k, v]) => [v, k]))[c];
+			return romanByte ? +romanByte : c.charCodeAt(0);
+		}]
+	],
+
 	octal      :
 	[
 		// Mac files can contain forward slashes, so we replace them with a unicode fraction slash
