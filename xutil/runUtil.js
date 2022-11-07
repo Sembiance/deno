@@ -174,7 +174,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		}
 
 		// Wait for the process to finish (or be killed by the timeoutHandler)
-		const [status, stdoutData, stderrData] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {}), stdinPromise]);
+		const [status, stdoutData, stderrData] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {}), stdinPromise.catch(() => {})]);
 
 		// If we have a timeout still running, clear it
 		if(typeof timerid==="number")

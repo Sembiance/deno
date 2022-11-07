@@ -16,6 +16,8 @@ export async function decode(data, fromEncoding)
 	let cmdArgs = ["iconv", ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
 	if(fromEncoding==="PETSCII")
 		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
+	else if(fromEncoding==="MACINTOSHJP")
+		cmdArgs = ["tclsh", [path.join(xu.dirname(import.meta), "tclDecode.tcl")]];
 
 	const {stdout} = await run(cmdArgs[0], cmdArgs[1], {stdinData : data});
 	return stdout;
