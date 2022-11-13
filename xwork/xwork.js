@@ -31,7 +31,7 @@ xwork.run = async function run(fun, args=[], {timeout, imports={}}={})
 		[
 			`import {xu} from "xu";`,
 			`import {fileUtil} from "xutil";`,
-			...Object.entries(imports).map(([pkg, imp]) => `import {${imp.join(", ")}} from "${pkg}";`)
+			...Object.entries(imports).map(([pkg, imp]) => `import {${imp.filter(v => v!=="fileUtil").join(", ")}} from "${pkg}";`)
 		];
 
 		srcFilePath = await fileUtil.genTempPath(undefined, ".xwork.js");
@@ -66,12 +66,19 @@ xwork.run = async function run(fun, args=[], {timeout, imports={}}={})
 };
 
 // this will map all the values in arr calling externally fun for each value
-xwork.map = async function map(arr, fun, {atOnce=navigator.hardwareConcurrency, ...rest}={})
+xwork.map = async function map(arr, fun, {atOnce=navigator.hardwareConcurrency, cb, ...rest}={})
 {
-	if(atOnce<1)
-		atOnce = navigator.hardwareConcurrency*atOnce;	// eslint-disable-line no-param-reassign
+	// no idea why I have these two lines, they don't make any sense to me
+	//if(atOnce<1)
+	//	atOnce = navigator.hardwareConcurrency*atOnce;	// eslint-disable-line no-param-reassign
 
-	return await arr.parallelMap(async arg => await xwork.run(fun, [arg], rest), atOnce);
+	return await arr.parallelMap(async (arg, i) =>
+	{
+		const r = await xwork.run(fun, [arg], rest);
+		if(cb)
+			await cb(r, i);
+		return r;
+	}, atOnce);
 };
 
 export {xwork};

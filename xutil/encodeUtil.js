@@ -17,7 +17,7 @@ export async function decode(data, fromEncoding)
 	if(fromEncoding==="PETSCII")
 		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
 	else if(fromEncoding==="MACINTOSHJP")
-		cmdArgs = ["tclsh", [path.join(xu.dirname(import.meta), "tclDecode.tcl")]];
+		cmdArgs = ["tclsh", [path.join(xu.dirname(import.meta), "tclDecode-macJapan.tcl")]];
 
 	const {stdout} = await run(cmdArgs[0], cmdArgs[1], {stdinData : data});
 	return stdout;
@@ -27,27 +27,27 @@ let MACINTOSH = null;
 // processors is an array of arrays: [ [matcher, replacer], ... ]
 // matcher should be a RegExp that ALWAYS matches the START of a string
 // replacer(match.groups) should return a byte number that the match represents
-export async function decodeMacintoshFilename({filename, processors=[], region="roman"})
+export async function decodeMacintosh({data, processors=[], region="roman", preserveWhitespace})
 {
 	if(!MACINTOSH)
 		({default : MACINTOSH} = await import(path.join(xu.dirname(import.meta), "encodeData", "macintosh.js")));
 
 	// first, convert the filename into an array of bytes, leveraging the processors
 	const bytes = [];
-	while(filename.length)
+	while(data.length)
 	{
 		let byte = null;
 
 		// check if any of our matchers match
 		for(const [matcher, replacer] of processors)
 		{
-			const match = filename.match(matcher);
+			const match = data.match(matcher);
 			if(match)
 			{
 				byte = replacer(match.groups);
 				if(byte!==null)
 				{
-					filename = filename.slice(match[0].length);
+					data = data.slice(match[0].length);
 					break;
 				}
 			}
@@ -56,8 +56,8 @@ export async function decodeMacintoshFilename({filename, processors=[], region="
 		// fallback to just getting the char code of the character
 		if(byte===null)
 		{
-			byte = filename.charCodeAt(0);
-			filename = filename.slice(1);
+			byte = data.charCodeAt(0);
+			data = data.slice(1);
 		}
 		
 		bytes.push(byte);
@@ -70,8 +70,11 @@ export async function decodeMacintoshFilename({filename, processors=[], region="
 		let c = null;
 		const byte = bytes[i];
 
-		// if region is japan, it might be a two byte character, so try that first
-		if(region==="japan" && i<(bytes.length-1))
+		if(preserveWhitespace && [0x09, 0x0A, 0x0D, 0x20].includes(byte))
+		{
+			c = String.fromCharCode(byte);
+		}
+		else if(region==="japan" && i<(bytes.length-1))	// if region is japan, it might be a two byte character, so try that first
 		{
 			c = MACINTOSH[region][new Uint8Array([byte, bytes[i+1]]).getUInt16BE()];
 			if(c)
@@ -86,16 +89,12 @@ export async function decodeMacintoshFilename({filename, processors=[], region="
 }
 
 // ENSURE that all regexes match at the START of the string!
-export const macintoshFilenameProcessors =
+export const macintoshProcessors =
 {
 	// this one will convert UTF8 files that were mistakenly converted to Roman back into bytes
 	romanUTF8 :
 	[
-		[/^(?<c>.)/, ({c}) =>
-		{
-			const romanByte = Object.fromEntries(Object.entries(MACINTOSH.roman).map(([k, v]) => [v, k]))[c];
-			return romanByte ? +romanByte : c.charCodeAt(0);
-		}]
+		[/^(?<c>.)/, ({c}) => (MACINTOSH.romanReversed[c] ? +MACINTOSH.romanReversed[c] : c.charCodeAt(0))]
 	],
 
 	octal      :

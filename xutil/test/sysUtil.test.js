@@ -1,4 +1,4 @@
-import {memInfo} from "../sysUtil.js";
+import {memInfo, getAvailablePorts} from "../sysUtil.js";
 import {assert} from "std";
 
 Deno.test("memInfo", async () =>
@@ -13,4 +13,10 @@ Deno.test("memInfo", async () =>
 	assert(a.usedPercent>0);
 
 	assert(a.total>a.available);
+});
+
+Deno.test("memInfo", async () =>
+{
+	assert((await getAvailablePorts()).length===1);
+	assert((await getAvailablePorts(222)).length===222);
 });

@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import {xwork} from "./xwork.js";
-import {assertEquals, assertStrictEquals, delay} from "std";
+import {assertEquals, assertStrictEquals, assert, delay} from "std";
 
 Deno.test("inline", async () =>
 {
@@ -14,6 +14,11 @@ Deno.test("inline", async () =>
 
 	r = await xwork.map([1, 2, 3, 4, 5], f, {imports : {std : ["delay"]}});
 	assertEquals(r, [2, 4, 6, 8, 10]);
+
+	let total=0;
+	r = await xwork.map([1, 2, 3, 4, 5], f, {cb : async (v, i) => { await delay(100); total+=v; assert(i<5); }, imports : {std : ["delay"]}});
+	assertStrictEquals(total, 30);
+	assertEquals(r, [2, 4, 6, 8, 10]);
 });
 
 Deno.test("anonInline", async () =>
@@ -21,7 +26,9 @@ Deno.test("anonInline", async () =>
 	let r = await xwork.run(async v => { await delay(300); return v*3; }, [7], {imports : {std : ["delay"]}});
 	assertStrictEquals(r, 21);
 
-	r = await xwork.map([1, 2, 3, 4, 5], async v => { await delay(300); return v*3; }, {imports : {std : ["delay"]}});
+	let total=0;
+	r = await xwork.map([1, 2, 3, 4, 5], async v => { await delay(300); return v*3; }, {cb : (v, i) => { total+=v; assert(i<5); }, imports : {std : ["delay"]}});
+	assertStrictEquals(total, 45);
 	assertEquals(r, [3, 6, 9, 12, 15]);
 });
 
@@ -48,6 +55,6 @@ Deno.test("timeout", async () =>
 
 	start = performance.now();
 	r = await xwork.run(f, undefined, {imports : {std : ["delay"]}});
-	assertStrictEquals(5, Math.round((performance.now()-start)/xu.SECOND));
+	assertStrictEquals(6, Math.ceil((performance.now()-start)/xu.SECOND));
 	assertStrictEquals(r, 14);
 });
