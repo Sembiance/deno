@@ -10,14 +10,17 @@ let run = null;
 // Detect encoding of a file visually: https://base64.guru/tools/character-encoding
 export async function decode(data, fromEncoding)
 {
+	// used to use tcl to convert, but found that it has some glitches that my custom converter doesn't have any problems with
+	// ideally some day I should patch MacJapanese support into iconv
+	if(fromEncoding==="MACINTOSHJP")
+		return await decodeMacintosh({data, region : "japan", preserveWhitespace : true});
+
 	if(!run)
 		({run} = await import(path.join(xu.dirname(import.meta), "runUtil.js")));
 
 	let cmdArgs = ["iconv", ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
 	if(fromEncoding==="PETSCII")
 		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
-	else if(fromEncoding==="MACINTOSHJP")
-		cmdArgs = ["tclsh", [path.join(xu.dirname(import.meta), "tclDecode-macJapan.tcl")]];
 
 	const {stdout} = await run(cmdArgs[0], cmdArgs[1], {stdinData : data});
 	return stdout;
@@ -33,34 +36,37 @@ export async function decodeMacintosh({data, processors=[], region="roman", pres
 		({default : MACINTOSH} = await import(path.join(xu.dirname(import.meta), "encodeData", "macintosh.js")));
 
 	// first, convert the filename into an array of bytes, leveraging the processors
-	const bytes = [];
-	while(data.length)
+	const bytes = data instanceof Uint8Array ? Array.from(data) : [];
+	if(bytes.length===0)
 	{
-		let byte = null;
-
-		// check if any of our matchers match
-		for(const [matcher, replacer] of processors)
+		while(data.length)
 		{
-			const match = data.match(matcher);
-			if(match)
+			let byte = null;
+
+			// check if any of our matchers match
+			for(const [matcher, replacer] of processors)
 			{
-				byte = replacer(match.groups);
-				if(byte!==null)
+				const match = data.match(matcher);
+				if(match)
 				{
-					data = data.slice(match[0].length);
-					break;
+					byte = replacer(match.groups);
+					if(byte!==null)
+					{
+						data = data.slice(match[0].length);
+						break;
+					}
 				}
 			}
-		}
 
-		// fallback to just getting the char code of the character
-		if(byte===null)
-		{
-			byte = data.charCodeAt(0);
-			data = data.slice(1);
+			// fallback to just getting the char code of the character
+			if(byte===null)
+			{
+				byte = data.charCodeAt(0);
+				data = data.slice(1);
+			}
+			
+			bytes.push(byte);
 		}
-		
-		bytes.push(byte);
 	}
 
 	// now form a new filename based on the bytes
