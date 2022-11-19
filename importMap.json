@@ -18,6 +18,7 @@
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
 		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
 		"xwork"            : "/mnt/compendium/DevLab/deno/xwork/xwork.js",
+		"XWorkerPool"      : "/mnt/compendium/DevLab/deno/XWorkerPool/XWorkerPool.js",
 
 		"thirdParty" : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js"
 	}
