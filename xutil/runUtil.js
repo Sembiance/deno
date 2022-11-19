@@ -197,6 +197,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			Deno.close(runArgs.stderr);
 		else
 			r.stderr = stderrEncoding==="utf-8" ? new TextDecoder().decode(stderrData) : (stderrEncoding==="binary" ? stderrData : await encodeUtil.decode(stderrData, stderrEncoding));
+		
+		// If we used lineReader due to have a stdoutcb/stderrcb, it opened up the handle so we need to close it
+		if(stdoutcb)
+			xu.tryFallback(() => p.stdout.close());
+		if(stderrcb)
+			xu.tryFallback(() => p.stderr.close());
 
 		return r;
 	};
