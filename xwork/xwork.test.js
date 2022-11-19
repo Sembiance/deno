@@ -22,7 +22,7 @@ Deno.test("detached", async () =>
 		await delay(xu.SECOND*2);
 		return {nums : [3.14, 1.235], arg};
 	}
-	let {ready, send, done} = await xwork.run(f, [msgs[0]], {imports : {std : ["delay"]}, detached : true, msgcb : msg => assertEquals(msg, msgs[msgCount++])});
+	let {ready, send, done} = await xwork.run(f, [msgs[0]], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])});
 	await ready();
 	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
 	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});
@@ -30,7 +30,7 @@ Deno.test("detached", async () =>
 	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
 
 	msgCount = 0;
-	({ready, send, done} = await xwork.run("testWorker-detached.js", [msgs[0]], {imports : {std : ["delay"]}, detached : true, msgcb : msg => assertEquals(msg, msgs[msgCount++])}));
+	({ready, send, done} = await xwork.run("testWorker-detached.js", [msgs[0]], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])}));
 	await ready();
 	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
 	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});

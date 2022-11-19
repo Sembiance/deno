@@ -50,7 +50,7 @@ xwork.send = async function send(msg) { await streams.writeAll(workerConnection,
 /** WHAT IS BELOW CAN BE CALLED BY THE PARENT */
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
 // this also allows 'inline' function execution on other threads via fun.toString()
-xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, msgcb}={})
+xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, recvcb}={})
 {
 	const xworkSockPath = await fileUtil.genTempPath(undefined, ".xwork.sock");
 	
@@ -77,8 +77,8 @@ xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, msg
 			await streams.writeAll(conn, new TextEncoder().encode(`${JSON.stringify(Array.force(args))}\n`));
 		
 		// this is sent by a worker (via xwork.send()) to send a message to the parent
-		if(op==="msg" && msgcb)
-			msgcb(msg);
+		if(op==="msg" && recvcb)
+			recvcb(msg);
 		
 		// this is sent by a detached worker when they are ready to receive messages
 		if(op==="ready")
