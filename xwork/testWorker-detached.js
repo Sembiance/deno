@@ -4,7 +4,7 @@ import {xwork} from "xwork";
 
 await xwork.openConnection();
 
-const arg = await xwork.args();
+const arg = await xwork.arg();
 xwork.send(arg);
 await delay(250);
 xwork.recv(async msg => await xwork.send({nums : msg.nums.map(v => v/7), str : msg.str.reverse(), bool : !msg.bool}));

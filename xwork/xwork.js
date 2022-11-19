@@ -5,7 +5,7 @@ import {streams, readLines} from "std";
 const xwork = {};
 
 /** THESE ARE ALL CALLED BY THE INDIVIDUAL WORKERS, DO NOT CALL THESE AS THE PARENT */
-xwork.args = async function args() { return xu.parseJSON(await unixSockUtil.sendReceiveLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "args"})), []); };
+xwork.arg = async function arg() { return xu.parseJSON(await unixSockUtil.sendReceiveLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "arg"})), []); };
 xwork.done = async function done(msg) { return await unixSockUtil.sendLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "done", msg})); };
 
 let workerMessages = [];
@@ -74,7 +74,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		}
 
 		// this is sent by a worker 'file' when they want to get their args
-		if(op==="args")
+		if(op==="arg")
 			await streams.writeAll(conn, new TextEncoder().encode(`${JSON.stringify(arg)}\n`));
 		
 		// this is sent by a worker (via xwork.send()) to send a message to the parent
