@@ -1,6 +1,7 @@
 import {xu} from "xu";
 import {xwork} from "./xwork.js";
 import {assertEquals, assertStrictEquals, assert, delay} from "std";
+import {XLog} from "xlog";
 
 Deno.test("detached", async () =>
 {
@@ -22,6 +23,7 @@ Deno.test("detached", async () =>
 		await delay(500);
 		return {nums : [3.14, 1.235], arg};
 	}
+
 	let {ready, send, done} = await xwork.run(f, msgs[0], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])});
 	await ready();
 	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
@@ -51,6 +53,26 @@ Deno.test("detachedKill", async () =>
 	assert(await xu.waitUntil(() => msgCount===1, {timeout : xu.SECOND*5}));
 	await delay(xu.SECOND);
 	await kill();
+});
+
+Deno.test("inline-xlog", async () =>
+{
+	async function f(v=7)
+	{
+		console.log("output from worker");
+		console.error("error from worker");
+		await delay(300);
+		return v*2;
+	}
+
+	const debugLog = [];
+	const logger = v => debugLog.push(v);
+	const xlog = new XLog("debug", {logger});
+	const r = await xwork.run(f, undefined, {imports : {std : ["delay"]}, xlog});
+	assertStrictEquals(r, 14);
+	assertStrictEquals(debugLog.length, 2);
+	assert(debugLog[0].includes("output from worker"));
+	assert(debugLog[1].includes("error from worker"));
 });
 
 Deno.test("inline", async () =>

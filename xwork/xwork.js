@@ -51,7 +51,7 @@ xwork.send = async function send(msg) { await streams.writeAll(workerConnection,
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
 // this also allows 'inline' function execution on other threads via fun.toString()
 // only supports passing a single argument (it used to support multiple, but it just got kinda gross and I don't need it)
-xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb}={})
+xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb, xlog}={})
 {
 	const xworkSockPath = await fileUtil.genTempPath(undefined, ".xwork.sock");
 	
@@ -86,8 +86,17 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb}
 			workerMsgConn = conn;
 	}});
 
-	const runOpts = runUtil.denoRunOpts({liveOutput : true});
+	const runOpts = runUtil.denoRunOpts();
 	runOpts.env.XWORK_SOCK_PATH = xworkSockPath;
+	if(xlog)
+	{
+		runOpts.stdoutcb = line => xlog.info`${line}`;
+		runOpts.stderrcb = line => xlog.warn`${line}`;
+	}
+	else
+	{
+		runOpts.liveOutput = true;
+	}
 
 	let srcFilePath = fun;	// assume a filename
 	if(typeof fun==="function")
@@ -125,8 +134,8 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb}
 	
 	if(detached)
 		runOpts.detached = true;
-
-	const {p, timedOut} = await runUtil.run("deno", runUtil.denoArgs(srcFilePath), runOpts);
+	
+	const {p, cb, timedOut} = await runUtil.run("deno", runUtil.denoArgs(srcFilePath), runOpts);
 	if(timedOut)
 	{
 		xworkSockServer.close();
@@ -136,7 +145,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb}
 	const cleanup = async killed =>
 	{
 		if(detached && !killed)
-			await p.status();
+			await cb();
 		
 		if(typeof fun==="function")
 			await fileUtil.unlink(srcFilePath);
