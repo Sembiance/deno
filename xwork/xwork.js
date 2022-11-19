@@ -1,68 +1,163 @@
 import {xu} from "xu";
-import {fileUtil, runUtil} from "xutil";
+import {fileUtil, runUtil, unixSockUtil} from "xutil";
+import {streams, readLines} from "std";
 
 const xwork = {};
 
-// this is called by worker 'files' that need to get their args
-xwork.args = async function args()
-{
-	return xu.parseJSON(await fileUtil.readTextFile(Deno.env.get("XWORK_ARGS_FILE_PATH")), []);
-};
+/** THESE ARE ALL CALLED BY THE INDIVIDUAL WORKERS, DO NOT CALL THESE AS THE PARENT */
+xwork.args = async function args() { return xu.parseJSON(await unixSockUtil.sendReceiveLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "args"})), []); };
+xwork.done = async function done(msg) { return await unixSockUtil.sendLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "done", msg})); };
 
-// this is called by worker 'files' upon completion to return values
-xwork.done = async function done(r)
+let workerMessages = [];
+let workerConnection = null;
+xwork.openConnection = async function openConnection()
 {
-	return await Deno.writeTextFile(Deno.env.get("XWORK_ARGS_FILE_PATH"), JSON.stringify(r));
-};
+	workerConnection = await Deno.connect({transport : "unix", path : Deno.env.get("XWORK_SOCK_PATH")});
+	
+	const receiveMessages = async function()
+	{
+		try
+		{
+			for await(const line of readLines(workerConnection))
+				workerMessages.push(xu.parseJSON(line, {}));
+		}
+		catch {}
+		
+		try
+		{
+			workerConnection.close();
+		}
+		catch {}
+		workerMessages = null;
+	};
 
-// this will execut the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
+	receiveMessages();
+	await streams.writeAll(workerConnection, new TextEncoder().encode(`${JSON.stringify({op : "ready"})}\n`));
+};
+xwork.closeConnection = function closeConnection() { workerConnection.close(); };
+xwork.recv = async function recv(cb)
+{
+	while(workerMessages!==null)	// eslint-disable-line no-unmodified-loop-condition
+	{
+		await xu.waitUntil(() => workerMessages===null || workerMessages?.length>0);	// eslint-disable-line no-loop-func
+		if(workerMessages===null)
+			break;
+		await cb(workerMessages.shift());
+	}
+};
+xwork.send = async function send(msg) { await streams.writeAll(workerConnection, new TextEncoder().encode(`${JSON.stringify({op : "msg", msg})}\n`)); };
+
+/** WHAT IS BELOW CAN BE CALLED BY THE PARENT */
+// this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
 // this also allows 'inline' function execution on other threads via fun.toString()
-xwork.run = async function run(fun, args=[], {timeout, imports={}}={})
+xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, msgcb}={})
 {
-	const inOutFilePath = await fileUtil.genTempPath(undefined, ".xwork");
-	await Deno.writeTextFile(inOutFilePath, JSON.stringify(Array.force(args)));
+	const xworkSockPath = await fileUtil.genTempPath(undefined, ".xwork.sock");
+	
+	let gotResult = false;
+	let result = [];
+	let workerMsgConn = null;
+	const xworkSockServer = await unixSockUtil.listen({unixSockPath : xworkSockPath, linecb : async (line, conn) =>
+	{
+		const {op, msg} = xu.parseJSON(line, {});
+		if(!op)
+			return;
+		
+		// this is sent by a worker 'file' when they are done and are ready to return a result
+		if(op==="done")
+		{
+			result = msg;
+			xworkSockServer.close();
+			gotResult = true;
+			return;
+		}
+
+		// this is sent by a worker 'file' when they want to get their args
+		if(op==="args")
+			await streams.writeAll(conn, new TextEncoder().encode(`${JSON.stringify(Array.force(args))}\n`));
+		
+		// this is sent by a worker (via xwork.send()) to send a message to the parent
+		if(op==="msg" && msgcb)
+			msgcb(msg);
+		
+		// this is sent by a detached worker when they are ready to receive messages
+		if(op==="ready")
+			workerMsgConn = conn;
+	}});
 
 	const runOpts = runUtil.denoRunOpts({liveOutput : true});
+	runOpts.env.XWORK_SOCK_PATH = xworkSockPath;
 
-	let srcFilePath = null;
+	let srcFilePath = fun;	// assume a filename
 	if(typeof fun==="function")
 	{
 		const src =
 		[
 			`import {xu} from "xu";`,
+			`import {xwork} from "xwork";`,
 			`import {fileUtil} from "xutil";`,
-			...Object.entries(imports).map(([pkg, imp]) => `import {${imp.filter(v => v!=="fileUtil").join(", ")}} from "${pkg}";`)
+			...Object.entries(imports).map(([pkg, imp]) => `import {${Array.force(imp).filter(v => v!=="fileUtil").join(", ")}} from "${pkg}";`)
 		];
+
+		if(detached)
+			src.push(`await xwork.openConnection();`);
 
 		srcFilePath = await fileUtil.genTempPath(undefined, ".xwork.js");
 		const funSrc = fun.toString();
 		src.push(fun.name ? funSrc : `const _xworkFun = ${funSrc}`);
-		let execLine = `await Deno.writeTextFile(\`${inOutFilePath}\`, JSON.stringify(`;
+		let execLine = `await xwork.done(`;
+		//let execLine = `await Deno.writeTextFile(\`${inOutFilePath}\`, JSON.stringify(`;
 		if(funSrc.trim().startsWith("async"))
 			execLine += "await ";
 		execLine += fun.name || "_xworkFun";
-		execLine += `(...xu.parseJSON(await fileUtil.readTextFile(\`${inOutFilePath}\`), []))));`;
+		execLine += `(...${JSON.stringify(Array.force(args))}));`;
 		src.push(execLine);
+	
+		if(detached)
+			src.push(`xwork.closeConnection();`);
 
 		await Deno.writeTextFile(srcFilePath, src.join("\n"));
-	}
-	else if(typeof fun==="string")
-	{
-		// assume a filename
-		srcFilePath = fun;
-		runOpts.env.XWORK_ARGS_FILE_PATH = inOutFilePath;
 	}
 
 	if(timeout)
 		runOpts.timeout = timeout;
+	
+	if(detached)
+		runOpts.detached = true;
 
-	await runUtil.run("deno", runUtil.denoArgs(srcFilePath), runOpts);
-	if(typeof fun==="function")
-		await fileUtil.unlink(srcFilePath);
+	const {p, timedOut} = await runUtil.run("deno", runUtil.denoArgs(srcFilePath), runOpts);
+	if(timedOut)
+	{
+		xworkSockServer.close();
+		gotResult = true;
+	}
+	
+	const cleanup = async () =>
+	{
+		if(detached)
+			await p.status();
+		
+		if(typeof fun==="function")
+			await fileUtil.unlink(srcFilePath);
+		
+		await xu.waitUntil(() => gotResult);
+		return result;
+	};
 
-	const r = xu.parseJSON(await fileUtil.readTextFile(inOutFilePath));
-	await fileUtil.unlink(inOutFilePath);
-	return r;
+	if(!detached)
+		return await cleanup();
+
+	return {
+		ready : async () => await xu.waitUntil(() => workerMsgConn!==null),
+		done  : async () => await cleanup(),
+		send  : async msg =>
+		{
+			if(!workerMsgConn)
+				throw new Error("Worker not ready to receive messages");
+			
+			await streams.writeAll(workerMsgConn, new TextEncoder().encode(`${JSON.stringify(msg)}\n`));
+		}
+	};
 };
 
 // this will map all the values in arr calling externally fun for each value

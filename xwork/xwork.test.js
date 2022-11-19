@@ -2,6 +2,42 @@ import {xu} from "xu";
 import {xwork} from "./xwork.js";
 import {assertEquals, assertStrictEquals, assert, delay} from "std";
 
+Deno.test("detached", async () =>
+{
+	let msgCount = 0;
+	const msgs =
+	[
+		"Start Arg",
+		"Hello, from Worker!",
+		{nums : [1, 2, 3], str : "!tneraP morf ,olleH", bool : false}
+	];
+
+	async function f(arg)
+	{
+		xwork.send(arg);
+		await delay(250);
+		xwork.recv(async msg => await xwork.send({nums : msg.nums.map(v => v/7), str : msg.str.reverse(), bool : !msg.bool}));
+		await delay(250);
+		xwork.send("Hello, from Worker!");
+		await delay(xu.SECOND*2);
+		return {nums : [3.14, 1.235], arg};
+	}
+	let {ready, send, done} = await xwork.run(f, [msgs[0]], {imports : {std : ["delay"]}, detached : true, msgcb : msg => assertEquals(msg, msgs[msgCount++])});
+	await ready();
+	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
+	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});
+	assert(await xu.waitUntil(() => msgCount===3, {timeout : xu.SECOND*5}));
+	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
+
+	msgCount = 0;
+	({ready, send, done} = await xwork.run("testWorker-detached.js", [msgs[0]], {imports : {std : ["delay"]}, detached : true, msgcb : msg => assertEquals(msg, msgs[msgCount++])}));
+	await ready();
+	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
+	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});
+	assert(await xu.waitUntil(() => msgCount===3, {timeout : xu.SECOND*5}));
+	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
+});
+
 Deno.test("inline", async () =>
 {
 	async function f(v=7)
