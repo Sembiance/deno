@@ -3,7 +3,7 @@
 // Can see changelog here: https://github.com/denoland/deno_std/releases
 // Sadly, because 'export' is a magic statement, I can't use a template string and have a single global "0.114.0" var
 // So you need to search/replace to update version
-export {delay} from "https://deno.land/std@0.159.0/async/mod.ts";
+export {delay, deadline} from "https://deno.land/std@0.159.0/async/mod.ts";
 export * as path from "https://deno.land/std@0.159.0/path/mod.ts";
 export * as fs from "https://deno.land/std@0.159.0/fs/mod.ts";
 export * as streams from "https://deno.land/std@0.159.0/streams/mod.ts";
