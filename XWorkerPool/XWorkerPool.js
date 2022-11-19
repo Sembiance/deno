@@ -89,4 +89,10 @@ export class XWorkerPool
 
 		this.queue = this.queue.concat(Array.force(vals));	// use use concat instead of ...vals to avoid call stack overflow
 	}
+
+	// send a message to all workers
+	async broadcast(msg)
+	{
+		await this.workers.parallelMap(async worker => await worker.send(msg), this.workers.length);
+	}
 }

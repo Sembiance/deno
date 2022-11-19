@@ -9,7 +9,13 @@ Deno.test("process", async () =>
 	{
 		console.log("stdout from worker");
 		console.error("stderr from worker");
-		await xwork.recv(async msg => await xwork.send({id : msg.id, nums : msg.nums.map(v => v*2), str : msg.str.reverse(), bool : !msg.bool}));	// eslint-disable-line no-undef
+		await xwork.recv(async msg =>	// eslint-disable-line no-undef
+		{
+			if(msg.broadcast)
+				return console.log("got broadcast message: ", msg);
+
+			await xwork.send({id : msg.id, nums : msg.nums.map(v => v*2), str : msg.str.reverse(), bool : !msg.bool});	// eslint-disable-line no-undef
+		});
 	}
 
 	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
@@ -23,6 +29,7 @@ Deno.test("process", async () =>
 	await pool.start(f, {imports : {std : ["delay"]}});
 	pool.process(vals.slice(0, vals.length/2));
 	await delay(100);
+	await pool.broadcast({broadcast : true, msg : "test broadcast"});
 	pool.process(vals.slice(vals.length/2));
 	await xu.waitUntil(() => results.length===vals.length, {timeout : xu.SECOND*30});
 	await pool.stop();
@@ -36,6 +43,7 @@ Deno.test("process", async () =>
 		assertEquals(result.nums, val.nums.map(v => v*2));
 	}
 
-	assertStrictEquals(debugLog.length, navigator.hardwareConcurrency*2);
+	assertStrictEquals(debugLog.length, navigator.hardwareConcurrency*3);
 	assert(debugLog[0].includes("stdout from worker"));
+	assert(debugLog.at(-1).includes("test broadcast"));
 });
