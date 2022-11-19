@@ -50,7 +50,8 @@ xwork.send = async function send(msg) { await streams.writeAll(workerConnection,
 /** WHAT IS BELOW CAN BE CALLED BY THE PARENT */
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
 // this also allows 'inline' function execution on other threads via fun.toString()
-xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, recvcb}={})
+// only supports passing a single argument (it used to support multiple, but it just got kinda gross and I don't need it)
+xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb}={})
 {
 	const xworkSockPath = await fileUtil.genTempPath(undefined, ".xwork.sock");
 	
@@ -74,7 +75,7 @@ xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, rec
 
 		// this is sent by a worker 'file' when they want to get their args
 		if(op==="args")
-			await streams.writeAll(conn, new TextEncoder().encode(`${JSON.stringify(Array.force(args))}\n`));
+			await streams.writeAll(conn, new TextEncoder().encode(`${JSON.stringify(arg)}\n`));
 		
 		// this is sent by a worker (via xwork.send()) to send a message to the parent
 		if(op==="msg" && recvcb)
@@ -110,7 +111,7 @@ xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, rec
 		if(funSrc.trim().startsWith("async"))
 			execLine += "await ";
 		execLine += fun.name || "_xworkFun";
-		execLine += `(...${JSON.stringify(Array.force(args))}));`;
+		execLine += `(${typeof arg==="undefined" ? undefined : JSON.stringify(arg)}));`;
 		src.push(execLine);
 	
 		if(detached)
@@ -132,13 +133,16 @@ xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, rec
 		gotResult = true;
 	}
 	
-	const cleanup = async () =>
+	const cleanup = async killed =>
 	{
-		if(detached)
+		if(detached && !killed)
 			await p.status();
 		
 		if(typeof fun==="function")
 			await fileUtil.unlink(srcFilePath);
+		
+		if(killed)
+			return;
 		
 		await xu.waitUntil(() => gotResult);
 		return result;
@@ -150,6 +154,12 @@ xwork.run = async function run(fun, args=[], {timeout, detached, imports={}, rec
 	return {
 		ready : async () => await xu.waitUntil(() => workerMsgConn!==null),
 		done  : async () => await cleanup(),
+		kill  : async () =>
+		{
+			await runUtil.kill(p);
+			xworkSockServer.close();
+			await cleanup(true);
+		},
 		send  : async msg =>
 		{
 			if(!workerMsgConn)

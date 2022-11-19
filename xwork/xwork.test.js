@@ -19,10 +19,10 @@ Deno.test("detached", async () =>
 		xwork.recv(async msg => await xwork.send({nums : msg.nums.map(v => v/7), str : msg.str.reverse(), bool : !msg.bool}));
 		await delay(250);
 		xwork.send("Hello, from Worker!");
-		await delay(xu.SECOND*2);
+		await delay(500);
 		return {nums : [3.14, 1.235], arg};
 	}
-	let {ready, send, done} = await xwork.run(f, [msgs[0]], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])});
+	let {ready, send, done} = await xwork.run(f, msgs[0], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])});
 	await ready();
 	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
 	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});
@@ -30,12 +30,27 @@ Deno.test("detached", async () =>
 	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
 
 	msgCount = 0;
-	({ready, send, done} = await xwork.run("testWorker-detached.js", [msgs[0]], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])}));
+	({ready, send, done} = await xwork.run("testWorker-detached.js", msgs[0], {imports : {std : ["delay"]}, detached : true, recvcb : msg => assertEquals(msg, msgs[msgCount++])}));
 	await ready();
 	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
 	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});
 	assert(await xu.waitUntil(() => msgCount===3, {timeout : xu.SECOND*5}));
 	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
+});
+
+Deno.test("detachedKill", async () =>
+{
+	let msgCount = 0;
+	async function f(arg)
+	{
+		xwork.send(arg.reverse());
+		await delay(xu.MINUTE);
+	}
+	const {ready, kill} = await xwork.run(f, "Hello, World!", {imports : {std : ["delay"]}, detached : true, recvcb : msg => { assertEquals(msg, "Hello, World!".reverse()); msgCount++; }});
+	await ready();
+	assert(await xu.waitUntil(() => msgCount===1, {timeout : xu.SECOND*5}));
+	await delay(xu.SECOND);
+	await kill();
 });
 
 Deno.test("inline", async () =>
@@ -81,7 +96,7 @@ Deno.test("timeout", async () =>
 {
 	async function f(v=7)
 	{
-		await delay(xu.SECOND*5);
+		await delay(xu.SECOND*3);
 		return v*2;
 	}
 	let start = performance.now();
@@ -91,6 +106,6 @@ Deno.test("timeout", async () =>
 
 	start = performance.now();
 	r = await xwork.run(f, undefined, {imports : {std : ["delay"]}});
-	assertStrictEquals(6, Math.ceil((performance.now()-start)/xu.SECOND));
+	assertStrictEquals(4, Math.ceil((performance.now()-start)/xu.SECOND));
 	assertStrictEquals(r, 14);
 });
