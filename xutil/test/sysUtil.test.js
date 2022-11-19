@@ -1,5 +1,6 @@
-import {memInfo, getAvailablePorts} from "../sysUtil.js";
+import {memInfo, getAvailablePorts, getAvailablePort} from "../sysUtil.js";
 import {assert} from "std";
+
 
 Deno.test("memInfo", async () =>
 {
@@ -15,8 +16,9 @@ Deno.test("memInfo", async () =>
 	assert(a.total>a.available);
 });
 
-Deno.test("memInfo", async () =>
+Deno.test("getAvailablePorts", () =>
 {
-	assert((await getAvailablePorts()).length===1);
-	assert((await getAvailablePorts(222)).length===222);
+	assert((getAvailablePorts()).length===1);
+	assert((getAvailablePorts(222)).length===222);
+	assert(typeof getAvailablePort()==="number");
 });

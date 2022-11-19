@@ -24,3 +24,8 @@ export function getAvailablePorts(qty=1)
 {
 	return Array.from({length : qty}).fill(1).map(() => Deno.listen({port : 0})).map(l => { l.close(); return l.addr.port; });
 }
+
+export function getAvailablePort()
+{
+	return getAvailablePorts(1)[0];
+}
