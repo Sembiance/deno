@@ -222,7 +222,7 @@ export async function writeJSONLFile(filePath, lines)
 }
 
 /** writes the data as text to filePath. We wrap Deno.writeTextFile() because we needed to do it for readTextFile() and this keeps clear that we always use fileUtil.* for these two ops */
-export async function writeTextFile(filePath, data)
+export async function writeTextFile(filePath, data, options)
 {
-	return await Deno.writeTextFile(filePath, data);	// eslint-disable-line no-restricted-syntax
+	return await Deno.writeTextFile(filePath, data, options);	// eslint-disable-line no-restricted-syntax
 }
