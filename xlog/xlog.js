@@ -1,5 +1,6 @@
 import {xu, fg} from "xu";
 import {path} from "std";
+import {fileUtil} from "xutil";
 
 const LEVELS = ["none", "fatal", "error", "warn", "info", "debug", "trace"];
 
@@ -103,7 +104,7 @@ export class XLog
 		const logLinesCopy = this.logLines.slice();
 		this.logLines.clear();
 
-		await Deno.writeTextFile(this.logFilePath, logLinesCopy.join("").decolor(), {append : true});
+		await fileUtil.writeTextFile(this.logFilePath, logLinesCopy.join("").decolor(), {append : true});
 	}
 
 	atLeast(logLevel)

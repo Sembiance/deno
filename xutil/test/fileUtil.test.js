@@ -19,8 +19,8 @@ Deno.test("emptyDir", async () =>
 {
 	const EMPTY_DIR_PATH = await fileUtil.genTempPath();
 	await Deno.mkdir(path.join(EMPTY_DIR_PATH, "subdir"), {recursive : true});
-	await Deno.writeTextFile(path.join(EMPTY_DIR_PATH, "abc.txt"), "abc123");
-	await Deno.writeTextFile(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat"), "DATA\nGOES\nHERE");
+	await fileUtil.writeTextFile(path.join(EMPTY_DIR_PATH, "abc.txt"), "abc123");
+	await fileUtil.writeTextFile(path.join(EMPTY_DIR_PATH, "subdir", "subfile.dat"), "DATA\nGOES\nHERE");
 
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "subdir")), true);
 	assertStrictEquals(await fileUtil.exists(path.join(EMPTY_DIR_PATH, "abc.txt")), true);
@@ -214,7 +214,7 @@ Deno.test("unlink", async () =>
 {
 	const tmpFilePath = await fileUtil.genTempPath();
 	const data = "this is just\na test";
-	await Deno.writeTextFile(tmpFilePath, data);
+	await fileUtil.writeTextFile(tmpFilePath, data);
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
 	await fileUtil.unlink(tmpFilePath);
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), false);

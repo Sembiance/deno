@@ -116,7 +116,6 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		const funSrc = fun.toString();
 		src.push(fun.name ? funSrc : `const _xworkFun = ${funSrc}`);
 		let execLine = `await xwork.done(`;
-		//let execLine = `await Deno.writeTextFile(\`${inOutFilePath}\`, JSON.stringify(`;
 		if(funSrc.trim().startsWith("async"))
 			execLine += "await ";
 		execLine += fun.name || "_xworkFun";
@@ -126,7 +125,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		if(detached)
 			src.push(`xwork.closeConnection();`);
 
-		await Deno.writeTextFile(srcFilePath, src.join("\n"));
+		await fileUtil.writeTextFile(srcFilePath, src.join("\n"));
 	}
 
 	if(timeout)
