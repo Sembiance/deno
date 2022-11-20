@@ -65,7 +65,7 @@ export class XLog
 					this.logLines.push(`${s}\n`);
 
 				if(this.logger)
-					this.logger(s);
+					this.logger(noANSI ? s.decolor() : s);
 				
 				if(!this.logFilePath && !this.logger)
 					console.log(noANSI ? s.decolor() : s);

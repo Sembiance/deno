@@ -2,6 +2,7 @@ import {xu} from "xu";
 import {delay, assertStrictEquals, assertEquals, assert, path} from "std";
 import * as runUtil from "../runUtil.js";
 import * as fileUtil from "../fileUtil.js";
+import {XLog} from "xlog";
 
 await runUtil.run("prlimit", ["--pid", Deno.pid, `--core=0`]);
 
@@ -44,6 +45,15 @@ Deno.test("stdout-encoding", async () =>
 
 	({stdout} = await runUtil.run("unzip", ["-qz", path.join(xu.dirname(import.meta), "files", "p205.zip")], {stdoutEncoding : "CP437"}));
 	assert(stdout.includes("│ ▄▄▄   ▄▄     ▄▄▄   ─────────────────────────            Winston-Salem, NC │"));
+});
+
+Deno.test("xlog", async () =>
+{
+	const xlogLines = [];
+	const xlog = new XLog("info", {logger : line => xlogLines.push(line), noANSI : true});
+	await runUtil.run("deno", ["--quiet"], {xlog, stdinData : `console.log("stdout"); console.error("stderr");`});
+	assert(xlogLines.find(line => line==="stdout"));
+	assert(xlogLines.find(line => line==="WARN: stderr"));
 });
 
 Deno.test("stdoutcb", async () =>

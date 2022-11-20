@@ -100,7 +100,7 @@ export async function searchReplace(filePath, findMe, replaceWith)
 		return;
 	
 	const data = await readTextFile(filePath);
-	await Deno.writeTextFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
+	await writeTextFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
 }
 
 /** Reads in a JSON L file, line by line, calling async cb(line) for each line read */
@@ -219,4 +219,10 @@ export async function writeJSONLFile(filePath, lines)
 
 	if(gz)
 		await runUtil.run("gzip", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
+}
+
+/** writes the data as text to filePath. We wrap Deno.writeTextFile() because we needed to do it for readTextFile() and this keeps clear that we always use fileUtil.* for these two ops */
+export async function writeTextFile(filePath, data)
+{
+	return await Deno.writeTextFile(filePath, data);	// eslint-disable-line no-restricted-syntax
 }

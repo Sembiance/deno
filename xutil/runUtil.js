@@ -28,13 +28,14 @@ import {path, readLines, streams} from "std";
  *   verbose            Set to true to output some details about the program
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
+ *   xlog               If set, stdout/stderr will be redirected to the logger
  */
 export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
 	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
 	stderrEncoding="utf-8", stderrFilePath, stderrcb,
-	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX}={})
+	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, xlog}={})
 {
 	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData || stdinFilePath) ? "piped" : "null")};
 
@@ -146,8 +147,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		reader.close();
 	};
 
-	const stdoutcbPromise = stdoutcb ? lineReader(p.stdout, stdoutcb) : null;
-	const stderrcbPromise = stderrcb ? lineReader(p.stderr, stderrcb) : null;
+	const stdoutcbPromise = stdoutcb || xlog ? lineReader(p.stdout, stdoutcb || (line => xlog.info`${line}`)) : null;
+	const stderrcbPromise = stderrcb || xlog ? lineReader(p.stderr, stderrcb || (line => xlog.warn`${line}`)) : null;
 
 	let cbCalled = false;
 	const cb = async () =>
