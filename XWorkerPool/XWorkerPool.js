@@ -4,7 +4,7 @@ import {XLog} from "xlog";
 
 export class XWorkerPool
 {
-	constructor({donecb, xlog=new XLog("warn")}={})
+	constructor({workercb, emptycb, xlog=new XLog("warn")}={})
 	{
 		this.queue = [];
 		this.ready = false;
@@ -12,7 +12,8 @@ export class XWorkerPool
 		this.available = [];
 		this.busy = {};
 		this.xlog = xlog;
-		this.donecb = donecb;
+		this.workercb = workercb;
+		this.emptycb = emptycb;
 		this.stopped = false;
 	}
 
@@ -75,11 +76,20 @@ export class XWorkerPool
 			this.xlog.error`Worker done but pool says worker ${workerid} is not busy!`;
 
 		this.xlog.debug`Worker ${workerid} done`;
+
+		if(this.workercb)
+			await this.workercb(workerid, r);
+
 		delete this.busy[workerid];
 		this.available.push(worker);
 
-		if(this.donecb)
-			await this.donecb(workerid, r);
+		if(this.emptycb && this.empty)
+			await this.emptycb();
+	}
+
+	get empty()
+	{
+		return this.queue.length===0 && this.available.length===this.workers.length;
 	}
 
 	// add the vals to the queue

@@ -25,13 +25,20 @@ Deno.test("process", async () =>
 	const xlog = new XLog("info", {logger});
 
 	const results = [];
-	const pool = new XWorkerPool({xlog, donecb : (workerid, r) => results.push(r)});
+	let emptyCount = 0;
+	const pool = new XWorkerPool({xlog, workercb : (workerid, r) => results.push(r), emptycb : () => emptyCount++});
 	await pool.start(f, {imports : {std : ["delay"]}});
 	pool.process(vals.slice(0, vals.length/2));
+	assertStrictEquals(pool.empty, false);
 	await delay(100);
 	await pool.broadcast({broadcast : true, msg : "test broadcast"});
+	assertStrictEquals(emptyCount, 1);
+	assertStrictEquals(pool.empty, true);
 	pool.process(vals.slice(vals.length/2));
+	assertStrictEquals(pool.empty, false);
 	await xu.waitUntil(() => results.length===vals.length, {timeout : xu.SECOND*30});
+	assertStrictEquals(emptyCount, 2);
+	assertStrictEquals(pool.empty, true);
 	await pool.stop();
 
 	for(const result of results)
