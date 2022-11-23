@@ -27,7 +27,7 @@ Deno.test("queryObjectToSearchString", () =>
 
 Deno.test("urlSearchParamsToQueryObject", () =>
 {
-	const a = `http://dev.retromission.com/search?${SEARCH_STRING}`;
+	const a = `http://test.com/search?${SEARCH_STRING}`;
 	const u = new URL(a);
 	assertEquals(urlSearchParamsToQueryObject(u.searchParams), {
 		q              : "",
