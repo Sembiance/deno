@@ -135,6 +135,11 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			});
 		}
 		try { p.kill(timeoutSignal); } catch {}
+		if(xvfbProc)
+		{
+			await kill(xvfbProc, "SIGTERM");
+			xvfbProc = null;
+		}
 		timerid = true;
 	}
 	if(timeout)
@@ -182,7 +187,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			clearTimeout(timerid);
 		
 		if(xvfbProc)
+		{
 			await kill(xvfbProc, "SIGTERM");
+			xvfbProc = null;
+		}
 
 		// Close the process
 		try { p.close(); } catch {}

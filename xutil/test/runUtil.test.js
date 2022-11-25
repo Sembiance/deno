@@ -192,6 +192,13 @@ Deno.test("virtualX-single", async () =>
 	assertStrictEquals(stderr.startsWith("Usage: xclock"), true, stderr);
 });
 
+Deno.test("virtualX-timeout", async () =>
+{
+	const {stdout, stderr} = await runUtil.run("xclock", [], {virtualX : true, timeout : xu.SECOND*3});
+	assertStrictEquals(stdout, "");
+	assertStrictEquals(stderr.includes("Missing charsets in String to Font"), true, stderr);
+});
+
 Deno.test("detached-killExternal", async () =>
 {
 	let beforeTime = performance.now();
@@ -216,7 +223,7 @@ Deno.test("detached-output", async () =>
 
 Deno.test("detached-partial", async () =>
 {
-	const {p} = await runUtil.run("time", ["sleep", 1], {detached : true});
+	const {p} = await runUtil.run("time", ["sleep", 2], {detached : true});
 	const stderr = await p.stderrOutput();
 	assert(stderr.length>100);
 });
