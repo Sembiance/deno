@@ -15,6 +15,18 @@ Deno.test("areEqual", async () =>
 	assertStrictEquals(await fileUtil.areEqual(path.join(FILES_DIR, "input.png"), path.join(FILES_DIR, "duplicateInput.png")), true);
 });
 
+Deno.test("concat", async () =>
+{
+	const CONCAT_DEST_FILE_PATH = await fileUtil.genTempPath();
+	await fileUtil.concat([path.join(FILES_DIR, "a.txt"), path.join(FILES_DIR, "b.txt")], CONCAT_DEST_FILE_PATH);
+	assert(await fileUtil.areEqual(CONCAT_DEST_FILE_PATH, path.join(FILES_DIR, "ab.txt")));
+	await fileUtil.unlink(CONCAT_DEST_FILE_PATH);
+	await fileUtil.concat([path.join(FILES_DIR, "a.txt"), path.join(FILES_DIR, "b.txt")], CONCAT_DEST_FILE_PATH, {seperator : "_"});
+	console.log(CONCAT_DEST_FILE_PATH);
+	assert(await fileUtil.areEqual(CONCAT_DEST_FILE_PATH, path.join(FILES_DIR, "ab_sep.txt")));
+	await fileUtil.unlink(CONCAT_DEST_FILE_PATH);
+});
+
 Deno.test("emptyDir", async () =>
 {
 	const EMPTY_DIR_PATH = await fileUtil.genTempPath();

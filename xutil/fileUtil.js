@@ -9,6 +9,23 @@ export async function areEqual(a, b)
 	return !!status.success;
 }
 
+export async function concat(srcFilePaths, destFilePath, {seperator}={})
+{
+	const destFile = await Deno.open(destFilePath, {read : false, write : true, append : true, truncate : false, create : true});
+	const seperatorData = typeof seperator==="string" ? new TextEncoder().encode(seperator) : seperator;
+	for(let i=0;i<srcFilePaths.length;i++)
+	{
+		const srcFile = await Deno.open(srcFilePaths[i], {read : true, write : false});
+		await streams.copy(srcFile, destFile);
+		srcFile.close();
+
+		if(seperatorData && i<(srcFilePaths.length-1))
+			await streams.writeAll(destFile, seperatorData);
+	}
+
+	destFile.close();
+}
+
 /** Empties the dirPath, deleting anything in it **/
 export async function emptyDir(dirPath)
 {

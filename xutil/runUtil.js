@@ -137,7 +137,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		try { p.kill(timeoutSignal); } catch {}
 		if(xvfbProc)
 		{
-			await kill(xvfbProc, "SIGTERM");
+			await kill(xvfbProc, "SIGKILL");
 			xvfbProc = null;
 		}
 		timerid = true;
@@ -188,7 +188,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		
 		if(xvfbProc)
 		{
-			await kill(xvfbProc, "SIGTERM");
+			await kill(xvfbProc, "SIGKILL");
 			xvfbProc = null;
 		}
 
@@ -253,12 +253,15 @@ export function denoArgs(...args)
 // returns env needed to properly run deno scripts
 export function denoEnv()
 {
-	return {DENO_DIR : "/mnt/compendium/.deno"};
+	return {
+		DENO_DIR : "/mnt/compendium/.deno",
+		DENO_NO_UPDATE_CHECK : "1"
+	};
 }
 
 export function denoRunOpts(o={})
 {
-	return {env : denoEnv(), ...o};
+	return {...o, env : { ...denoEnv(), ...(o.env)}};
 }
 
 export async function checkNumserver(dontExit)

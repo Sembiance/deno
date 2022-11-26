@@ -1,5 +1,6 @@
 import {xu} from "xu";
 import {run} from "./runUtil.js";
+import {fileUtil} from "xutil";
 
 /* returns info about current system memory */
 export async function memInfo()
@@ -15,7 +16,7 @@ export async function memInfo()
 		available = +cols.at(-1);
 	};
 
-	await run("free", ["-m"], {stdoutcb : stdoutMemCB});
+	await run("free", ["-b"], {stdoutcb : stdoutMemCB});
 
 	return {total, available, usedPercent : Math.floor((1-(available/total))*100)};
 }
@@ -28,4 +29,16 @@ export function getAvailablePorts(qty=1)
 export function getAvailablePort()
 {
 	return getAvailablePorts(1)[0];
+}
+
+export async function pidMemInfo(pid=Deno.pid)
+{
+	const r = {};
+	const pidStatusRaw = await fileUtil.readTextFile(`/proc/${pid}/status`);
+	for(const line of pidStatusRaw.split("\n"))
+	{
+		if(line.startsWith("VmRSS"))
+			r.vmRSS = line.innerTrim().split(" ")[1]*xu.KB;
+	}
+	return r;
 }
