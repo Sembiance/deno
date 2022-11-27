@@ -220,6 +220,11 @@ Number.prototype.secondsAsHumanReadable ||= function secondsAsHumanReadable({lan
 	return r.slice(0, maxParts).join(short ? "" : ", ");
 };
 
+Number.prototype.msAsHumanReadable = function msAsHumanReadable(options)
+{
+	return Number(this/1000).secondsAsHumanReadable(options);
+};
+
 /** Sets the given bit in a number to 1 */
 Number.prototype.setBit ||= function setBit(loc)
 {

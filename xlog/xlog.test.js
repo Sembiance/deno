@@ -94,6 +94,12 @@ Deno.test("elapsed", async () =>
 	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
 });
 
+Deno.test("noANSI", () =>
+{
+	const xlog = new XLog(undefined, {noANSI : true});
+	assertStrictEquals(xlog.fatal`fatal no color message, ${fg.green("should see")}`, "FATAL: fatal no color message, should see");
+});
+
 Deno.test("xlog", () =>
 {
 	const xlog = new XLog();

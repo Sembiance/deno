@@ -60,7 +60,9 @@ export class WebServer
 			}
 			catch(err)
 			{
-				this.xlog.warn`Listener closed with ${httpConns.size.toLocaleString()} open HTTP connections with error: ${err}`;
+				if(!this.stopping)
+					this.xlog.warn`Listener closed with ${httpConns.size.toLocaleString()} open HTTP connections with error: ${err}`;
+					
 				for(const v of httpConns)
 					v.close();
 				

@@ -64,12 +64,16 @@ export class XLog
 
 				if(this.logFilePath)
 					this.logLines.push(`${s}\n`);
+				
+				const outText = noANSI ? s.decolor() : s;
 
 				if(this.logger)
-					this.logger(noANSI ? s.decolor() : s);
+					this.logger(outText);
 				
 				if(!this.logFilePath && !this.logger)
-					console.log(noANSI ? s.decolor() : s);
+					console.log(outText);
+				
+				return outText;
 			};
 		}
 	}
