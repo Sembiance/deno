@@ -38,6 +38,11 @@ export class XWorkerPool
 	async workerExit(workerid, status)
 	{
 		this.workers.find(worker => worker.workerid===workerid).exited = true;
+		
+		// remove it from busy and available
+		delete this.busy[workerid];
+		this.available.filterInPlace(worker => worker.workerid!==workerid);
+		
 		if(this.stopping || !this.crashcb)
 			return;
 		
