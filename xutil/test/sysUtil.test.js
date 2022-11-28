@@ -27,6 +27,6 @@ Deno.test("getAvailablePorts", () =>
 
 Deno.test("pidMemInfo", async () =>
 {
-	const a = await pidMemInfo(2640);
+	const a = await pidMemInfo(Deno.pid);
 	assert(a.vmRSS>0);
 });

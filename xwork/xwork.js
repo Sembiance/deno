@@ -51,7 +51,7 @@ xwork.send = async function send(msg) { await streams.writeAll(workerConnection,
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
 // this also allows 'inline' function execution on other threads via fun.toString()
 // only supports passing a single argument (it used to support multiple, but it just got kinda gross and I don't need it)
-xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb, xlog}={})
+xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb, exitcb, hideOutput, xlog}={})
 {
 	const xworkSockPath = await fileUtil.genTempPath(undefined, ".xwork.sock");
 	
@@ -92,6 +92,11 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	{
 		runOpts.stdoutcb = line => xlog.info`${line}`;
 		runOpts.stderrcb = line => xlog.warn`${line}`;
+	}
+	else if(hideOutput)
+	{
+		runOpts.stdoutNull = true;
+		runOpts.stderrNull = true;
 	}
 	else
 	{
@@ -134,10 +139,22 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	if(detached)
 		runOpts.detached = true;
 	
+	let exited = false;
+	const exitHandler = async status =>
+	{
+		xu.tryFallback(() => xworkSockServer.close());
+		
+		if(exitcb)
+			await exitcb(status);
+
+		exited = true;
+	};
+	runOpts.exitcb = exitHandler;
+	
 	const {p, cb, timedOut} = await runUtil.run("deno", runUtil.denoArgs(srcFilePath), runOpts);
 	if(timedOut)
 	{
-		xworkSockServer.close();
+		xu.tryFallback(() => xworkSockServer.close());
 		gotResult = true;
 	}
 	
@@ -149,8 +166,8 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		if(typeof fun==="function")
 			await fileUtil.unlink(srcFilePath);
 		
-		if(killed)
-			return;
+		if(killed || exited)
+			return gotResult ? result : undefined;
 		
 		await xu.waitUntil(() => gotResult);
 		return result;
@@ -158,7 +175,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 
 	if(!detached)
 		return await cleanup();
-
+	
 	return {
 		ready : async () => await xu.waitUntil(() => workerMsgConn!==null),
 		done  : async () => await cleanup(),

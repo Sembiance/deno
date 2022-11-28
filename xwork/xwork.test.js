@@ -3,7 +3,7 @@ import {xwork} from "./xwork.js";
 import {assertEquals, assertStrictEquals, assert, delay} from "std";
 import {XLog} from "xlog";
 
-Deno.test("detached", async () =>
+Deno.test("detachedSimple", async () =>
 {
 	let msgCount = 0;
 	const msgs =
@@ -40,6 +40,31 @@ Deno.test("detached", async () =>
 	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
 });
 
+Deno.test("detachedCrash", async () =>
+{
+	let msgCount = 0;
+	const msgs =
+	[
+		"Start Arg",
+		"Hello, from Worker!",
+		{nums : [1, 2, 3], str : "!tneraP morf ,olleH", bool : false}
+	];
+	let failed = false;
+	const exitcb = async status =>
+	{
+		await delay(50);
+		assertStrictEquals(status.success, false);
+		assertStrictEquals(status.code, 1);
+		failed = true;
+	};
+	const {ready, done} = await xwork.run("testWorker-detachedCrash.js", msgs[0], {imports : {std : ["delay"]}, detached : true, hideOutput : true, recvcb : msg => assertEquals(msg, msgs[msgCount++]), exitcb});
+	await ready();
+	assert(await xu.waitUntil(() => msgCount===2, {timeout : xu.SECOND*5}));
+	assert(await xu.waitUntil(() => failed, {timeout : xu.SECOND*2}));
+	assertStrictEquals(failed, true);
+	await done();
+});
+
 Deno.test("detachedKill", async () =>
 {
 	let msgCount = 0;
@@ -48,11 +73,21 @@ Deno.test("detachedKill", async () =>
 		xwork.send(arg.reverse());
 		await delay(xu.MINUTE);
 	}
-	const {ready, kill} = await xwork.run(f, "Hello, World!", {imports : {std : ["delay"]}, detached : true, recvcb : msg => { assertEquals(msg, "Hello, World!".reverse()); msgCount++; }});
+	let failed = false;
+	const exitcb = async status =>
+	{
+		await delay(50);
+		assertStrictEquals(status.success, false);
+		assertStrictEquals(status.signal, 15);
+		failed = true;
+	};
+	const {ready, kill} = await xwork.run(f, "Hello, World!", {imports : {std : ["delay"]}, detached : true, recvcb : msg => { assertEquals(msg, "Hello, World!".reverse()); msgCount++; }, exitcb});
 	await ready();
 	assert(await xu.waitUntil(() => msgCount===1, {timeout : xu.SECOND*5}));
 	await delay(xu.SECOND);
 	await kill();
+	assert(await xu.waitUntil(() => failed, {timeout : xu.SECOND*2}));
+	assertStrictEquals(failed, true);
 });
 
 Deno.test("inline-xlog", async () =>
@@ -128,6 +163,6 @@ Deno.test("timeout", async () =>
 
 	start = performance.now();
 	r = await xwork.run(f, undefined, {imports : {std : ["delay"]}});
-	assertStrictEquals(4, Math.ceil((performance.now()-start)/xu.SECOND));
+	assert([4, 5].includes(Math.ceil((performance.now()-start)/xu.SECOND)));
 	assertStrictEquals(r, 14);
 });

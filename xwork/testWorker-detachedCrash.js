@@ -10,6 +10,7 @@ await delay(250);
 xwork.recv(async msg => await xwork.send({nums : msg.nums.map(v => v/7), str : msg.str.reverse(), bool : !msg.bool}));
 await delay(250);
 await xwork.send("Hello, from Worker!");
+const b = unknownVariable/0;	// eslint-disable-line no-unused-vars, no-undef
 await delay(500);
 await xwork.done({nums : [3.14, 1.235], arg});
 await xwork.closeConnection();

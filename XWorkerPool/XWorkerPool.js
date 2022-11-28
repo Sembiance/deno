@@ -4,7 +4,7 @@ import {XLog} from "xlog";
 
 export class XWorkerPool
 {
-	constructor({workercb, emptycb, xlog=new XLog("warn")}={})
+	constructor({workercb, emptycb, crashcb, xlog=new XLog("warn")}={})
 	{
 		this.queue = [];
 		this.ready = false;
@@ -14,6 +14,7 @@ export class XWorkerPool
 		this.xlog = xlog;
 		this.workercb = workercb;
 		this.emptycb = emptycb;
+		this.crashcb = crashcb;
 		this.stopped = false;
 	}
 
@@ -23,7 +24,7 @@ export class XWorkerPool
 
 		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
 		{
-			const worker = await xwork.run(fun, workerid, {xlog : this.xlog, imports, detached : true, recvcb : msg => this.workerDone(workerid, msg)});
+			const worker = await xwork.run(fun, workerid, {xlog : this.xlog, imports, detached : true, exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)});
 			await worker.ready();
 			worker.workerid = workerid;
 			this.available.push(worker);
@@ -34,11 +35,27 @@ export class XWorkerPool
 		this.processQueue();
 	}
 
+	async workerExit(workerid, status)
+	{
+		this.workers.find(worker => worker.workerid===workerid).exited = true;
+		if(this.stopping || !this.crashcb)
+			return;
+		
+		await this.crashcb(workerid, status);
+	}
+
 	async stop()
 	{
 		this.xlog.debug`Stopping worker pool...`;
 
-		await this.workers.parallelMap(async worker => await worker.kill(), this.workers.length);
+		this.stopping = true;
+		await this.workers.parallelMap(async worker =>
+		{
+			if(worker.exited)
+				return;
+				
+			await worker.kill();
+		}, this.workers.length);
 		this.ready = false;
 		await xu.waitUntil(() => this.stopped, {timeout : xu.SECOND*10});
 	}
@@ -64,8 +81,8 @@ export class XWorkerPool
 			}
 
 			this.busy[worker.workerid] = worker;
-			this.xlog.debug`Sending val from queue (size ${this.queue.length}) to worker ${worker.workerid}`;
-			await worker.send(this.queue.shift());
+			const val = this.queue.shift();
+			await worker.send(val);
 		}
 	}
 
@@ -95,7 +112,8 @@ export class XWorkerPool
 	// add the vals to the queue
 	process(vals)
 	{
-		this.xlog.debug`process: Adding ${Array.force(vals).length} vals to queue...`;
+		if(Array.force(vals).length>1)
+			this.xlog.debug`process: Adding ${Array.force(vals).length} vals to queue...`;
 
 		this.queue = this.queue.concat(Array.force(vals));	// use use concat instead of ...vals to avoid call stack overflow
 	}

@@ -221,6 +221,15 @@ Deno.test("detached-output", async () =>
 	assert(stderr.includes("elapsed"));
 });
 
+
+Deno.test("detached-exitcb", async () =>
+{
+	let finished = false;
+	await runUtil.run("time", ["sleep", 1], {detached : true, exitcb : async status => { await delay(50); assertStrictEquals(status.success, true); assertStrictEquals(status.code, 0); finished = true; }});
+	await delay(xu.SECOND*1.5);
+	assertStrictEquals(finished, true);
+});
+
 Deno.test("detached-partial", async () =>
 {
 	const {p} = await runUtil.run("time", ["sleep", 2], {detached : true});

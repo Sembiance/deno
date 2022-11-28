@@ -9,6 +9,7 @@ import {path, readLines, streams} from "std";
  *   cwd				The current working directory to run the program in
  *   detached			Don't wait for the command to finish, return the Process once launched
  *   env				An object of key : value pairs to be addded to the environment
+ *   exitcb				A callback to be called when the process exits, useful in detached mode
  *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
  *   killChildren		Kill children of the process as well
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
@@ -30,7 +31,7 @@ import {path, readLines, streams} from "std";
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  *   xlog               If set, stdout/stderr will be redirected to the logger
  */
-export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput,
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput, exitcb,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
 	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
@@ -101,6 +102,9 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		console.log(`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${xu.inspect({...runArgs, cmd : []}).squeeze()}`);
 
 	// Kick off the process
+	if(cwd && !(await fileUtil.exists(cwd)))
+		await Deno.mkdir(cwd, {recursive : true});
+
 	const p = Deno.run(runArgs);
 
 	// Start our timer
@@ -158,6 +162,9 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let cbCalled = false;
 	const cb = async () =>
 	{
+		if(cbCalled)
+			return;
+
 		cbCalled = true;
 
 		// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
@@ -218,10 +225,13 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 	if(detached)
 	{
-		p.status().then(async () =>
+		p.status().then(async status =>
 		{
 			if(!cbCalled)
 				await cb();
+			
+			if(exitcb)
+				await exitcb(status);
 		});
 
 		const r = {p, cb};
