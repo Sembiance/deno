@@ -8,11 +8,10 @@ export class HTML
 		this.baseDirPath = _baseDirPath;
 	}
 
-	async render(subPath, data={}, {cache}={})
+	async render(subPath, data={})
 	{
 		const self=this;
-		const requirePath = path.join(this.baseDirPath, `${subPath}.js${cache ? "" : `?v=${xu.randStr()}`}`);
-		const {default : renderer} = await import(requirePath);
+		const {default : renderer} = await import(path.join(this.baseDirPath, `${subPath}.js`));
 		const htmlRaw = await renderer(data, {
 			html : this.html.bind(this),
 			async include(includeSubPath, includeData=data) { return await self.render(includeSubPath, includeData, {skipMinify : true}); } });
