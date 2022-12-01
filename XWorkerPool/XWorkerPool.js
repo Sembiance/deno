@@ -24,7 +24,7 @@ export class XWorkerPool
 
 		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
 		{
-			const worker = await xwork.run(fun, workerid, {xlog : this.xlog, imports, detached : true, exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)});
+			const worker = await xwork.run(fun, workerid, {xlog : this.xlog, imports, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)});
 			await worker.ready();
 			worker.workerid = workerid;
 			this.available.push(worker);

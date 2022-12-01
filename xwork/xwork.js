@@ -51,7 +51,7 @@ xwork.send = async function send(msg) { await streams.writeAll(workerConnection,
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
 // this also allows 'inline' function execution on other threads via fun.toString()
 // only supports passing a single argument (it used to support multiple, but it just got kinda gross and I don't need it)
-xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb, exitcb, hideOutput, xlog}={})
+xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb, exitcb, hideOutput, xlog, runArgs=[]}={})
 {
 	const xworkSockPath = await fileUtil.genTempPath(undefined, ".xwork.sock");
 	
@@ -151,7 +151,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	};
 	runOpts.exitcb = exitHandler;
 	
-	const {p, cb, timedOut} = await runUtil.run("deno", runUtil.denoArgs(srcFilePath), runOpts);
+	const {p, cb, timedOut} = await runUtil.run("deno", runUtil.denoArgs(srcFilePath, ...runArgs), runOpts);
 	if(timedOut)
 	{
 		xu.tryFallback(() => xworkSockServer.close());
