@@ -42,3 +42,10 @@ export async function pidMemInfo(pid=Deno.pid)
 	}
 	return r;
 }
+
+export async function calcMaxProcs(idealCount=navigator.hardwareConcurrency*0.90, {expectedMemoryUsage=0, extraMemoryUsage=0, memoryUsageFactor=1.2, availableFactor=1}={})
+{
+	const totalExpectedMemoryUsage = (expectedMemoryUsage || (await pidMemInfo()).vmRSS) + extraMemoryUsage;
+	const sysMemInfo = await memInfo();
+	return Math.floor(Math.min((sysMemInfo.available*availableFactor)/(totalExpectedMemoryUsage*memoryUsageFactor), idealCount));
+}
