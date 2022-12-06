@@ -77,21 +77,22 @@ export async function fixTerminalWallpaper(screenNum=null)
 	await cycleClients(screenNum, false);
 }
 
-export async function runTerminal(cmd)
+export async function runTerminal(cmd, options)
 {
 	const r = await runAndGetWindow("urxvt", []);
 	await fixTerminalWallpaper();
-	if(cmd)
-		await runTerminalCommand(r.wid, cmd);
+	if(cmd || options?.tabName)
+		await runTerminalCommand(r.wid, cmd, options);
 	return r;
 }
 
-export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0}={})
+export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0, tabName}={})
 {
 	if(newTab)
 		await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "shift+Down"], {inheritEnv : true});
-	
-	await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, cmd], {inheritEnv : true});
+
+	if(cmd?.length)
+		await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, cmd], {inheritEnv : true});
 
 	if(newTab)
 	{
@@ -100,8 +101,19 @@ export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0}={}
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Left"], {inheritEnv : true});
 	}
 
+	if(tabName)
+	{
+		await delay(100);
+		await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "shift+Up"], {inheritEnv : true});
+		await delay(100);
+		await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, `${tabName}`], {inheritEnv : true});
+		await delay(50);
+		await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "Return"], {inheritEnv : true});
+	}
+
 	if(cmdDelay)
 		await delay(cmdDelay);
+
 	await runUtil.run("xdotool", ["keyup", "Shift_L", "Shift_R", "Control_L", "Control_R", "Meta_L", "Meta_R", "Alt_L", "Alt_R", "Super_L", "Super_R", "Hyper_L", "Hyper_R"], {inheritEnv : true});
 }
 
