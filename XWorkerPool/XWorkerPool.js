@@ -37,8 +37,10 @@ export class XWorkerPool
 
 	async workerExit(workerid, status)
 	{
+		//this.xlog.debug`workerExit ${workerid} exited with status ${status} busy ${Object.keys(this.busy).join(" ")}`;
+
 		this.workers.find(worker => worker.workerid===workerid).exited = true;
-		
+
 		// remove it from busy and available
 		delete this.busy[workerid];
 		this.available.filterInPlace(worker => worker.workerid!==workerid);
@@ -87,23 +89,26 @@ export class XWorkerPool
 
 			this.busy[worker.workerid] = worker;
 			const val = this.queue.shift();
+			//this.xlog.debug`processQueue ${worker.workerid} A: await worker.send(${val})`;
 			await worker.send(val);
+			//this.xlog.debug`processQueue ${worker.workerid} B: worker.send() finished`;
 		}
 	}
 
 	async workerDone(workerid, r)
 	{
+		//this.xlog.debug`workerDone ${workerid} A: busy ${Object.keys(this.busy).join(" ")}`;
+		
 		const worker = this.busy[workerid];
 		if(!worker)
 			this.xlog.error`Worker done but pool says worker ${workerid} is not busy!`;
-
-		this.xlog.debug`Worker ${workerid} done`;
 
 		if(this.workercb)
 			await this.workercb(workerid, r);
 
 		delete this.busy[workerid];
 		this.available.push(worker);
+		//this.xlog.debug`workerDone ${workerid} B: busy ${Object.keys(this.busy).join(" ")}`;
 
 		if(this.emptycb && this.empty)
 			await this.emptycb();

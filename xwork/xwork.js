@@ -10,6 +10,7 @@ xwork.done = async function done(msg) { return await unixSockUtil.sendLine(Deno.
 
 let workerMessages = [];
 let workerConnection = null;
+let recvAborted = false;
 xwork.openConnection = async function openConnection()
 {
 	workerConnection = await Deno.connect({transport : "unix", path : Deno.env.get("XWORK_SOCK_PATH")});
@@ -42,9 +43,10 @@ xwork.recv = async function recv(cb)
 		await xu.waitUntil(() => workerMessages===null || workerMessages?.length>0);	// eslint-disable-line no-loop-func
 		if(workerMessages===null)
 			break;
-		await cb(workerMessages.shift());
+		await Promise.race([cb(workerMessages.shift()), xu.waitUntil(async () => recvAborted)]);	// eslint-disable-line no-loop-func, require-await
 	}
 };
+xwork.recvAbort = function recvAbort() { recvAborted = true; };		// called by a worker when the recv is stuck and needs to be aborted
 xwork.send = async function send(msg) { await streams.writeAll(workerConnection, new TextEncoder().encode(`${JSON.stringify({op : "msg", msg})}\n`)); };
 
 /** WHAT IS BELOW CAN BE CALLED BY THE PARENT */

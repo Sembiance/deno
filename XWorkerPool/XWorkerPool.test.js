@@ -1,7 +1,46 @@
 import {xu} from "xu";
 import {XWorkerPool} from "./XWorkerPool.js";
-import {assert, assertEquals, assertStrictEquals, delay} from "std";
+import {assert, assertEquals, assertStrictEquals, delay, path} from "std";
 import {XLog} from "xlog";
+
+Deno.test("abortedWorker", async () =>
+{
+	const xlog = new XLog("info");
+	let allDone = false;
+	let pool = null;
+
+	async function workercb(workerid, r)
+	{
+		if(r.err)
+			xlog.debug`workercb (testid ${r.testid}): pool queue ${pool.queue.length} available ${pool.available.length} workers ${pool.workers.length} busy ${Object.keys(pool.busy).join(" ")} ERROR: ${r.err}`;
+		else
+			xlog.debug`workercb (testid ${r.testid}): pool queue ${pool.queue.length} available ${pool.available.length} workers ${pool.workers.length} busy ${Object.keys(pool.busy).join(" ")} NORMAL`;
+
+		await delay(50);
+	}
+
+	async function emptycb()
+	{
+		xlog.debug`emptycb: pool queue ${pool.queue.length} available ${pool.available.length} workers ${pool.workers.length} busy ${Object.keys(pool.busy).join(" ")}`;
+
+		await delay(50);
+
+		xlog.debug`Stopping workers...`;
+		await pool.stop();
+		allDone = true;
+	}
+	pool = new XWorkerPool({workercb, emptycb, xlog});
+	await pool.start(path.join(xu.dirname(import.meta), "abortedWorker.js"), {size : 10});
+	xlog.debug`pool started, adding to queue...`;
+	pool.process([].pushSequence(1, 3).map(v => ({testid : v})));
+	pool.process([].pushSequence(4, 15).map(v => ({testid : v})));
+	await delay(xu.SECOND*4);
+	pool.process([].pushSequence(16, 30).map(v => ({testid : v})));
+
+	xlog.debug`waiting for allDone...`;
+	await xu.waitUntil(() => allDone);
+	xlog.debug`allDone!`;
+});
 
 Deno.test("processSimple", async () =>
 {
