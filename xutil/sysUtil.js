@@ -49,3 +49,10 @@ export async function calcMaxProcs(idealCount=navigator.hardwareConcurrency*0.90
 	const sysMemInfo = await memInfo();
 	return Math.floor(Math.min((sysMemInfo.available*availableFactor)/(totalExpectedMemoryUsage*memoryUsageFactor), idealCount));
 }
+
+export async function getCPUIdleUsage()
+{
+	const {stdout : mpstatRaw} = await run("mpstat", ["-o", "JSON", "1", "1"]);
+	const mpstat = xu.parseJSON(mpstatRaw);
+	return mpstat.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle;
+}
