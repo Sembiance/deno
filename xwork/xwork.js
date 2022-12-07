@@ -130,7 +130,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		src.push(execLine);
 	
 		if(detached)
-			src.push(`xwork.closeConnection();`);
+			src.push(`xwork.closeConnection();`, "Deno.exit()");
 
 		await fileUtil.writeTextFile(srcFilePath, src.join("\n"));
 	}
@@ -164,13 +164,10 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	{
 		if(detached && !killed)
 			await cb();
-		
 		if(typeof fun==="function")
 			await fileUtil.unlink(srcFilePath);
-		
 		if(killed || exited)
 			return gotResult ? result : undefined;
-		
 		await xu.waitUntil(() => gotResult);
 		return result;
 	};
@@ -183,7 +180,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		done  : async () => await cleanup(),
 		kill  : async () =>
 		{
-			await runUtil.kill(p);
+			await runUtil.kill(p, undefined, {killChildren : true});
 			xworkSockServer.close();
 			await cleanup(true);
 		},

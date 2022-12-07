@@ -4,6 +4,36 @@ import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import {path, readLines, streams} from "std";
 
+// requires kernel CONFIG_PROC_CHILDREN
+async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
+{
+	const kids = [];
+	const getKids = async (pid, depth=0) =>
+	{
+		// get pid tids (task ids)
+		const tids = (await fileUtil.tree(`/proc/${pid}/task`, {depth : 1, nofile : true})).map(tidPath => path.basename(tidPath));
+		await tids.parallelMap(async tid =>
+		{
+			// get the children pids of the tid
+			const tidPidsRaw = (await fileUtil.readTextFile(`/proc/${pid}/task/${tid}/children`)).trim();
+			if(tidPidsRaw.length===0)
+				return;
+			const tidPids = tidPidsRaw.split(" ");
+			await tidPids.parallelMap(async tidPid => await getKids(tidPid, depth+1));
+			kids.push(...tidPids.map(tidPid => ({pid : tidPid, depth})));
+		});
+	};
+
+	await getKids(parentPID).catch(() => {});
+
+	// sort the kids so that we kill the deepest ones first
+	kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid).forEach(pid =>
+	{
+		try { Deno.kill(pid, timeoutSignal); } catch {}
+	});
+}
+
+
 /** Will run the given cmd and pass it the given args.
  * Options:
  *   cwd				The current working directory to run the program in
@@ -111,33 +141,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let timerid = null;
 	async function timeoutHandler()
 	{
-		if(killChildren)	// requires kernel CONFIG_PROC_CHILDREN
-		{
-			const kids = [];
-			const getKids = async (pid, depth=0) =>
-			{
-				// get pid tids (task ids)
-				const tids = (await fileUtil.tree(`/proc/${pid}/task`, {depth : 1, nofile : true})).map(tidPath => path.basename(tidPath));
-				await tids.parallelMap(async tid =>
-				{
-					// get the children pids of the tid
-					const tidPidsRaw = (await fileUtil.readTextFile(`/proc/${pid}/task/${tid}/children`)).trim();
-					if(tidPidsRaw.length===0)
-						return;
-					const tidPids = tidPidsRaw.split(" ");
-					await tidPids.parallelMap(async tidPid => await getKids(tidPid, depth+1));
-					kids.push(...tidPids.map(tidPid => ({pid : tidPid, depth})));
-				});
-			};
-
-			await getKids(p.pid).catch(() => {});
-
-			// sort the kids so that we kill the deepest ones first
-			kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid).forEach(pid =>
-			{
-				try { Deno.kill(pid, timeoutSignal); } catch {}
-			});
-		}
+		if(killChildren)
+			await killPIDKids(p.pid, timeoutSignal);
 		try { p.kill(timeoutSignal); } catch {}
 		if(xvfbProc)
 		{
@@ -244,8 +249,11 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 }
 
 /** gracefully kills the given process p with signal */
-export async function kill(p, signal="SIGTERM")
+export async function kill(p, signal="SIGTERM", {killChildren}={})
 {
+	if(killChildren)
+		await killPIDKids(p.pid, signal);
+		
 	try { p.kill(signal); } catch {}
 	try { await p.status(); } catch {}	// allows the process to gracefully close before I close the handle
 	try { p.close(); } catch {}

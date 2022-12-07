@@ -13,3 +13,4 @@ await xwork.send("Hello, from Worker!");
 await delay(500);
 await xwork.done({nums : [3.14, 1.235], arg});
 await xwork.closeConnection();
+Deno.exit();

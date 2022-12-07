@@ -97,18 +97,22 @@ export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0, ta
 	if(newTab)
 	{
 		await fixTerminalWallpaper();
+		await delay(50);
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Right"], {inheritEnv : true});
+		await delay(50);
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Left"], {inheritEnv : true});
+		await delay(50);
 	}
 
 	if(tabName)
 	{
-		await delay(100);
+		await delay(300);
 		await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "shift+Up"], {inheritEnv : true});
-		await delay(100);
+		await delay(150);
 		await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, `${tabName}`], {inheritEnv : true});
-		await delay(50);
+		await delay(150);
 		await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "Return"], {inheritEnv : true});
+		await delay(250);
 	}
 
 	if(cmdDelay)

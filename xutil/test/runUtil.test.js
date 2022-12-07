@@ -244,3 +244,45 @@ Deno.test("customHomeENV", async () =>
 	({stdout} = await runUtil.run("sh", ["-c", "cd ~ && pwd"], {env : {HOME : "/tmp"}}));
 	assertStrictEquals(stdout.trim(), "/tmp");
 });
+
+Deno.test("killChildrenBuiltin", async () =>
+{
+	const pids = [];
+	await runUtil.run(path.join(xu.dirname(import.meta), "files", "makeKids.sh"), [], {timeout : xu.SECOND*2, killChildren : true, stdoutcb : line => pids.push(line.trim())});
+
+	for(const pid of pids)
+	{
+		const {stdout} = await runUtil.run("ps", ["--no-headers", "-p", pid, "-o", "pid"]);
+		assert(!stdout.trim().length);
+	}
+});
+
+Deno.test("killChildrenWithRunUtilKill", async () =>
+{
+	const pids = [];
+	const {p} = await runUtil.run(path.join(xu.dirname(import.meta), "files", "makeKids.sh"), [], {detached : true, stdoutcb : line => pids.push(line.trim())});
+	await xu.waitUntil(() => pids.length===2);
+
+	await delay(xu.SECOND);
+	for(const pid of pids)
+	{
+		const {stdout} = await runUtil.run("ps", ["--no-headers", "-p", pid, "-o", "pid"]);
+		assert(stdout.trim().length);
+	}
+
+	await delay(xu.SECOND*2);
+	for(const pid of pids)
+	{
+		const {stdout} = await runUtil.run("ps", ["--no-headers", "-p", pid, "-o", "pid"]);
+		assert(stdout.trim().length);
+	}
+
+	await runUtil.kill(p, undefined, {killChildren : true});
+	await delay(xu.SECOND);
+
+	for(const pid of pids)
+	{
+		const {stdout} = await runUtil.run("ps", ["--no-headers", "-p", pid, "-o", "pid"]);
+		assert(!stdout.trim().length);
+	}
+});
