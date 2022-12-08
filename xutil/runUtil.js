@@ -41,7 +41,7 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   env				An object of key : value pairs to be addded to the environment
  *   exitcb				A callback to be called when the process exits, useful in detached mode
  *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
- *   killChildren		Kill children of the process as well
+ *   killChildren		Kill children of the process as well on timeout
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
  *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe
  *	 stdinData          If set, this will be sent to stdin
