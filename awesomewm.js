@@ -82,7 +82,10 @@ export async function runTerminal(cmd, options)
 	const r = await runAndGetWindow("urxvt", []);
 	await fixTerminalWallpaper();
 	if(cmd || options?.tabName)
+	{
+		await delay(200);
 		await runTerminalCommand(r.wid, cmd, options);
+	}
 	return r;
 }
 
