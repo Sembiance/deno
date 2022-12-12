@@ -126,7 +126,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		if(funSrc.trim().startsWith("async"))
 			execLine += "await ";
 		execLine += fun.name || "_xworkFun";
-		execLine += `(${typeof arg==="undefined" ? undefined : JSON.stringify(arg)}));`;
+		execLine += `(${arg===undefined ? undefined : JSON.stringify(arg)}));`;
 		src.push(execLine);
 	
 		if(detached)

@@ -71,7 +71,7 @@ export function columnizeObjects(objects, options={})
 		if(colTypes[i]==="number")
 			return (typeof v==="number" ? v.toLocaleString() : 0);
 
-		return typeof v==="undefined" ? "" : v;
+		return v===undefined ? "" : v;
 	}
 
 	rows.forEach(object => colNames.forEach((colName, i) => { object[colName] = (options.formatter || defaultFormatter)(colName, object[colName], object, i); }));
