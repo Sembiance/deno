@@ -58,6 +58,9 @@ export class XLog
 				if(this.mapper)
 					s = this.mapper(s);
 				
+				if(!s)
+					return s;
+				
 				const prefixColor = {warn : "yellow", error : "red", fatal : "red"}[levelName];
 				if(prefixColor)
 					s = `${fg[prefixColor]((levelName==="fatal" ? xu.c.blink : "") + levelName.toUpperCase())}${fg.cyan(":")} ${s}`;
