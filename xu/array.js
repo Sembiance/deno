@@ -11,6 +11,8 @@ Array.prototype.average ||= function average()
 /** Groups up the values in the array into sub array chunks of x length. Set vertical option to batch in the Y direction rather than X */
 Array.prototype.chunk ||= function chunk(num=1, {vertical=false}={})
 {
+	num = Math.max(1, num);	// eslint-disable-line no-param-reassign
+
 	const a = Array.from(this);
 	const chunks = [];
 	if(vertical)

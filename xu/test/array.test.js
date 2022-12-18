@@ -19,6 +19,10 @@ Deno.test("chunk", () =>
 	r = [[1, 5], [2, 6], [3, 7], [4]];
 	assertEquals(r, a.chunk(2, {vertical : true}));
 	assertNotEquals(!r, a);
+
+	a = [1, 2, 3, 4, 5];
+	r = [[1], [2], [3], [4], [5]];
+	assertEquals(r, a.chunk(0));
 });
 
 Deno.test("clear", () =>
