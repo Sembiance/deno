@@ -17,11 +17,11 @@ xu.MONTH = xu.DAY*30.4375;
 xu.YEAR = xu.DAY*365.25;
 
 xu.BYTE = 1;
-xu.KB = xu.BYTE*1000;
-xu.MB = xu.KB*1000;
-xu.GB = xu.MB*1000;
-xu.TB = xu.GB*1000;
-xu.PB = xu.TB*1000;
+xu.KB = xu.BYTE*1024;
+xu.MB = xu.KB*1024;
+xu.GB = xu.MB*1024;
+xu.TB = xu.GB*1024;
+xu.PB = xu.TB*1024;
 
 /* eslint-disable unicorn/escape-case, unicorn/no-hex-escape */
 // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors

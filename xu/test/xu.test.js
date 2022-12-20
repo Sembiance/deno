@@ -58,6 +58,14 @@ Deno.test("randStr", () =>
 	assertStrictEquals(a.unique().length, 20000);
 });
 
+Deno.test("sizes", () =>
+{
+	assertStrictEquals(xu.KB, 1024);
+	assertStrictEquals(xu.MB, 1024*1024);
+	assertStrictEquals(xu.GB, 1024*1024*1024);
+	assertStrictEquals(xu.TB, 1024*1024*1024*1024);
+});
+
 Deno.test("trim", () =>
 {
 	const r = xu.trim`
