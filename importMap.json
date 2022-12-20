@@ -15,6 +15,7 @@
 		"typesense"        : "/mnt/compendium/DevLab/deno/Typesense/Typesense.js",
 		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
+		"vinput"           : "/mnt/compendium/DevLab/deno/vinput/vinput.js",
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
 		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
 		"xwork"            : "/mnt/compendium/DevLab/deno/xwork/xwork.js",
