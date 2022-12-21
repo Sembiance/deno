@@ -39,6 +39,7 @@ Deno.test("abortedWorker", async () =>
 
 	xlog.debug`waiting for allDone...`;
 	await xu.waitUntil(() => allDone);
+	await pool.stop();
 	xlog.debug`allDone!`;
 });
 

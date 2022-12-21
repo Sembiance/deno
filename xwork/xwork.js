@@ -44,6 +44,7 @@ xwork.recv = async function recv(cb)
 		if(workerMessages===null)
 			break;
 		await Promise.race([cb(workerMessages.shift()), xu.waitUntil(async () => recvAborted)]);	// eslint-disable-line no-loop-func, require-await
+		recvAborted = false;
 	}
 };
 xwork.recvAbort = function recvAbort() { recvAborted = true; };		// called by a worker when the recv is stuck and needs to be aborted

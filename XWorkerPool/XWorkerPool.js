@@ -101,13 +101,16 @@ export class XWorkerPool
 		
 		const worker = this.busy[workerid];
 		if(!worker)
-			this.xlog.error`Worker done but pool says worker ${workerid} is not busy!`;
+			this.xlog.warn`Worker done but pool says worker ${workerid} is not busy!`;
 
 		if(this.workercb)
 			await this.workercb(workerid, r);
 
-		delete this.busy[workerid];
-		this.available.push(worker);
+		if(worker)
+		{
+			delete this.busy[workerid];
+			this.available.push(worker);
+		}
 		//this.xlog.debug`workerDone ${workerid} B: busy ${Object.keys(this.busy).join(" ")}`;
 
 		if(this.emptycb && this.empty)
