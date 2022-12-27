@@ -56,3 +56,15 @@ export async function getCPUIdleUsage()
 	const mpstat = xu.parseJSON(mpstatRaw);
 	return mpstat.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle;
 }
+
+export async function optimalParallelism(totalCount)
+{
+	// if less than 5 just do 1 at a time to avoid calling out to mpstat for a small number of files
+	if(totalCount<5)
+		return 1;
+
+	let optimalCount = 1;
+	const idleUsage = await getCPUIdleUsage();
+	optimalCount = Math.max(1, Math.floor(idleUsage.scale(0, 100, 1, navigator.hardwareConcurrency*0.50)));
+	return optimalCount;
+}

@@ -89,7 +89,7 @@ export async function move(src, dest)
 		throw new Error(`src and dest are identical: ${src}`);
 
 	if(await exists(dest))
-		await unlink(dest);
+		await unlink(dest, {recursive : true});
 	
 	await Deno.rename(src, dest).catch(async () =>
 	{
