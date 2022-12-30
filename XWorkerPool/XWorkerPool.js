@@ -24,7 +24,14 @@ export class XWorkerPool
 
 		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
 		{
-			const worker = await xwork.run(fun, workerid, {xlog : this.xlog, imports, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)});
+			const xworkRunOpts = {xlog : this.xlog, imports, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)};
+			xworkRunOpts.stderrcb = () =>
+			{
+				this.xlog.inspectOptions.strAbbreviateSize = 10000;
+				this.xlog.warn`worker ${workerid} stderr occurred with queue value ${this.currentQueueValue} and stderr:`;
+				delete this.xlog.inspectOptions.strAbbreviateSize;
+			};
+			const worker = await xwork.run(fun, workerid, xworkRunOpts);
 			await worker.ready();
 			worker.workerid = workerid;
 			this.available.push(worker);
@@ -88,9 +95,9 @@ export class XWorkerPool
 			}
 
 			this.busy[worker.workerid] = worker;
-			const val = this.queue.shift();
+			this.currentQueueValue = this.queue.shift();
 			//this.xlog.debug`processQueue ${worker.workerid} A: await worker.send(${val})`;
-			await worker.send(val);
+			await worker.send(this.currentQueueValue);
 			//this.xlog.debug`processQueue ${worker.workerid} B: worker.send() finished`;
 		}
 	}

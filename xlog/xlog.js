@@ -18,6 +18,7 @@ export class XLog
 		this.logFilePath = logFilePath;
 		this.noANSI = noANSI;
 		this.signalHandler = async () => await this.flush();
+		this.inspectOptions = {};
 
 		if(this.logFilePath)
 			Deno.addSignalListener("SIGUSR2", this.signalHandler);
@@ -50,7 +51,7 @@ export class XLog
 						if(typeof val==="string")
 							r.push(xu.cf.fg.greenDim(val));
 						else
-							r.push(xu.inspect(val));
+							r.push(xu.inspect(val, this.inspectOptions));
 					}
 				});
 

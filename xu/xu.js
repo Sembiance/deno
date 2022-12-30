@@ -227,9 +227,9 @@ xu.dirname = function dirname(meta)
 };
 
 /** returns a nice pretty representation of val */
-xu.inspect = function inspect(val)
+xu.inspect = function inspect(val, options={})
 {
-	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false});
+	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, strAbbreviateSize : 100, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false, ...options});
 };
 
 const stdoutEncoder = new TextEncoder();
