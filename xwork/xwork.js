@@ -148,6 +148,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		runOpts.detached = true;
 	
 	let exited = false;
+	let cleanup = null;
 	const exitHandler = async status =>
 	{
 		xu.tryFallback(() => xworkSockServer.close());
@@ -156,6 +157,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 			await exitcb(status);
 
 		exited = true;
+		await cleanup(true);
 	};
 	runOpts.exitcb = exitHandler;
 	
@@ -166,12 +168,20 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		gotResult = true;
 	}
 	
-	const cleanup = async killed =>
+	let cleanedUp = false;
+	cleanup = async killed =>
 	{
+		if(cleanedUp)
+			return;
+		cleanedUp = true;
+
+		if(xlog)
+			xlog.trace`cleanup() called, killed=${killed}`;
+
 		if(detached && !killed)
 			await cb();
 		if(typeof fun==="function")
-			await fileUtil.unlink(srcFilePath);
+			await fileUtil.unlink(srcFilePath, {recursive : true});
 		if(killed || exited)
 			return gotResult ? result : undefined;
 		await xu.waitUntil(() => gotResult);
@@ -184,12 +194,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	return {
 		ready : async () => await xu.waitUntil(() => workerMsgConn!==null),
 		done  : async () => await cleanup(),
-		kill  : async () =>
-		{
-			await runUtil.kill(p, undefined, {killChildren : true});
-			xworkSockServer.close();
-			await cleanup(true);
-		},
+		kill  : async () => await runUtil.kill(p, undefined, {killChildren : true}),
 		send  : async msg =>
 		{
 			if(!workerMsgConn)

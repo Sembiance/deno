@@ -4,7 +4,7 @@ import {XLog} from "xlog";
 
 export class XWorkerPool
 {
-	constructor({workercb, emptycb, crashcb, xlog=new XLog("warn")}={})
+	constructor({workercb, emptycb, crashcb, crashRecover, xlog=new XLog("warn")}={})
 	{
 		this.queue = [];
 		this.ready = false;
@@ -16,6 +16,8 @@ export class XWorkerPool
 		this.emptycb = emptycb;
 		this.crashcb = crashcb;
 		this.stopped = false;
+		this.crashRecover = crashRecover;
+		this.recoverArgs = {};
 	}
 
 	async start(fun, {size=navigator.hardwareConcurrency, imports}={})
@@ -25,15 +27,7 @@ export class XWorkerPool
 		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
 		{
 			const xworkRunOpts = {xlog : this.xlog, imports, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)};
-			xworkRunOpts.stderrcb = () =>
-			{
-				if(this.lastStderrValue===this.currentQueueValue)
-					return;
-				this.lastStderrValue = this.currentQueueValue;
-				this.xlog.inspectOptions.strAbbreviateSize = 10000;
-				this.xlog.warn`worker ${workerid} stderr occurred with queue value ${this.currentQueueValue} and stderr:`;
-				delete this.xlog.inspectOptions.strAbbreviateSize;
-			};
+			this.recoverArgs[workerid] = {fun, xworkRunOpts};
 			const worker = await xwork.run(fun, workerid, xworkRunOpts);
 			await worker.ready();
 			worker.workerid = workerid;
@@ -47,7 +41,7 @@ export class XWorkerPool
 
 	async workerExit(workerid, status)
 	{
-		//this.xlog.debug`workerExit ${workerid} exited with status ${status} busy ${Object.keys(this.busy).join(" ")}`;
+		this.xlog.debug`workerExit ${workerid} exited with status ${status} busy ${Object.keys(this.busy).join(" ")}`;
 
 		this.workers.find(worker => worker.workerid===workerid).exited = true;
 
@@ -55,10 +49,23 @@ export class XWorkerPool
 		delete this.busy[workerid];
 		this.available.filterInPlace(worker => worker.workerid!==workerid);
 		
-		if(this.stopping || !this.crashcb)
+		if(this.stopping)
 			return;
 		
-		await this.crashcb(workerid, status);
+		this.xlog.warn`Worker ${workerid} crashed with status ${status} and queue value ${this.currentQueueValue}`;
+		if(this.crashcb)
+			await this.crashcb(workerid, status, this.currentQueueValue);
+
+		if(this.crashRecover)
+		{
+			this.xlog.warn`Recovering from crash...`;
+			const worker = await xwork.run(this.recoverArgs[workerid].fun, workerid, this.recoverArgs[workerid].xworkRunOpts);
+			await worker.ready();
+			worker.workerid = workerid;
+			delete this.busy[workerid];
+			this.workers[workerid] = worker;
+			this.available.push(worker);
+		}
 	}
 
 	async stop()

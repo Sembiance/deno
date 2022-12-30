@@ -2,6 +2,7 @@ import {xu} from "xu";
 import {XWorkerPool} from "./XWorkerPool.js";
 import {assert, assertEquals, assertStrictEquals, delay, path} from "std";
 import {XLog} from "xlog";
+import {runUtil, fileUtil} from "xutil";
 
 Deno.test("abortedWorker", async () =>
 {
@@ -145,4 +146,59 @@ Deno.test("processCrash", async () =>
 		assertStrictEquals(result.str, val.str.reverse());
 		assertEquals(result.nums, val.nums.map(v => v*2));
 	}
+});
+
+Deno.test("processCrashRecover", async () =>
+{
+	const hugeFilePath = await fileUtil.genTempPath();
+	await runUtil.run("dd", ["if=/dev/random", `of=${hugeFilePath}`, "bs=8815936", "count=512"]);
+
+	async function f()
+	{
+		await xwork.recv(async msg =>	// eslint-disable-line no-undef
+		{
+			if(msg.causeCrash)
+				return Deno.readFile(msg.causeCrash, null);
+
+			await xwork.send({id : msg.id, nums : msg.nums.map(v => v*2), str : msg.str.reverse(), bool : !msg.bool});	// eslint-disable-line no-undef
+		});
+	}
+
+	const xlog = new XLog();
+
+	const results = [];
+	let crashCount = 0;
+	async function crashcb(workerid, status, value)
+	{
+		xlog.debug`crashcb: ${{workerid, status, value}}`;
+
+		await delay(5);
+		crashCount++;
+		assertStrictEquals(status.success, false);
+		assertStrictEquals(status.code, 133);
+		assertStrictEquals(results.length, 250);
+		assertStrictEquals(crashCount, 1);
+	}
+
+	let emptyCount = 0;
+	function emptycb()
+	{
+		emptyCount++;
+	}
+
+	const vals = [].pushSequence(1, 500).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
+	vals[250].causeCrash = hugeFilePath;
+
+	const pool = new XWorkerPool({xlog, workercb : (workerid, r) => results.push(r), emptycb, crashcb, crashRecover : true});
+	await pool.start(f, {size : 1, imports : {std : ["delay"]}});
+	pool.process(vals);
+
+	assert(await xu.waitUntil(() => results.length===vals.length-1, {timeout : xu.SECOND*20}));
+
+	await pool.stop();
+	await fileUtil.unlink(hugeFilePath);
+	await fileUtil.unlink(path.join(xu.dirname(import.meta), "core"));
+
+	assertStrictEquals(emptyCount, 1);
+	assertStrictEquals(crashCount, 1);
 });
