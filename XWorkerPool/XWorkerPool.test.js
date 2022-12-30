@@ -90,7 +90,7 @@ Deno.test("processSimple", async () =>
 		assertEquals(result.nums, val.nums.map(v => v*2));
 	}
 
-	assertStrictEquals(debugLog.length, navigator.hardwareConcurrency*4);
+	assertStrictEquals(debugLog.length, navigator.hardwareConcurrency*3);
 	assert(debugLog[0].includes("stdout from worker"));
 	assert(debugLog.at(-1).includes("test broadcast"));
 });

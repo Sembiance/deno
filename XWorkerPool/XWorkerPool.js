@@ -27,6 +27,9 @@ export class XWorkerPool
 			const xworkRunOpts = {xlog : this.xlog, imports, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)};
 			xworkRunOpts.stderrcb = () =>
 			{
+				if(this.lastStderrValue===this.currentQueueValue)
+					return;
+				this.lastStderrValue = this.currentQueueValue;
 				this.xlog.inspectOptions.strAbbreviateSize = 10000;
 				this.xlog.warn`worker ${workerid} stderr occurred with queue value ${this.currentQueueValue} and stderr:`;
 				delete this.xlog.inspectOptions.strAbbreviateSize;
@@ -80,6 +83,7 @@ export class XWorkerPool
 		{
 			this.xlog.trace`processQueue: Waiting...`;
 			await xu.waitUntil(() => !this.ready || (this.queue.length>0 && this.available.length>0));
+			//this.xlog.trace`processQueue: Done waiting. this.ready = ${this.ready}  this.queue.length = ${this.queue.length}  this.available.length = ${this.available.length}`;
 			if(!this.ready)
 			{
 				this.xlog.trace`processQueue: Breaking loop due to ready===false`;
@@ -96,9 +100,9 @@ export class XWorkerPool
 
 			this.busy[worker.workerid] = worker;
 			this.currentQueueValue = this.queue.shift();
-			//this.xlog.debug`processQueue ${worker.workerid} A: await worker.send(${val})`;
+			//this.xlog.trace`processQueue ${worker.workerid} A: await worker.send(${this.currentQueueValue})`;
 			await worker.send(this.currentQueueValue);
-			//this.xlog.debug`processQueue ${worker.workerid} B: worker.send() finished`;
+			//this.xlog.trace`processQueue ${worker.workerid} B: worker.send(${this.currentQueueValue}) finished`;
 		}
 	}
 
