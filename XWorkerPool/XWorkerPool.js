@@ -137,7 +137,7 @@ export class XWorkerPool
 
 	get empty()
 	{
-		return this.queue.length===0 && this.available.length===this.workers.length;
+		return this.queue.length===0 && Object.keys(this.busy).length===0;
 	}
 
 	// add the vals to the queue
