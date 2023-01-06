@@ -152,6 +152,21 @@ Array.prototype.parallelMap ||= async function parallelMap(fn, atOnce=Math.min(M
 	return await Promise.all(this.map(fn));
 };
 
+/** Returns an array of 1 or more random values from an array. Can pass an array of values to exclude */
+Array.prototype.pickRandom ||= function pickRandom(num=1, {exclude=[]}={})
+{
+	if(!Array.isArray(exclude))
+		throw new TypeError("pickRandom called with exclude option not of type array");
+
+	if(exclude.length===0 && num===1)
+		return [this[Math.floor(Math.random()*this.length)]];
+	
+	if(exclude.length===0 && num>=this.length)
+		return Array.from(this).shuffle();
+
+	return Array.from(this).shuffle().filter(v => !exclude.includes(v)).slice(0, num);
+};
+
 /** Returns an array with numbers in sequence from start to end INCLUSIVE */
 Array.prototype.pushSequence ||= function pushSequence(start, end)
 {
@@ -317,20 +332,4 @@ Array.prototype.variance ||= function variance(sample)
 {
 	const avg = this.average();
 	return (this.map(n => ((n-avg)*(n-avg))).sum() / (this.length - (sample ? 1 : 0)));
-};
-
-
-/** Returns an array of 1 or more random values from an array. Can pass an array of values to exclude */
-Array.prototype.pickRandom ||= function pickRandom(num=1, {exclude=[]}={})
-{
-	if(!Array.isArray(exclude))
-		throw new TypeError("pickRandom called with exclude option not of type array");
-
-	if(exclude.length===0 && num===1)
-		return [this[Math.floor(Math.random()*this.length)]];
-	
-	if(exclude.length===0 && num>=this.length)
-		return Array.from(this).shuffle();
-
-	return Array.from(this).shuffle().filter(v => !exclude.includes(v)).slice(0, num);
 };

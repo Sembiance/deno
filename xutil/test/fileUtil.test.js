@@ -22,7 +22,6 @@ Deno.test("concat", async () =>
 	assert(await fileUtil.areEqual(CONCAT_DEST_FILE_PATH, path.join(FILES_DIR, "ab.txt")));
 	await fileUtil.unlink(CONCAT_DEST_FILE_PATH);
 	await fileUtil.concat([path.join(FILES_DIR, "a.txt"), path.join(FILES_DIR, "b.txt")], CONCAT_DEST_FILE_PATH, {seperator : "_"});
-	console.log(CONCAT_DEST_FILE_PATH);
 	assert(await fileUtil.areEqual(CONCAT_DEST_FILE_PATH, path.join(FILES_DIR, "ab_sep.txt")));
 	await fileUtil.unlink(CONCAT_DEST_FILE_PATH);
 });
@@ -137,6 +136,10 @@ Deno.test("readJSONLFile", async () =>
 	const lines = [];
 	await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl"), line => lines.push(line));
 	assertEquals(JSONL_LINES, lines);
+
+	lines.clear();
+	await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl"), line => lines.push(line), {dontParse : true});
+	assertEquals(JSONL_LINES.map(v => JSON.stringify(v)), lines);
 
 	lines.clear();
 	await fileUtil.readJSONLFile(path.join(FILES_DIR, "test.jsonl.gz"), line => lines.push(line));

@@ -121,7 +121,7 @@ export async function searchReplace(filePath, findMe, replaceWith)
 }
 
 /** Reads in a JSON L file, line by line, calling async cb(line) for each line read */
-export async function readJSONLFile(filePath, cb)
+export async function readJSONLFile(filePath, cb, {dontParse}={})
 {
 	const lines = [];
 	cb ||= line =>	// eslint-disable-line no-param-reassign
@@ -134,13 +134,13 @@ export async function readJSONLFile(filePath, cb)
 
 	if(filePath.toLowerCase().endsWith(".gz"))
 	{
-		await runUtil.run("gunzip", ["-c", filePath], {stdoutcb : async line =>	await cb(xu.parseJSON(line), line)});
+		await runUtil.run("pigz", ["-dc", filePath], {stdoutcb : async line =>	await cb(dontParse ? line : xu.parseJSON(line), line)});
 	}
 	else
 	{
 		const file = await Deno.open(filePath);
 		for await(const line of readLines(file))
-			await cb(xu.parseJSON(line), line);
+			await cb(dontParse ? line : xu.parseJSON(line), line);
 		file.close();
 	}
 
