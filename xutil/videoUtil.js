@@ -2,12 +2,12 @@ import {xu} from "xu";
 import * as runUtil from "./runUtil.js";
 
 /** Returns info about the given video at videoFilePath including duration, bitrate, width, height, etc */
-export async function getInfo(videoFilePath)
+export async function getInfo(videoFilePath, {timeout=xu.MINUTE}={})
 {
 	const mplayerArgs = ["-frames", "0", "-identify", "--", videoFilePath];
 	if(videoFilePath.endsWith(".m2ts"))
 		mplayerArgs.unshift("-demuxer", "lavf");
-	const {stdout} = await runUtil.run("mplayer", mplayerArgs);
+	const {stdout} = await runUtil.run("mplayer", mplayerArgs, {timeout});
 	const info = {};
 	stdout.split("\n").forEach(line =>
 	{

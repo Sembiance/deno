@@ -39,7 +39,7 @@ export async function decodeMacintosh({data, processors=[], region="roman", pres
 	const bytes = data instanceof Uint8Array ? Array.from(data) : [];
 	if(bytes.length===0)
 	{
-		while(data.length)
+		while(data?.length)
 		{
 			let byte = null;
 
