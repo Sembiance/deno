@@ -7,7 +7,7 @@ export async function getInfo(videoFilePath, {timeout=xu.MINUTE}={})
 	const mplayerArgs = ["-frames", "0", "-identify", "--", videoFilePath];
 	if(videoFilePath.endsWith(".m2ts"))
 		mplayerArgs.unshift("-demuxer", "lavf");
-	const {stdout} = await runUtil.run("mplayer", mplayerArgs, {timeout});
+	const {stdout} = await runUtil.run("mplayer", mplayerArgs, {timeout, timeoutSignal : "SIGKILL"});
 	const info = {};
 	stdout.split("\n").forEach(line =>
 	{
