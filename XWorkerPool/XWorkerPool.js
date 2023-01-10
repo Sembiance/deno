@@ -11,6 +11,7 @@ export class XWorkerPool
 		this.workers = [];
 		this.available = [];
 		this.busy = {};
+		this.busyValues = {};
 		this.xlog = xlog;
 		this.workercb = workercb;
 		this.emptycb = emptycb;
@@ -52,9 +53,9 @@ export class XWorkerPool
 		if(this.stopping)
 			return;
 		
-		this.xlog.warn`Worker ${workerid} crashed with status ${status} and queue value ${this.currentQueueValue}`;
+		this.xlog.warn`Worker ${workerid} crashed with status ${status} and queue value ${this.busyValues[workerid]}`;
 		if(this.crashcb)
-			await this.crashcb(workerid, status, this.currentQueueValue);
+			await this.crashcb(workerid, status, this.busyValues[workerid]);
 
 		if(this.crashRecover)
 		{
@@ -106,16 +107,17 @@ export class XWorkerPool
 			}
 
 			this.busy[worker.workerid] = worker;
-			this.currentQueueValue = this.queue.shift();
-			//this.xlog.trace`processQueue ${worker.workerid} A: await worker.send(${this.currentQueueValue})`;
-			await worker.send(this.currentQueueValue);
-			//this.xlog.trace`processQueue ${worker.workerid} B: worker.send(${this.currentQueueValue}) finished`;
+			this.busyValues[worker.workerid] = this.queue.shift();
+			//this.xlog.trace`processQueue ${worker.workerid} A: await worker.send(${this.busyValues[worker.workerid]})`;
+			await worker.send(this.busyValues[worker.workerid]);
+			//this.xlog.trace`processQueue ${worker.workerid} B: worker.send(${this.busyValues[worker.workerid]}) finished`;
 		}
 	}
 
 	async workerDone(workerid, r)
 	{
 		//this.xlog.debug`workerDone ${workerid} A: busy ${Object.keys(this.busy).join(" ")}`;
+		delete this.busyValues[workerid];
 		
 		const worker = this.busy[workerid];
 		if(!worker)
