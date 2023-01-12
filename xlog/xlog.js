@@ -10,7 +10,7 @@ export class XLog
 	logLines = [];
 
 	// noANSI does not need to be set if you have a logFilePath or logger set
-	constructor(level="info", {logger, mapper, logFilePath, noANSI}={})
+	constructor(level="info", {logger, mapper, logFilePath, noANSI, inspectOptions={}}={})
 	{
 		this.level = level;
 		this.logger = logger;
@@ -18,7 +18,7 @@ export class XLog
 		this.logFilePath = logFilePath;
 		this.noANSI = noANSI;
 		this.signalHandler = async () => await this.flush();
-		this.inspectOptions = {};
+		this.inspectOptions = inspectOptions;
 
 		if(this.logFilePath)
 			Deno.addSignalListener("SIGUSR2", this.signalHandler);
