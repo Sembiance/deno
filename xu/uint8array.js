@@ -51,7 +51,7 @@ Uint8Array.prototype.getString ||= function getString(offset, len, encoding="utf
 };
 
 /** returns len bytes at offset decoded as a string */
-Uint8Array.prototype.getPascalString ||= function getString(offset, encoding="utf-8")
+Uint8Array.prototype.getPascalString ||= function getPascalString(offset, encoding="utf-8")
 {
 	const len = this[offset];
 	return new TextDecoder(encoding).decode(this.subarray(offset+1, offset+1+len));
