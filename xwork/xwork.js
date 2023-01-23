@@ -1,13 +1,14 @@
 import {xu} from "xu";
-import {fileUtil, runUtil, unixSockUtil} from "xutil";
+import {fileUtil, runUtil, sockUtil} from "xutil";
 import {streams, readLines} from "std";
 
 const xwork = {};
 
 /** THESE ARE ALL CALLED BY THE INDIVIDUAL WORKERS, DO NOT CALL THESE AS THE PARENT */
-xwork.arg = async function arg() { return xu.parseJSON(await unixSockUtil.sendReceiveLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "arg"})), []); };
-xwork.done = async function done(msg) { return await unixSockUtil.sendLine(Deno.env.get("XWORK_SOCK_PATH"), JSON.stringify({op : "done", msg})); };
+xwork.arg = async function arg() { return xu.parseJSON(await sockUtil.sendReceiveLine({transport : "unix", path : Deno.env.get("XWORK_SOCK_PATH")}, JSON.stringify({op : "arg"})), []); };
+xwork.done = async function done(msg) { return await sockUtil.sendLine({transport : "unix", path : Deno.env.get("XWORK_SOCK_PATH")}, JSON.stringify({op : "done", msg})); };
 
+const textEncoder = new TextEncoder();
 let workerMessages = [];
 let workerConnection = null;
 let recvAborted = false;
@@ -33,7 +34,7 @@ xwork.openConnection = async function openConnection()
 	};
 
 	receiveMessages();
-	await streams.writeAll(workerConnection, new TextEncoder().encode(`${JSON.stringify({op : "ready"})}\n`));
+	await streams.writeAll(workerConnection, textEncoder.encode(`${JSON.stringify({op : "ready"})}\n`));
 };
 xwork.closeConnection = function closeConnection() { workerConnection.close(); };
 xwork.recv = async function recv(cb)
@@ -43,12 +44,15 @@ xwork.recv = async function recv(cb)
 		await xu.waitUntil(() => workerMessages===null || workerMessages?.length>0);	// eslint-disable-line no-loop-func
 		if(workerMessages===null)
 			break;
-		await Promise.race([cb(workerMessages.shift()), xu.waitUntil(async () => recvAborted)]);	// eslint-disable-line no-loop-func, require-await
+		
+		const stopper = {};
+		await Promise.race([cb(workerMessages.shift()), xu.waitUntil(async () => recvAborted, {stopper})]);	// eslint-disable-line no-loop-func, require-await
+		stopper.stop = true;
 		recvAborted = false;
 	}
 };
 xwork.recvAbort = function recvAbort() { recvAborted = true; };		// called by a worker when the recv is stuck and needs to be aborted
-xwork.send = async function send(msg) { await streams.writeAll(workerConnection, new TextEncoder().encode(`${JSON.stringify({op : "msg", msg})}\n`)); };
+xwork.send = async function send(msg) { await streams.writeAll(workerConnection, textEncoder.encode(`${JSON.stringify({op : "msg", msg})}\n`)); };
 
 /** WHAT IS BELOW CAN BE CALLED BY THE PARENT */
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
@@ -61,7 +65,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	let gotResult = false;
 	let result = [];
 	let workerMsgConn = null;
-	const xworkSockServer = await unixSockUtil.listen({unixSockPath : xworkSockPath, linecb : async (line, conn) =>
+	const xworkSockServer = await sockUtil.listen({transport : "unix", path : xworkSockPath}, {linecb : async (line, conn) =>
 	{
 		const {op, msg} = xu.parseJSON(line, {});
 		if(!op)
@@ -78,7 +82,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 
 		// this is sent by a worker 'file' when they want to get their args
 		if(op==="arg")
-			await streams.writeAll(conn, new TextEncoder().encode(`${JSON.stringify(arg)}\n`));
+			await streams.writeAll(conn, textEncoder.encode(`${JSON.stringify(arg)}\n`));
 		
 		// this is sent by a worker (via xwork.send()) to send a message to the parent
 		if(op==="msg" && recvcb)
@@ -200,7 +204,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 			if(!workerMsgConn)
 				throw new Error("Worker not ready to receive messages");
 			
-			await streams.writeAll(workerMsgConn, new TextEncoder().encode(`${JSON.stringify(msg)}\n`));
+			await streams.writeAll(workerMsgConn, textEncoder.encode(`${JSON.stringify(msg)}\n`));
 		}
 	};
 };

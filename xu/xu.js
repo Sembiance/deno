@@ -202,7 +202,7 @@ xu.tryFallbackAsync = async function tryFallbackAsync(fn, fallbackResult)
 };
 
 /** waits until the given async function fun returns a truthy value. Exponential delay, starting at 5ms */
-xu.waitUntil = async function waitUntil(fun, {interval, timeout}={})
+xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper}={})
 {
 	let i=0;
 	let timedOut = false;
@@ -215,6 +215,9 @@ xu.waitUntil = async function waitUntil(fun, {interval, timeout}={})
 			timedOut = true;
 			break;
 		}
+
+		if(stopper?.stop)
+			break;
 	}
 
 	return !timedOut;

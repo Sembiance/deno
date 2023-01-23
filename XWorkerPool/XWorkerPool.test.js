@@ -62,8 +62,7 @@ Deno.test("processSimple", async () =>
 	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
 
 	const debugLog = [];
-	const logger = v => debugLog.push(v);
-	const xlog = new XLog("info", {logger});
+	const xlog = new XLog("info", {logger : v => debugLog.push(v)});
 
 	const results = [];
 	let emptyCount = 0;
@@ -94,6 +93,20 @@ Deno.test("processSimple", async () =>
 	assertStrictEquals(debugLog.length, navigator.hardwareConcurrency*3);
 	assert(debugLog[0].includes("stdout from worker"));
 	assert(debugLog.at(-1).includes("test broadcast"));
+});
+
+Deno.test("bigPool", async () =>
+{
+	const NUM_VALS = 100_000;
+	const vals = [].pushSequence(1, NUM_VALS).map((v, id) => ({id}));
+
+	let resultCount = 0;
+	let emptyCount = false;
+	const pool = new XWorkerPool({workercb : () => resultCount++, emptycb : () => { emptyCount = true; }});
+	await pool.start(async () => await xwork.recv(async msg => await xwork.send({id : msg.id})), {size : 100, imports : {std : ["delay"]}});	// eslint-disable-line no-undef
+	pool.process(vals);
+	assert(await xu.waitUntil(() => resultCount===NUM_VALS && emptyCount===true, {interval : xu.SECOND, timeout : xu.SECOND*20}));
+	await pool.stop();
 });
 
 

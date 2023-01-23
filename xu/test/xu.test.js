@@ -40,9 +40,9 @@ Deno.test("freeze", () =>
 Deno.test("inspect", () =>
 {
 	let o = {abc : () => {}, xyz : false, numbers : [23, 213, 125, 123_523_523, 23423], moreProps : {subObj : "keys", andMore : "live\nlong\nand\nprosper"}};
-	assertStrictEquals(base64Encode(xu.inspect(o)), "ewogIGFiYzogG1szNm1bRnVuY3Rpb246IGFiY10bWzM5bSwKICB4eXo6IBtbMzNtZmFsc2UbWzM5bSwKICBudW1iZXJzOiBbIBtbMzNtMjMbWzM5bSwgG1szM20yMTMbWzM5bSwgG1szM20xMjUbWzM5bSwgG1szM20xMjM1MjM1MjMbWzM5bSwgG1szM20yMzQyMxtbMzltIF0sCiAgbW9yZVByb3BzOiB7IHN1Yk9iajogG1szMm0ia2V5cyIbWzM5bSwgYW5kTW9yZTogG1szMm0ibGl2ZVxubG9uZ1xuYW5kXG5wcm9zcGVyIhtbMzltIH0KfQ==");	// eslint-disable-line max-len
+	assertStrictEquals(base64Encode(xu.inspect(o)), "ewogIGFiYzogG1szNm1bRnVuY3Rpb246IGFiY10bWzM5bSwKICB4eXo6IBtbMzNtZmFsc2UbWzM5bSwKICBudW1iZXJzOiBbIBtbMzNtMjMbWzM5bSwgG1szM20yMTMbWzM5bSwgG1szM20xMjUbWzM5bSwgG1szM20xMjM1MjM1MjMbWzM5bSwgG1szM20yMzQyMxtbMzltIF0sCiAgbW9yZVByb3BzOiB7IHN1Yk9iajogG1szMm0ia2V5cyIbWzM5bSwgYW5kTW9yZTogG1szMm0ibGl2ZVxubG9uZ1xuYW5kXG5wcm9zcGVyIhtbMzltIH0KfQ==");
 	o = {abc : 123, longStr : "This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated"};
-	assertStrictEquals(base64Encode(xu.inspect(o)), "ewogIGFiYzogG1szM20xMjMbWzM5bSwKICBsb25nU3RyOiAbWzMybSJUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpLi4uIhtbMzltCn0=");	// eslint-disable-line max-len
+	assertStrictEquals(base64Encode(xu.inspect(o)), "ewogIGFiYzogG1szM20xMjMbWzM5bSwKICBsb25nU3RyOiAbWzMybSJUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpLi4uIhtbMzltCn0=");
 	assertStrictEquals(base64Encode(xu.inspect(o, {strAbbreviateSize : 5000})), "ewogIGFiYzogG1szM20xMjMbWzM5bSwKICBsb25nU3RyOiAbWzMybSJUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCIbWzM5bQp9");
 });
 
@@ -141,6 +141,15 @@ Deno.test("waitUntil", async () =>
 	setTimeout(() => { test = true; }, xu.SECOND*2);
 	await xu.waitUntil(() => !!test);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
+});
+
+Deno.test("waitUntilStopEarly", async () =>
+{
+	const stopper = {};
+	const startedAt = performance.now();
+	setTimeout(() => { stopper.stop = true; }, xu.SECOND*2);
+	await xu.waitUntil(() => false, {stopper});
+	assertStrictEquals(Math.round((performance.now()-startedAt)/xu.SECOND), 2);
 });
 
 /////////////////////////////////////////////////////
