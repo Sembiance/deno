@@ -103,12 +103,23 @@ Deno.test("bigPool", async () =>
 	let resultCount = 0;
 	let emptyCount = false;
 	const pool = new XWorkerPool({workercb : () => resultCount++, emptycb : () => { emptyCount = true; }});
-	await pool.start(async () => await xwork.recv(async msg => await xwork.send({id : msg.id})), {size : 100, imports : {std : ["delay"]}});	// eslint-disable-line no-undef
+	await pool.start(async () => await xwork.recv(async msg => await xwork.send({id : msg.id})), {size : 100});	// eslint-disable-line no-undef
 	pool.process(vals);
 	assert(await xu.waitUntil(() => resultCount===NUM_VALS && emptyCount===true, {interval : xu.SECOND, timeout : xu.SECOND*20}));
 	await pool.stop();
 });
 
+Deno.test("quickProcess", async () =>
+{
+	const NUM_VALS = 5000;
+	const vals = [].pushSequence(1, NUM_VALS).map((v, id) => ({id}));
+
+	const outVals = await XWorkerPool.quickProcess(vals, async () => await xwork.recv(async msg => await xwork.send({id : msg.id*2})), {size : 100});	// eslint-disable-line no-undef
+	assertStrictEquals(outVals.length, NUM_VALS);
+	for(const {id} of outVals)
+		vals.filterInPlace(v => v.id!==id/2);
+	assertStrictEquals(vals.length, 0);
+});
 
 Deno.test("processCrash", async () =>
 {

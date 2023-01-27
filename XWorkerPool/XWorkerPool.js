@@ -140,4 +140,18 @@ export class XWorkerPool
 	{
 		await this.workers.parallelMap(async worker => await worker.send(msg), this.workers.length);
 	}
+
+	// Process a given array of values via a worker pool. WARNING! ORDERING OF MAP VALUES ARE NOT MAINTAINED!
+	static async quickProcess(arr, fun, xWorkOptions={})
+	{
+		const size = Math.min(xWorkOptions.size || navigator.hardwareConcurrency, arr.length);
+		let empty = false;
+		const results = [];
+		const pool = new XWorkerPool({crashcb : (workerid, status, v) => console.error(`worker ${workerid} crash with status ${status} and value ${v}`), workercb : (workerid, result) => results.push(result), emptycb : () => { empty = true; }});
+		await pool.start(fun, {...xWorkOptions, size});
+		pool.process(arr);
+		await xu.waitUntil(() => empty===true);
+		await pool.stop();
+		return results;
+	}
 }
