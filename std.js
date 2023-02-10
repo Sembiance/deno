@@ -12,6 +12,7 @@ export {crypto} from "https://deno.land/std@0.173.0/crypto/mod.ts";
 export {format as dateFormat, parse as dateParse} from "https://deno.land/std@0.173.0/datetime/mod.ts";
 export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertRejects} from "https://deno.land/std@0.173.0/testing/asserts.ts";
 export {decode as base64Decode, encode as base64Encode} from "https://deno.land/std@0.173.0/encoding/base64.ts";
+export {decode as hexDecode, encode as hexEncode} from "https://deno.land/std@0.173.0/encoding/hex.ts";
 export {createRequire} from "https://deno.land/std@0.173.0/node/module.ts";
 export {readLines} from "https://deno.land/std@0.173.0/io/mod.ts";
 export {parse as csvParse} from "https://deno.land/std@0.173.0/encoding/csv.ts";
