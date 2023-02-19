@@ -31,6 +31,12 @@ export function getAvailablePort()
 	return getAvailablePorts(1)[0];
 }
 
+export async function coreCount()
+{
+	const {stdout} = await run("nproc");
+	return +stdout.trim();
+}
+
 export async function pidMemInfo(pid=Deno.pid)
 {
 	const r = {};
