@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import {xu} from "xu";
 import * as printUtil from "../printUtil.js";
 import {base64Encode, assertStrictEquals} from "std";

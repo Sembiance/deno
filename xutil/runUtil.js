@@ -273,7 +273,8 @@ export function denoEnv()
 {
 	return {
 		DENO_DIR : "/mnt/compendium/.deno",
-		DENO_NO_UPDATE_CHECK : "1"
+		DENO_NO_UPDATE_CHECK : "1",
+		DENO_NO_PACKAGE_JSON : "1"
 	};
 }
 

@@ -16,7 +16,7 @@ Deno.test("logger", () =>
 	xlog.fatal`nope, should not see`;
 	if(xlog.atLeast("trace"))
 		console.log("should NOT see");
-	assertEquals(debugLog, ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxlog.test.js: 13\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxlog.test.js: 14\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"]);	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape, max-len
+	assertEquals(debugLog, ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxlog.test.js: 13\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxlog.test.js: 14\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"]);	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape
 });
 
 Deno.test("mapper", () =>

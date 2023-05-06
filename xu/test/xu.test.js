@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import {xu} from "../xu.js";
 import {base64Encode, delay, assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "std";
 

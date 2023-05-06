@@ -158,7 +158,7 @@ Deno.test("readJSONLFile", async () =>
 Deno.test("readTextFile", async () =>
 {
 	const text = await fileUtil.readTextFile("/mnt/compendium/DevLab/deno/xutil/test/files/desktop.ini");
-	assertEquals(base64Encode(text), "Wy5TaGVsbENsYXNzSW5mb10NCkNvbmZpcm1GaWxlT3A9MA0KDQpbezhCRUJCMjkwLTUyRDAtMTFkMC1CN0Y0LTAwQzA0RkQ3MDZFQ31dDQpNZW51TmFtZT0mUO+/vWdpbmFzIGVuIG1pbmlhdHVyYQ0KVG9vbFRpcFRleHQ9JlDvv71naW5hcyBlbiBtaW5pYXR1cmENCkhlbHBUZXh0PU11ZXN0cmEgbG9zIGVsZW1lbnRvcyB1dGlsaXphbmRvIGxhIHZpc3RhIGRlIHDvv71naW5hcyBlbiBtaW5pYXR1cmEuDQpBdHRyaWJ1dGVzPTB4NjAwMDAwMDANCg0KW0V4dFNoZWxsRm9sZGVyVmlld3NdDQp7OEJFQkIyOTAtNTJEMC0xMWQwLUI3RjQtMDBDMDRGRDcwNkVDfT17OEJFQkIyOTAtNTJEMC0xMWQwLUI3RjQtMDBDMDRGRDcwNkVDfQ0K");	// eslint-disable-line max-len
+	assertEquals(base64Encode(text), "Wy5TaGVsbENsYXNzSW5mb10NCkNvbmZpcm1GaWxlT3A9MA0KDQpbezhCRUJCMjkwLTUyRDAtMTFkMC1CN0Y0LTAwQzA0RkQ3MDZFQ31dDQpNZW51TmFtZT0mUO+/vWdpbmFzIGVuIG1pbmlhdHVyYQ0KVG9vbFRpcFRleHQ9JlDvv71naW5hcyBlbiBtaW5pYXR1cmENCkhlbHBUZXh0PU11ZXN0cmEgbG9zIGVsZW1lbnRvcyB1dGlsaXphbmRvIGxhIHZpc3RhIGRlIHDvv71naW5hcyBlbiBtaW5pYXR1cmEuDQpBdHRyaWJ1dGVzPTB4NjAwMDAwMDANCg0KW0V4dFNoZWxsRm9sZGVyVmlld3NdDQp7OEJFQkIyOTAtNTJEMC0xMWQwLUI3RjQtMDBDMDRGRDcwNkVDfT17OEJFQkIyOTAtNTJEMC0xMWQwLUI3RjQtMDBDMDRGRDcwNkVDfQ0K");
 });
 
 Deno.test("searchReplace", async () =>
@@ -221,7 +221,10 @@ Deno.test("tree", async () =>
 	r = await fileUtil.tree("/some/path/that/does/not/exist");
 	assertStrictEquals(r.length, 0);
 
-	r = await fileUtil.tree(path.join(FILES_DIR, "hugeDirTree"), {nodir : true});
+	const tmpDirPath = await fileUtil.genTempPath();
+	await runUtil.run("tar", ["-xf", path.join(FILES_DIR, "hugeDirTree.tar")], {cwd : tmpDirPath});
+	r = await fileUtil.tree(path.join(tmpDirPath, "hugeDirTree"), {nodir : true});
+	await fileUtil.unlink(tmpDirPath, {recursive : true});
 	assertStrictEquals(r.length, 130_282);
 });
 

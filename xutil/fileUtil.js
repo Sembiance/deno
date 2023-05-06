@@ -124,7 +124,7 @@ export async function searchReplace(filePath, findMe, replaceWith)
 export async function readJSONLFile(filePath, cb, {dontParse}={})
 {
 	const lines = [];
-	cb ||= line =>	// eslint-disable-line no-param-reassign
+	cb ||= line =>
 	{
 		if(!line)
 			return;
@@ -169,6 +169,7 @@ export async function readTextFile(filePath, encoding="utf-8")
 /** Returns a recursive list of all files and directories contained in dirPath.
  * Options:
  *  regex	If set, the relative path from the root must match this regex to be included
+ *  glob    If set, the relative path from the root must match this glob to be included
  * 	nodir	Set to true to omit directories from the results
  *  nofile	Set to true to omit files from the results
  *  depth   Maximum levels deep to look. Default, infinite.
@@ -177,13 +178,19 @@ export async function readTextFile(filePath, encoding="utf-8")
  * Likewise, fs.walk() suffers from issues such as throwing exceptions whenever it encounters non-standard files, such as sockets
  * Deno.readDir() doesn't suffer from these problems, so I've rolled my own simplified blog with a simple regex match
  */
-export async function tree(root, {nodir=false, nofile=false, regex, depth=Number.MAX_SAFE_INTEGER, _originalRoot=root}={})
+export async function tree(root, {nodir=false, nofile=false, regex, glob, depth=Number.MAX_SAFE_INTEGER, _originalRoot=root}={})
 {
 	if(depth===0 || !(await exists(root)))
 		return [];
 
 	if(!(await Deno.stat(root))?.isDirectory)
 		throw new Error(`root ${root} must be a directory`);
+	
+	if(glob && regex)
+		throw new Error(`glob and regex cannot both be set, pick one or the other`);
+	
+	if(glob)
+		regex = path.globToRegExp(glob, {extended : true});
 
 	if(regex && regex instanceof RegExp===false)
 		throw new TypeError(`regex must be an actual RegExp to avoid all sorts of edge cases when matching`);

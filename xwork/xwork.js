@@ -214,7 +214,7 @@ xwork.map = async function map(arr, fun, {atOnce=navigator.hardwareConcurrency, 
 {
 	// no idea why I have these two lines, they don't make any sense to me
 	//if(atOnce<1)
-	//	atOnce = navigator.hardwareConcurrency*atOnce;	// eslint-disable-line no-param-reassign
+	//	atOnce = navigator.hardwareConcurrency*atOnce;
 
 	return await arr.parallelMap(async (arg, i) =>
 	{

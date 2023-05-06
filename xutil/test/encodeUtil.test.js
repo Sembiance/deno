@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+/* eslint-disable sembiance/shorter-arrow-funs */
 import {path, base64Encode, assertStrictEquals} from "std";
 import * as encodeUtil from "../encodeUtil.js";
 
@@ -64,3 +64,9 @@ Deno.test("decodeMacintosh-octal", async () =>
 	assertStrictEquals(await encodeUtil.decodeMacintosh({data : "QD\\1773D", processors : encodeUtil.macintoshProcessors.octal, region : "roman"}), "QD□3D");
 	assertStrictEquals(await encodeUtil.decodeMacintosh({data : `\\"Collapse\\"\\ plug-ins\\ coming`, processors : encodeUtil.macintoshProcessors.octal, region : "roman"}), `"Collapse" plug-ins coming`);
 });
+
+Deno.test("unicodeToAscii", () =>
+{
+	assertStrictEquals(encodeUtil.unicodeToAscii("ÀÆÇD"), "AAECD");
+});
+

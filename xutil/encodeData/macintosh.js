@@ -1,4 +1,4 @@
-/* eslint-disable max-len, key-spacing, comma-spacing, unicorn/escape-case */
+/* eslint-disable key-spacing, comma-spacing, unicorn/escape-case */
 
 // roman : https://en.wikipedia.org/wiki/Mac_OS_Roman
 // japan : https://github.com/unsound/hfsexplorer/tree/master/src/java/org/catacombae/hfs/original/macjapanese

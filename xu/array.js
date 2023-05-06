@@ -11,7 +11,7 @@ Array.prototype.average ||= function average()
 /** Groups up the values in the array into sub array chunks of x length. Set vertical option to batch in the Y direction rather than X */
 Array.prototype.chunk ||= function chunk(num=1, {vertical=false}={})
 {
-	num = Math.max(1, num);	// eslint-disable-line no-param-reassign
+	num = Math.max(1, num);
 
 	const a = Array.from(this);
 	const chunks = [];
@@ -143,11 +143,11 @@ Array.prototype.min ||= function min()
 	return Math.min(...this);
 };
 
-/** Runs the given fn in parallel for each item in the array, returning a mapped result. Set atOnce to limit how many run at a time */
+/** Runs the given fn in parallel for each item in the array, returning a mapped result. Set atOnce to limit how many run at a time (default 10 or cpus/3 whichever is smaller) set to -1 to use all CPUs */
 Array.prototype.parallelMap ||= async function parallelMap(fn, atOnce=Math.min(Math.floor(navigator.hardwareConcurrency/3), 10))
 {
 	if(atOnce)
-		return await (new PQueue({concurrency : atOnce})).addAll(this.map((v, i) => () => fn(v, i)));
+		return await (new PQueue({concurrency : atOnce===-1 ? navigator.hardwareConcurrency : atOnce})).addAll(this.map((v, i) => () => fn(v, i)));
 
 	return await Promise.all(this.map(fn));
 };
