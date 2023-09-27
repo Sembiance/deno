@@ -22,11 +22,11 @@ export class XWorkerPool
 		this.recoverArgs = {};
 	}
 
-	async start(fun, {size=navigator.hardwareConcurrency, imports}={})
+	async start(fun, {size=navigator.hardwareConcurrency, imports, runEnv}={})
 	{
 		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
 		{
-			const xworkRunOpts = {xlog : this.xlog, imports, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)};
+			const xworkRunOpts = {xlog : this.xlog, imports, runEnv, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)};
 			this.recoverArgs[workerid] = {fun, xworkRunOpts};
 			const worker = await xwork.run(fun, workerid, xworkRunOpts);
 			await worker.ready();
