@@ -1,5 +1,6 @@
 /* eslint-disable sembiance/shorter-arrow-funs */
-import {path, assertEquals, assertStrictEquals, assert, base64Encode} from "std";
+import {xu} from "xu";
+import {path, assertEquals, assertStrictEquals, assert, base64Encode, delay} from "std";
 import * as fileUtil from "../fileUtil.js";
 import * as runUtil from "../runUtil.js";
 
@@ -67,6 +68,60 @@ Deno.test("genTempPath", async () =>
 Deno.test("gunzip", async () =>
 {
 	assertStrictEquals(new TextDecoder().decode(await fileUtil.gunzip(path.join(FILES_DIR, "gzipped.gz"))), "prefix\nabc\n123\nxyz");
+});
+
+Deno.test("monitor", async () =>
+{
+	const dirFilePath = await fileUtil.genTempPath();
+	await Deno.mkdir(dirFilePath);
+	
+	const aFilePath = path.join(dirFilePath, "a.txt");
+	await fileUtil.writeTextFile(aFilePath, "Hello, World!");
+
+	const subDirPath = path.join(dirFilePath, "subdir");
+	await Deno.mkdir(subDirPath);
+
+	const bFilePath = path.join(subDirPath, "b.txt");
+	await fileUtil.writeTextFile(bFilePath, "Hello, World!");
+
+	let ready = false;
+	let done = false;
+	const events = [];
+	const expectedEvents = ["ready", "create c.txt", "modify c.txt", "modify c.txt", "delete c.txt", "create d.txt", "modify d.txt", "delete d.txt", "create c.txt", "delete c.txt", "create subdir/d.txt", "delete subdir/d.txt", "delete subdir/b.txt", "delete subdir"];
+	const monitorcb = ({type, filePath}) =>
+	{
+		if(type==="ready")
+		{
+			ready = true;
+			events.push(type);
+			return;
+		}
+
+		events.push(`${type} ${path.relative(dirFilePath, filePath)}`);
+		if(events.length===expectedEvents.length)
+			done = true;
+	};
+
+	const {stop} = await fileUtil.monitor(dirFilePath, monitorcb);
+	await xu.waitUntil(() => ready, {timeout : xu.SECOND*10});
+	
+	const cFilePath = path.join(dirFilePath, "c.txt");
+	await fileUtil.writeTextFile(cFilePath, "Hello, World!");
+	await fileUtil.writeTextFile(cFilePath, "Hello, World! 2");
+	await fileUtil.unlink(cFilePath);
+
+	let dFilePath = path.join(dirFilePath, "d.txt");
+	await fileUtil.writeTextFile(dFilePath, "Hello, World!");
+	await fileUtil.move(dFilePath, cFilePath);
+	dFilePath = path.join(subDirPath, "d.txt");
+	await fileUtil.move(cFilePath, dFilePath);
+	await fileUtil.unlink(subDirPath, {recursive : true});
+
+	await xu.waitUntil(() => done, {timeout : xu.SECOND*10});
+
+	await stop();
+
+	assertEquals(events, expectedEvents);
 });
 
 Deno.test("move", async () =>

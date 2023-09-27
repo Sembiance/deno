@@ -79,6 +79,39 @@ export async function gunzip(filePath)
 	return await streams.readAll(streams.readerFromStreamReader(await (await Deno.open(filePath)).readable.pipeThrough(new DecompressionStream("gzip")).getReader()));
 }
 
+export async function monitor(dirPath, cb)
+{
+	const linecb = line =>
+	{
+		if(line.startsWith("Setting up watches"))
+			return;
+
+		if(line.trim()==="Watches established.")
+			return cb({type : "ready"});
+
+		let {when, events, filePath} = line.match(/^(?<when>\d+) (?<events>[^ ]+) (?<filePath>.+)$/)?.groups || {};		// eslint-disable-line prefer-const
+		if(!when)
+			return console.error(`Failed to parse inotifywait line: ${line}`);
+	
+		events = events.split(",");
+
+		const o = {when : new Date((+when*xu.SECOND)), filePath};
+		if(events.includesAny(["CREATE", "MOVED_TO"]))
+			o.type = "create";
+		else if(events.includes("CLOSE_WRITE"))
+			o.type = "modify";
+		else if(events.includesAny(["DELETE", "MOVED_FROM"]))
+			o.type = "delete";
+		else
+			o.type = `UNKNOWN: ${events.join(",")}`;
+		
+		cb(o);
+	};
+
+	const {p} = await runUtil.run("inotifywait", ["-mr", "--timefmt", "%s", "--format", "%T %e %w%f", "-e", "create", "-e", "close_write", "-e", "delete", "-e", "moved_from", "-e", "moved_to", dirPath], {detached : true, stdoutcb : linecb, stderrcb : linecb});
+	return {stop : async () => await runUtil.kill(p)};
+}
+
 /** Safely moves a file from src to dest, will try to just rename it, but will copy and remove original if needed */
 export async function move(src, dest)
 {
