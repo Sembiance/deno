@@ -12,6 +12,7 @@ export class XLog
 	// noANSI does not need to be set if you have a logFilePath or logger set
 	constructor(level="info", {logger, mapper, logFilePath, noANSI, inspectOptions={}}={})
 	{
+		this.lastMessageAt = performance.now();
 		this.level = level;
 		this.logger = logger;
 		this.mapper = mapper;
@@ -34,6 +35,13 @@ export class XLog
 					return;
 
 				const r = [];
+				if(this.atLeast("trace"))
+				{
+					const sinceLast = performance.now()-this.lastMessageAt;
+					this.lastMessageAt = performance.now();
+					r.push(`${fg.peach(`${sinceLast.toFixed(2)}ms`.padStart(8, " "))} `);
+				}
+
 				if(this.atLeast("debug"))
 				{
 					const stackTrace = (new Error()).stack.split("\n");	// eslint-disable-line unicorn/error-message
