@@ -1,6 +1,6 @@
 /* eslint-disable sembiance/shorter-arrow-funs */
 import {xu} from "xu";
-import {path, assertEquals, assertStrictEquals, assert, base64Encode, delay} from "std";
+import {path, assertEquals, assertStrictEquals, assert, base64Encode} from "std";
 import * as fileUtil from "../fileUtil.js";
 import * as runUtil from "../runUtil.js";
 
@@ -88,7 +88,7 @@ Deno.test("monitor", async () =>
 	let done = false;
 	const events = [];
 	const expectedEvents = ["ready", "create c.txt", "modify c.txt", "modify c.txt", "delete c.txt", "create d.txt", "modify d.txt", "delete d.txt", "create c.txt", "delete c.txt", "create subdir/d.txt", "delete subdir/d.txt", "delete subdir/b.txt", "delete subdir"];
-	const monitorcb = ({type, filePath}) =>
+	const monitorcb = async ({type, filePath}) =>		// eslint-disable-line require-await
 	{
 		if(type==="ready")
 		{

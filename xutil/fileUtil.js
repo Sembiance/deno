@@ -81,13 +81,13 @@ export async function gunzip(filePath)
 
 export async function monitor(dirPath, cb)
 {
-	const linecb = line =>
+	const linecb = async line =>
 	{
 		if(line.startsWith("Setting up watches"))
 			return;
 
 		if(line.trim()==="Watches established.")
-			return cb({type : "ready"});
+			return await cb({type : "ready"});
 
 		let {when, events, filePath} = line.match(/^(?<when>\d+) (?<events>[^ ]+) (?<filePath>.+)$/)?.groups || {};		// eslint-disable-line prefer-const
 		if(!when)
@@ -105,7 +105,7 @@ export async function monitor(dirPath, cb)
 		else
 			o.type = `UNKNOWN: ${events.join(",")}`;
 		
-		cb(o);
+		await cb(o);
 	};
 
 	const {p} = await runUtil.run("inotifywait", ["-mr", "--timefmt", "%s", "--format", "%T %e %w%f", "-e", "create", "-e", "close_write", "-e", "delete", "-e", "moved_from", "-e", "moved_to", dirPath], {detached : true, stdoutcb : linecb, stderrcb : linecb});
