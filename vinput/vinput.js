@@ -6,8 +6,8 @@ import {fileUtil} from "xutil";
 insmod /mnt/compendium/DevLab/kernel-modules/vinput/vinput_mod.ko
 insmod /mnt/compendium/DevLab/kernel-modules/vinput/vkbd_mod.ko
 echo "vkbd" | sudo tee -a /sys/class/vinput/export
-chown root:input /dev/vinput0
-chmod g+w /dev/vinput0
+sudo chown root:input /dev/vinput0
+sudo chmod g+w /dev/vinput0
 */
 
 const DEFAULT_SEQUENCE_DELAY = 250;
