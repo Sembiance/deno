@@ -12,9 +12,11 @@ import {xu} from "xu";
  * 		required			Set to true to require this option be set
  *      short				Single letter to use as a short name. Default is first letter of the key (optid). Can set to null/undefined to omit short
  *      multiple            Whether or not multiple values can be specified for this option
+ *      asString			Don't parse the number as anything other than a string
  *	 args				An array of objects representing the arguments this command takes. Each one has properties:
  *      allowed				An array of approved values
  * 		argid				The argument name/id
+ *      defaultValue		Set to the value you want it to hold if the user doesn't specify. If set, it implies hasValue.
  *		desc				The description of this argument
  *		multiple			Whether or not multiple values can be specified for this argument
  *		required			Whether or not the argument is required
@@ -49,7 +51,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 		const argOptPadding = Math.max("version".length, args.map(arg => arg.argid.length).max(), Object.entries(opts).map(([k, opt]) => k.length + (opt.hasValue ? " <value>".length : 0) + (opt.multiple ? 4 : 0)).max()) + 8;
 
 		if(args.length>0)
-			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}${arg.allowed ? ` (${arg.allowed.join(" | ")})` : ""}`).join("\n")}`);
+			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}${arg.allowed ? ` (${arg.allowed.join(" | ")})` : ""}${Object.hasOwn(arg, "defaultValue") ? ` (Default: ${arg.defaultValue})` : ""}`).join("\n")}`);
 		
 		console.log(`\nOptions:\n${Object.entries(opts).map(([optid, opt]) =>
 			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}${opt.multiple ? " ..." : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}`).join("\n")}`);
@@ -122,7 +124,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 			curOptid = optid;
 	}
 
-	// Set any defaults we may have and convert any numbers to numbers
+	// Set any default options we may have and convert any numbers to numbers
 	Object.entries(opts).forEach(([optid, opt]) =>
 	{
 		if(Object.hasOwn(opt, "defaultValue") && !Object.hasOwn(argv, optid))
@@ -133,7 +135,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 			if(Object.hasOwn(opt, "defaultValue") && typeof opt.defaultValue==="number" && typeof argv[optid]!=="number" && typeof argv[optid]==="string" && !argv[optid].isNumber())
 				return showUsage(`Expected ${optid} to be a number. Got: ${argv[optid]}`);
 			
-			if(typeof argv[optid]==="string" && argv[optid].isNumber())
+			if(typeof argv[optid]==="string" && argv[optid].isNumber() && !opt.asString)
 				argv[optid] = +argv[optid];
 		}
 		else if(opt.required)
@@ -163,6 +165,15 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 
 	if(curArg?.required && !Object.hasOwn(argv, curArg.argid))
 		return showUsage(`Required argument ${curArg.argid} was not supplied.`);
+
+	// Set any default arguments we may have and convert any numbers to numbers
+	Array.from(args).forEach(arg =>
+	{
+		if(!Object.hasOwn(arg, "defaultValue") || Object.hasOwn(argv, arg.argid))
+			return;
+		
+		argv[arg.argid] = arg.defaultValue;
+	});
 
 	// Verify that we have allowed values
 	for(const arg of args)

@@ -1,4 +1,5 @@
-import {delay, path} from "std";
+let delay=null, path=null;	// This method allows us to use this code in both deno and browser
+try { ({delay, path} = await import("std")); } catch {}	// eslint-disable-line brace-style
 import {} from "./array.js";
 import {} from "./math.js";
 import {} from "./number.js";
@@ -232,7 +233,7 @@ xu.dirname = function dirname(meta)
 /** returns a nice pretty representation of val */
 xu.inspect = function inspect(val, options={})
 {
-	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, strAbbreviateSize : 100, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false, ...options});
+	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, strAbbreviateSize : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false, ...options});
 };
 
 const stdoutEncoder = new TextEncoder();
@@ -253,3 +254,4 @@ xu.randStr = function randStr()
 };
 
 export { xu, fg };
+

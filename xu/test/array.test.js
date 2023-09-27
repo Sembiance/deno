@@ -322,3 +322,4 @@ Deno.test("variance", () =>
 	r = 2.5;
 	assertStrictEquals(r, a.variance(true));
 });
+

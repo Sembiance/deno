@@ -1,6 +1,5 @@
 import {} from "./object.js";
 import {} from "./math.js";
-import {PQueue} from "denoLandX";
 
 /** Returns an average of all the numbers in the array (arithmetic mean) */
 Array.prototype.average ||= function average()
@@ -144,8 +143,12 @@ Array.prototype.min ||= function min()
 };
 
 /** Runs the given fn in parallel for each item in the array, returning a mapped result. Set atOnce to limit how many run at a time (default 10 or cpus/3 whichever is smaller) set to -1 to use all CPUs */
+let PQueue = null;
 Array.prototype.parallelMap ||= async function parallelMap(fn, atOnce=Math.min(Math.floor(navigator.hardwareConcurrency/3), 10))
 {
+	if(!PQueue)
+		({PQueue} = await import("denoLandX"));
+
 	if(atOnce)
 		return await (new PQueue({concurrency : atOnce===-1 ? navigator.hardwareConcurrency : atOnce})).addAll(this.map((v, i) => () => fn(v, i)));
 

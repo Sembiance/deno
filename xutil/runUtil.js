@@ -291,3 +291,41 @@ export async function checkNumserver(dontExit)
 	
 	return numserverAvaialble;
 }
+
+export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, verbose, dereferenceSymlinks, progress}={})
+{
+	const r = [];
+
+	if(srcHost && destHost)
+		throw new Error("Can't have both srcHost and destHost");
+	
+	if(pretend)
+		r.push("-rlpgoD", "--dry-run");
+	else
+		r.push("--archive");
+	
+	if(progress)
+		r.push("--progress");
+
+	r.push("--hard-links", dereferenceSymlinks ? "--copy-links" : "--links");
+	
+	if(verbose)
+		r.push("--verbose");
+
+	if(deleteExtra)
+		r.push("--delete");
+
+	if(filter)
+		r.push("-f", `merge ${filter}`);
+
+	if(fast)
+		r.push("--no-compress");
+	
+	if(fast && (srcHost || destHost))
+		r.push("-e", "ssh -T -c aes256-gcm@openssh.com -o Compression=no -x");
+	
+	r.push(`${srcHost ? `${srcHost}:` : ""}${src}`);
+	r.push(`${destHost ? `${destHost}:` : ""}${dest}`);
+
+	return r;
+}
