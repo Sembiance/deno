@@ -2,7 +2,7 @@
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
-import {path, readLines, streams} from "std";
+import {path, TextLineStream} from "std";
 
 // requires kernel CONFIG_PROC_CHILDREN
 async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
@@ -27,10 +27,11 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
 	await getKids(parentPID).catch(() => {});
 
 	// sort the kids so that we kill the deepest ones first
-	kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid).forEach(pid =>
+	for(const kidPid of kids.sortMulti([({depth}) => depth], [true]).map(({pid}) => pid))
 	{
-		try { Deno.kill(pid, timeoutSignal); } catch {}
-	});
+		try { Deno.kill(+kidPid, timeoutSignal); }
+		catch {}
+	}
 }
 
 
@@ -156,9 +157,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 	const lineReader = async function(reader, cb)
 	{
-		for await(const line of readLines(reader))
+		for await(const line of reader.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
 			await cb(line);
-		reader.close();
 	};
 
 	const stdoutcbPromise = stdoutcb || xlog ? lineReader(p.stdout, stdoutcb || (line => xlog.info`${line}`)) : null;
@@ -180,11 +180,11 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(stdinFilePath)
 		{
 			const stdinFile = await Deno.open(stdinFilePath);
-			stdinPromise = streams.copy(stdinFile, p.stdin).finally(() => { stdinFile.close(); p.stdin.close(); });
+			stdinPromise = stdinFile.readable.pipeTo(p.stdin.writable).finally(() => { stdinFile.close(); p.stdin.close(); });
 		}
 		else if(stdinData)
 		{
-			stdinPromise = streams.writeAll(p.stdin, typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData).finally(() => p.stdin.close());
+			stdinPromise = new Blob([(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData)]).stream().pipeTo(p.stdin.writable).finally(() => p.stdin.close());
 		}
 		else
 		{

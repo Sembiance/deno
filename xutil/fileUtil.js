@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import * as runUtil from "./runUtil.js";
-import {path, readLines, streams} from "std";
+import {path, toArrayBuffer, TextLineStream} from "std";
 
 /** returns true if files a and b are equals. Calls out to 'cmp' due to how optimized that program is for speed */
 export async function areEqual(a, b)
@@ -16,11 +16,10 @@ export async function concat(srcFilePaths, destFilePath, {seperator}={})
 	for(let i=0;i<srcFilePaths.length;i++)
 	{
 		const srcFile = await Deno.open(srcFilePaths[i], {read : true, write : false});
-		await streams.copy(srcFile, destFile);
-		srcFile.close();
+		await srcFile.readable.pipeTo(destFile.writable, {preventClose : true});
 
 		if(seperatorData && i<(srcFilePaths.length-1))
-			await streams.writeAll(destFile, seperatorData);
+			await (new Blob([seperatorData])).stream().pipeTo(destFile.writable, {preventClose : true});
 	}
 
 	destFile.close();
@@ -76,7 +75,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 /** Will gunzip the given filePath */
 export async function gunzip(filePath)
 {
-	return await streams.readAll(streams.readerFromStreamReader(await (await Deno.open(filePath)).readable.pipeThrough(new DecompressionStream("gzip")).getReader()));
+	return await toArrayBuffer(await (await Deno.open(filePath)).readable.pipeThrough(new DecompressionStream("gzip")));
 }
 
 export async function monitor(dirPath, cb)
@@ -171,10 +170,8 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 	}
 	else
 	{
-		const file = await Deno.open(filePath);
-		for await(const line of readLines(file))
+		for await(const line of (await Deno.open(filePath)).readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
 			await cb(dontParse ? line : xu.parseJSON(line), line);
-		file.close();
 	}
 
 	if(lines.length>0)
@@ -270,7 +267,7 @@ export async function writeJSONLFile(filePath, lines)
 	const encoder = new TextEncoder();
 
 	for(const line of lines)
-		await streams.writeAll(file, encoder.encode(`${JSON.stringify(line)}\n`));
+		await new Blob([encoder.encode(`${JSON.stringify(line)}\n`)]).stream().pipeTo(file.writable, {preventClose : true});
 
 	file.close();
 

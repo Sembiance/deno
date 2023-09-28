@@ -16,6 +16,8 @@ Deno.test("prefix", async () =>
 	assertStrictEquals(await a.text(), "You browsed");
 
 	webServer.stop();
+	
+	await delay(250);
 });
 
 Deno.test("external", async () =>
@@ -96,4 +98,6 @@ Deno.test("basic", async () =>
 	assert(r.startsWith("error"));
 
 	webServer.stop();
+
+	await delay(250);
 });

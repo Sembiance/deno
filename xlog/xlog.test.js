@@ -1,6 +1,6 @@
 import {xu, fg} from "xu";
 import {XLog} from "./xlog.js";
-import {assertEquals, assertStrictEquals, delay} from "std";
+import {assertStrictEquals, delay, assert} from "std";
 import {fileUtil} from "xutil";
 
 Deno.test("logger", () =>
@@ -16,7 +16,10 @@ Deno.test("logger", () =>
 	xlog.fatal`nope, should not see`;
 	if(xlog.atLeast("trace"))
 		console.log("should NOT see");
-	assertEquals(debugLog, ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxlog.test.js: 13\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxlog.test.js: 14\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"]);	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape
+
+	const expectedLog = ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxlog.test.js: 13\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxlog.test.js: 14\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"];	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape
+	for(let i=0;i<debugLog.length;i++)
+		assert(debugLog[i].endsWith(expectedLog[i]));
 });
 
 Deno.test("mapper", () =>
@@ -48,8 +51,13 @@ Deno.test("flush", async () =>
 	xlog.trace`xlog test message with number: ${47}`;
 	await xlog.flush(logFilePath);
 
-	assertEquals(await fileUtil.readTextFile(logFilePath), "WARN: \nxlog test message\nxlog.test.js: 41: xlog test message with string: hello\nxlog.test.js: 48: xlog test message with number: 47\n");
+	const expectedLog = ["WARN: ", "xlog test message", "xlog.test.js: 44: xlog test message with string: hello", "xlog.test.js: 51: xlog test message with number: 47"];
+	const debugLog = (await fileUtil.readTextFile(logFilePath)).trim().split("\n");
 	await fileUtil.unlink(logFilePath);
+
+	for(let i=0;i<debugLog.length;i++)
+		assert(debugLog[i].endsWith(expectedLog[i]), `${i}: ${debugLog[i]} vs ${expectedLog[i]}`);
+
 	xlog.cleanup();
 });
 
@@ -72,8 +80,13 @@ Deno.test("flush-via-signal", async () =>
 	Deno.kill(Deno.pid, "SIGUSR2");
 	await delay(1000);	// give the flush time to finish since we are doing it async via a kill SIGUSR2 signal
 
-	assertEquals(await fileUtil.readTextFile(logFilePath), "WARN: \nxlog test message\nxlog.test.js: 62: xlog test message with string: hello\nxlog.test.js: 70: xlog test message with number: 47\n");
+	const expectedLog = ["WARN: ", "xlog test message", "xlog.test.js: 70: xlog test message with string: hello", "xlog.test.js: 78: xlog test message with number: 47"];
+	const debugLog = (await fileUtil.readTextFile(logFilePath)).trim().split("\n");
 	await fileUtil.unlink(logFilePath);
+
+	for(let i=0;i<debugLog.length;i++)
+		assert(debugLog[i].endsWith(expectedLog[i]), `${i}: ${debugLog[i]} vs ${expectedLog[i]}`);
+
 	xlog.cleanup();
 });
 

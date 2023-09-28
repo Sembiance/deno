@@ -234,8 +234,8 @@ Deno.test("detached-exitcb", async () =>
 
 Deno.test("detached-partial", async () =>
 {
-	const {p} = await runUtil.run("time", ["sleep", 2], {detached : true});
-	const stderr = await p.stderrOutput();
+	const {cb} = await runUtil.run("time", ["sleep", "2"], {detached : true});
+	const {stderr} = await cb();
 	assert(stderr.length>100);
 });
 

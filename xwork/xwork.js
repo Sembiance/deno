@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import {fileUtil, runUtil, sockUtil} from "xutil";
-import {streams, readLines} from "std";
+import {TextLineStream} from "std";
 
 const xwork = {};
 
@@ -20,21 +20,18 @@ xwork.openConnection = async function openConnection()
 	{
 		try
 		{
-			for await(const line of readLines(workerConnection))
+			for await(const line of workerConnection.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
 				workerMessages.push(xu.parseJSON(line, {}));
 		}
 		catch {}
 		
-		try
-		{
-			workerConnection.close();
-		}
+		try { workerConnection.close(); }
 		catch {}
 		workerMessages = null;
 	};
 
 	receiveMessages();
-	await streams.writeAll(workerConnection, textEncoder.encode(`${JSON.stringify({op : "ready"})}\n`));
+	await new Blob([textEncoder.encode(`${JSON.stringify({op : "ready"})}\n`)]).stream().pipeTo(workerConnection.writable, {preventClose : true});
 };
 xwork.closeConnection = function closeConnection() { workerConnection.close(); };
 xwork.recv = async function recv(cb)
@@ -52,7 +49,7 @@ xwork.recv = async function recv(cb)
 	}
 };
 xwork.recvAbort = function recvAbort() { recvAborted = true; };		// called by a worker when the recv is stuck and needs to be aborted
-xwork.send = async function send(msg) { await streams.writeAll(workerConnection, textEncoder.encode(`${JSON.stringify({op : "msg", msg})}\n`)); };
+xwork.send = async function send(msg) { await new Blob([textEncoder.encode(`${JSON.stringify({op : "msg", msg})}\n`)]).stream().pipeTo(workerConnection.writable, {preventClose : true}); };
 
 /** WHAT IS BELOW CAN BE CALLED BY THE PARENT */
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
@@ -82,7 +79,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 
 		// this is sent by a worker 'file' when they want to get their args
 		if(op==="arg")
-			await streams.writeAll(conn, textEncoder.encode(`${JSON.stringify(arg)}\n`));
+			await new Blob([textEncoder.encode(`${JSON.stringify(arg)}\n`)]).stream().pipeTo(conn.writable, {preventClose : true});
 		
 		// this is sent by a worker (via xwork.send()) to send a message to the parent
 		if(op==="msg" && recvcb)
@@ -206,7 +203,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 			if(!workerMsgConn)
 				throw new Error("Worker not ready to receive messages");
 			
-			await streams.writeAll(workerMsgConn, textEncoder.encode(`${JSON.stringify(msg)}\n`));
+			await new Blob([textEncoder.encode(`${JSON.stringify(msg)}\n`)]).stream().pipeTo(workerMsgConn.writable, {preventClose : true});
 		}
 	};
 };

@@ -38,6 +38,8 @@ Deno.test("detachedSimple", async () =>
 	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true});
 	assert(await xu.waitUntil(() => msgCount===3, {timeout : xu.SECOND*5}));
 	assertEquals(await done(), {nums : [3.14, 1.235], arg : msgs[0]});
+
+	await delay(250);
 });
 
 Deno.test("detachedCrash", async () =>
@@ -63,6 +65,8 @@ Deno.test("detachedCrash", async () =>
 	assert(await xu.waitUntil(() => failed, {timeout : xu.SECOND*2}));
 	assertStrictEquals(failed, true);
 	await done();
+
+	await delay(250);
 });
 
 Deno.test("detachedKill", async () =>
@@ -138,6 +142,8 @@ Deno.test("anonInline", async () =>
 	r = await xwork.map([1, 2, 3, 4, 5], async v => { await delay(300); return v*3; }, {cb : (v, i) => { total+=v; assert(i<5); }, imports : {std : ["delay"]}});
 	assertStrictEquals(total, 45);
 	assertEquals(r, [3, 6, 9, 12, 15]);
+
+	await delay(250);
 });
 
 Deno.test("file", async () =>
@@ -147,6 +153,8 @@ Deno.test("file", async () =>
 
 	r = await xwork.map([1, 2, 3, 4, 5], "testWorker.js");
 	assertEquals(r, [5, 10, 15, 20, 25]);
+
+	await delay(250);
 });
 
 Deno.test("timeout", async () =>
@@ -165,4 +173,6 @@ Deno.test("timeout", async () =>
 	r = await xwork.run(f, undefined, {imports : {std : ["delay"]}});
 	assert([4, 5].includes(Math.ceil((performance.now()-start)/xu.SECOND)));
 	assertStrictEquals(r, 14);
+
+	await delay(250);
 });
