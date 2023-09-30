@@ -59,6 +59,7 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
  *   verbose            Set to true to output some details about the program
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
+ *   virtualXVNCPort    If set, x11vnc will run against the virtual X port so you can see what's going on
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  *   xlog               If set, stdout/stderr will be redirected to the logger
  */
@@ -67,7 +68,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	stdoutNull, stderrNull,
 	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
 	stderrEncoding="utf-8", stderrFilePath, stderrcb,
-	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, xlog}={})
+	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, virtualXVNCPort, xlog}={})
 {
 	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData || stdinFilePath) ? "piped" : "null")};
 
@@ -114,6 +115,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 	let xvfbProc = null;
 	let xvfbPort = null;
+	let x11vncProc = null;
 	if(virtualX || virtualXGLX)
 	{
 		xvfbPort = await xu.tryFallbackAsync(async () => +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim(), Math.randomInt(10, 59999));
@@ -127,6 +129,9 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 		runArgs.env ||= {};
 		runArgs.env.DISPLAY = `:${xvfbPort}`;
+
+		if(virtualXVNCPort)
+			x11vncProc = Deno.run({cmd : ["x11vnc", "-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"});
 	}
 
 	if(verbose)
@@ -145,6 +150,11 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(killChildren)
 			await killPIDKids(p.pid, timeoutSignal);
 		try { p.kill(timeoutSignal); } catch {}
+		if(x11vncProc)
+		{
+			await kill(x11vncProc, "SIGTERM");
+			x11vncProc = null;
+		}
 		if(xvfbProc)
 		{
 			await kill(xvfbProc, "SIGTERM");
@@ -198,6 +208,11 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(typeof timerid==="number")
 			clearTimeout(timerid);
 		
+		if(x11vncProc)
+		{
+			await kill(x11vncProc, "SIGTERM");
+			x11vncProc = null;
+		}
 		if(xvfbProc)
 		{
 			await kill(xvfbProc, "SIGTERM");
@@ -292,7 +307,7 @@ export async function checkNumserver(dontExit)
 	return numserverAvaialble;
 }
 
-export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, verbose, dereferenceSymlinks, progress}={})
+export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, verbose, dereferenceSymlinks, progress, noOwnership}={})
 {
 	const r = [];
 
@@ -320,6 +335,9 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 
 	if(fast)
 		r.push("--no-compress");
+
+	if(noOwnership)
+		r.push("--no-o", "--no-g");
 	
 	if(fast && (srcHost || destHost))
 		r.push("-e", "ssh -T -c aes256-gcm@openssh.com -o Compression=no -x");
