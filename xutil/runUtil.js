@@ -2,6 +2,7 @@
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
+import * as sysUtil from "./sysUtil.js";
 import {path, TextLineStream} from "std";
 
 // requires kernel CONFIG_PROC_CHILDREN
@@ -59,7 +60,7 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
  *   verbose            Set to true to output some details about the program
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
- *   virtualXVNCPort    If set, x11vnc will run against the virtual X port so you can see what's going on
+ *   virtualXVNCPort    If set, x11vnc will run against the virtual X port so you can see what's going on. If you set to 'true' it will auto assign a port
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  *   xlog               If set, stdout/stderr will be redirected to the logger
  */
@@ -131,7 +132,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		runArgs.env.DISPLAY = `:${xvfbPort}`;
 
 		if(virtualXVNCPort)
+		{
+			if(virtualXVNCPort===true)
+				virtualXVNCPort = sysUtil.getAvailablePort();
+
 			x11vncProc = Deno.run({cmd : ["x11vnc", "-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"});
+		}
 	}
 
 	if(verbose)
@@ -257,6 +263,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		const r = {p, cb};
 		if(xvfbPort)
 			r.xvfbPort = xvfbPort;
+		if(virtualXVNCPort)
+			r.virtualXVNCPort = virtualXVNCPort;
 		return r;
 	}
 
