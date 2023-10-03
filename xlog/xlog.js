@@ -10,7 +10,7 @@ export class XLog
 	logLines = [];
 
 	// noANSI does not need to be set if you have a logFilePath or logger set
-	constructor(level="info", {logger, mapper, logFilePath, noANSI, inspectOptions={}}={})
+	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, inspectOptions={}}={})
 	{
 		this.lastMessageAt = performance.now();
 		this.level = level;
@@ -18,6 +18,7 @@ export class XLog
 		this.mapper = mapper;
 		this.logFilePath = logFilePath;
 		this.noANSI = noANSI;
+		this.alwaysEcho = alwaysEcho;
 		this.signalHandler = async () => await this.flush();
 		this.inspectOptions = inspectOptions;
 
@@ -82,7 +83,7 @@ export class XLog
 				if(this.logger)
 					this.logger(outText);
 				
-				if(!this.logFilePath && !this.logger)
+				if((!this.logFilePath && !this.logger) || this.alwaysEcho)
 					console.log(outText);
 				
 				return outText;
