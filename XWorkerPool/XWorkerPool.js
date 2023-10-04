@@ -26,7 +26,7 @@ export class XWorkerPool
 	{
 		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
 		{
-			const xworkRunOpts = {xlog : this.xlog, imports, runEnv, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : status => this.workerExit(workerid, status), recvcb : msg => this.workerDone(workerid, msg)};
+			const xworkRunOpts = {xlog : this.xlog, imports, runEnv, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : (status, logLines) => this.workerExit(workerid, status, logLines), recvcb : msg => this.workerDone(workerid, msg)};
 			this.recoverArgs[workerid] = {fun, xworkRunOpts};
 			const worker = await xwork.run(fun, workerid, xworkRunOpts);
 			await worker.ready();
@@ -39,7 +39,7 @@ export class XWorkerPool
 		this.processQueue();
 	}
 
-	async workerExit(workerid, status)
+	async workerExit(workerid, status, logLines)
 	{
 		this.workers.find(worker => worker.workerid===workerid).exited = true;
 
@@ -51,9 +51,9 @@ export class XWorkerPool
 		if(this.stopping)
 			return;
 		
-		this.xlog.warn`Worker ${workerid} crashed with status ${status} and queue value ${this.busyValues[workerid]}`;
+		this.xlog.warn`Worker ${workerid} crashed with status ${status} and queue value ${this.busyValues[workerid]} and logLines:\n\t${logLines.join("\n\t")}`;
 		if(this.crashcb)
-			await this.crashcb(workerid, status, this.busyValues[workerid]);
+			await this.crashcb(workerid, status, this.busyValues[workerid], logLines);
 
 		if(this.crashRecover)
 		{

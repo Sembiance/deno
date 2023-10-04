@@ -62,6 +62,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 	let gotResult = false;
 	let result = [];
 	let workerMsgConn = null;
+	const logLines = [];
 	const xworkSockServer = await sockUtil.listen({transport : "unix", path : xworkSockPath}, {linecb : async (line, conn) =>
 	{
 		const {op, msg} = xu.parseJSON(line, {});
@@ -96,12 +97,17 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		Object.assign(runOpts.env, runEnv);
 	if(xlog)
 	{
-		runOpts.stdoutcb = line => xlog.info`${line}`;
+		runOpts.stdoutcb = line =>
+		{
+			xlog.info`${line}`;
+			logLines.push(line);
+		};
 		runOpts.stderrcb = line =>
 		{
 			if(stderrcb)
 				stderrcb(line);
 			xlog.warn`${line}`;
+			logLines.push(line);
 		};
 	}
 	else if(hideOutput)
@@ -157,7 +163,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		xu.tryFallback(() => xworkSockServer.close());
 		
 		if(exitcb)
-			await exitcb(status);
+			await exitcb(status, logLines);
 
 		exited = true;
 		await cleanup(true);
