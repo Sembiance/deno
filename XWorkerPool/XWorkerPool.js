@@ -1,6 +1,7 @@
 import {xu} from "xu";
 import {xwork} from "xwork";
 import {XLog} from "xlog";
+import {delay} from "std";
 
 export class XWorkerPool
 {
@@ -22,10 +23,13 @@ export class XWorkerPool
 		this.recoverArgs = {};
 	}
 
-	async start(fun, {size=navigator.hardwareConcurrency, imports, runEnv}={})
+	async start(fun, {size=navigator.hardwareConcurrency, imports, runEnv, interval}={})
 	{
-		this.workers = await [].pushSequence(0, size-1).parallelMap(async workerid =>
+		this.workers = await [].pushSequence(0, size-1).parallelMap(async (workerid, i) =>
 		{
+			if(interval)
+				await delay(interval*i);
+
 			const xworkRunOpts = {xlog : this.xlog, imports, runEnv, detached : true, runArgs : [workerid.toString(), size.toString()], exitcb : (status, logLines) => this.workerExit(workerid, status, logLines), recvcb : msg => this.workerDone(workerid, msg)};
 			this.recoverArgs[workerid] = {fun, xworkRunOpts};
 			const worker = await xwork.run(fun, workerid, xworkRunOpts);
