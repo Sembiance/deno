@@ -24,8 +24,8 @@ export {format as dateFormat} from "https://deno.land/std@0.203.0/datetime/forma
 export {parse as dateParse} from "https://deno.land/std@0.203.0/datetime/parse.ts";
 
 // encoding
-export {decode as base64Decode, encode as base64Encode} from "https://deno.land/std@0.203.0/encoding/base64.ts";
-export {decode as hexDecode, encode as hexEncode} from "https://deno.land/std@0.203.0/encoding/hex.ts";
+export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "https://deno.land/std@0.203.0/encoding/base64.ts";
+export {decodeHex as hexDecode, encodeHex as hexEncode} from "https://deno.land/std@0.203.0/encoding/hex.ts";
 
 // fs
 export * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
