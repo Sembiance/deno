@@ -20,6 +20,7 @@ export class UInt8ArrayReader
 	}
 
 	getEndianness(swap) { return swap ? (this.endianness==="BE" ? "LE" : "BE") : this.endianness; }
+	setEndianness(endianness) { this.endianness = endianness.toUpperCase(); }
 
 	length() { return this.arr.length; }
 	remaining() { return this.arr.length-this.pos; }
@@ -35,7 +36,8 @@ export class UInt8ArrayReader
 	async writeToDisk(len, filePath) { await Deno.writeFile(filePath, Uint8Array.from(this.arr.subarray(this.pos, this.post(len)))); }
 
 	// Returns a new UInt8ArrayReader that is made up of a subsection of the current buf
-	sub(len) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(this.pos, this.post(len))), {endianness : this.endianness}); }
+	sub(len, copy) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(this.pos, copy ? this.pos+len : this.post(len))), {endianness : this.endianness}); }
+	subAt(pos, len, copy) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(pos, copy ? pos+len : this.post(len))), {endianness : this.endianness}); }
 
 	// Reads a string of the given len with the given encoding
 	str(len, encoding="ascii")
