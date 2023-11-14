@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import {crypto} from "std";
-import {runUtil} from "xutil";
+import {runUtil, fileUtil} from "xutil";
 
 const MAX_INLINE_FILE_SIZE = xu.GB*2;
 
@@ -12,6 +12,9 @@ export async function hashData(algorithm, dataRaw)
 
 export async function hashFile(algorithm, filePath)
 {
+	if(!await fileUtil.exists(filePath))
+		return null;
+
 	// anything larger than a certain size, call out to an external program
 	// in theory Uint8Array can handle a maximum of 32bit, but that's 4GB of memory usage, so let's aim for half that or 2GB (or whatever I set above)
 	if((await Deno.stat(filePath)).size>MAX_INLINE_FILE_SIZE)
