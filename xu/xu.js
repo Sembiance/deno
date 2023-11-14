@@ -24,88 +24,93 @@ xu.GB = xu.MB*1024;
 xu.TB = xu.GB*1024;
 xu.PB = xu.TB*1024;
 
-/* eslint-disable unicorn/escape-case, unicorn/no-hex-escape */
+/* eslint-disable unicorn/no-hex-escape */
 // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 xu.c =
 {
-	reset       : "\x1b[0m",
-	bold        : "\x1b[1m",
-	dim         : "\x1b[2m",
-	italic      : "\x1b[3m",
-	underline   : "\x1b[4m",
-	blink       : "\x1b[5m",
-	reverse     : "\x1b[7m",
-	strike      : "\x1b[9m",
-	clearScreen : "\x1b[2J\x1b[H",	// blanks screen and returns cursor to home position
+	reset       : "\x1B[0m",
+	bold        : "\x1B[1m",
+	dim         : "\x1B[2m",
+	italic      : "\x1B[3m",
+	underline   : "\x1B[4m",
+	blink       : "\x1B[5m",
+	reverse     : "\x1B[7m",
+	strike      : "\x1B[9m",
+	clearScreen : "\x1B[2J\x1B[H",	// blanks screen and returns cursor to home position
 	bg          :
 	{
-		black   : "\x1b[40m",
+		black   : "\x1B[40m",
 
 		// bright colors
-		red     : "\x1b[41m",
-		green   : "\x1b[42m",
-		yellow  : "\x1b[43m",
-		blue    : "\x1b[44m",
-		magenta : "\x1b[45m",
-		cyan    : "\x1b[46m",
-		white   : "\x1b[47m",
+		red     : "\x1B[41m",
+		green   : "\x1B[42m",
+		yellow  : "\x1B[43m",
+		blue    : "\x1B[44m",
+		magenta : "\x1B[45m",
+		cyan    : "\x1B[46m",
+		white   : "\x1B[47m",
 
 		// dim colors
-		redDim     : "\x1b[41m",
-		greenDim   : "\x1b[42m",
-		yellowDim  : "\x1b[43m",
-		blueDim    : "\x1b[44m",
-		magentaDim : "\x1b[45m",
-		cyanDim    : "\x1b[46m",
-		whiteDim   : "\x1b[47m",
+		redDim     : "\x1B[41m",
+		greenDim   : "\x1B[42m",
+		yellowDim  : "\x1B[43m",
+		blueDim    : "\x1B[44m",
+		magentaDim : "\x1B[45m",
+		cyanDim    : "\x1B[46m",
+		whiteDim   : "\x1B[47m",
 
 		// 256 colors
-		peach       : "\x1b[48;5;203m",
-		pink        : "\x1b[48;5;205m",
-		orange      : "\x1b[48;5;208m",
-		violet      : "\x1b[48;5;93m",
-		chartreuse  : "\x1b[48;5;190m",
-		deepSkyblue : "\x1b[48;5;27m",
-		violetRed   : "\x1b[48;5;163m",
-		blueGreen   : "\x1b[48;5;23m",
-		fogGray     : "\x1b[48;5;250m"
+		peach       : "\x1B[48;5;203m",
+		pink        : "\x1B[48;5;205m",
+		orange      : "\x1B[48;5;208m",
+		violet      : "\x1B[48;5;93m",
+		chartreuse  : "\x1B[48;5;190m",
+		deepSkyblue : "\x1B[48;5;27m",
+		violetRed   : "\x1B[48;5;163m",
+		blueGreen   : "\x1B[48;5;23m",
+		fogGray     : "\x1B[48;5;250m"
 	},
 	fg :
 	{
-		black   : "\x1b[90m",
+		black   : "\x1B[90m",
 
 		// bright colors
-		red     : "\x1b[91m",
-		green   : "\x1b[92m",
-		yellow  : "\x1b[93m",
-		blue    : "\x1b[94m",
-		magenta : "\x1b[95m",
-		cyan    : "\x1b[96m",
-		white   : "\x1b[97m",
+		red     : "\x1B[91m",
+		green   : "\x1B[92m",
+		yellow  : "\x1B[93m",
+		blue    : "\x1B[94m",
+		magenta : "\x1B[95m",
+		cyan    : "\x1B[96m",
+		white   : "\x1B[97m",
 
 		// dim colors
-		redDim     : "\x1b[31m",
-		greenDim   : "\x1b[32m",
-		yellowDim  : "\x1b[33m",
-		blueDim    : "\x1b[34m",
-		magentaDim : "\x1b[35m",
-		cyanDim    : "\x1b[36m",
-		whiteDim   : "\x1b[37m",
+		redDim     : "\x1B[31m",
+		greenDim   : "\x1B[32m",
+		yellowDim  : "\x1B[33m",
+		blueDim    : "\x1B[34m",
+		magentaDim : "\x1B[35m",
+		cyanDim    : "\x1B[36m",
+		whiteDim   : "\x1B[37m",
 
 		// 256 colors
-		peach       : "\x1b[38;5;203m",
-		pink        : "\x1b[38;5;205m",
-		orange      : "\x1b[38;5;208m",
-		violet      : "\x1b[38;5;93m",
-		chartreuse  : "\x1b[38;5;190m",
-		deepSkyblue : "\x1b[38;5;27m",
-		violetRed   : "\x1b[38;5;163m",
-		blueGreen   : "\x1b[38;5;23m",
-		fogGray     : "\x1b[38;5;250m",
-		brown       : "\x1b[38;5;94m"
+		peach       : "\x1B[38;5;203m",
+		pink        : "\x1B[38;5;205m",
+		orange      : "\x1B[38;5;208m",
+		violet      : "\x1B[38;5;93m",
+		chartreuse  : "\x1B[38;5;190m",
+		deepSkyblue : "\x1B[38;5;27m",
+		violetRed   : "\x1B[38;5;163m",
+		blueGreen   : "\x1B[38;5;23m",
+		fogGray     : "\x1B[38;5;250m",
+		brown       : "\x1B[38;5;94m"
+	},
+	cursor :
+	{
+		hide : "\x1B[?25l",
+		show : "\x1B[?25h"
 	}
 };
-/* eslint-enable unicorn/escape-case, unicorn/no-hex-escape */
+/* eslint-enable unicorn/no-hex-escape */
 
 // This will convert the above exports.c so you can call xy.cf.fg.cyan("Cyan Color")
 xu.cf = {};

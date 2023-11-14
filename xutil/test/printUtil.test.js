@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import * as printUtil from "../printUtil.js";
-import {base64Encode, assertStrictEquals} from "std";
+import {base64Encode, assertStrictEquals, delay} from "std";
 
 Deno.test("minorHeader", () => assertStrictEquals(base64Encode(printUtil.minorHeader("Minor Header", { prefix : "prefix\n", suffix : "suffix\n"})), "cHJlZml4ChtbOTdtTWlub3IgSGVhZGVyG1swbQobWzk2bS0tLS0tLS0tLS0tLRtbMG1zdWZmaXgK"));
 Deno.test("majorHeader", () => assertStrictEquals(base64Encode(printUtil.majorHeader("Major Header", { prefix : "prefix\n", suffix : "suffix\n"})), "cHJlZml4ChtbOTZtLy0tLS0tLS0tLS0tLS0tXBtbMG0KG1s5Nm18IBtbMG0bWzk3bU1ham9yIEhlYWRlchtbMG0bWzk2bSB8G1swbQobWzk2bVwtLS0tLS0tLS0tLS0tLS8bWzBtc3VmZml4Cg=="));
@@ -22,3 +22,27 @@ Deno.test("columnizeObject", () => assertStrictEquals(base64Encode(printUtil.col
 	header    : ["Show Name", "Disk Usage"],
 	alignment : ["l", "r"],
 	sorter    : (a, b) => (b[1]-a[1])})), "ICAgICAgICAgICAgICAgIFNob3cgTmFtZSAgICAgICAgICAgICAgICAgICAgIERpc2sgVXNhZ2UgICAgIAobWzk2bS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tG1swbSAgICAgG1s5Nm0tLS0tLS0tLS0tG1swbSAgICAgCkNhdWdodCBJbiBQcm92aWRlbmNlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMzJHICAgICAKQ28tT3B0aW11cyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMUcgICAgIApDTkJDICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgOTA5TSAgICAgCkVFVmJsb2cgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA3MTRNICAgICAKemVmcmFuazEgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDYxOE0gICAgIApUaGUgRGljZSBUb3dlciAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgNDc2TSAgICAgClZlcml0YXNpdW0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAzNTJNICAgICAKRmlsbUNvdyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDMxMU0gICAgIApKaW0gU3RlcmxpbmcgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMjU3TSAgICAgClRlY2ggVGFuZ2VudHMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAyMzVNICAgICAKVGhpcyBEb2VzIE5vdCBDb21wdXRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDIyOE0gICAgIApWb3ggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMjI0TSAgICAgCkZyYW4gQmxhbmNoZSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAxODRNICAgICAKUmV0cm9HYW1lck5hdGlvbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDEyN00gICAgIApTaG9ydENpcmN1aXQgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMTE1TSAgICAgCkxpbnVzIFRlY2ggVGlwcyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAxMTRNICAgICAKTW9kZXJuIFZpbnRhZ2UgR2FtZXIgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDExNE0gICAgIApDYWxsIG9mIER1dHkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMTEyTSAgICAgCkRhbiBXb29kICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgODNNICAgICAKQ2l0eSBCZWF1dGlmdWwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA2MU0gICAgIAobWzM4OzU7OTNtQSBDcml0aWNhbCBIaXQhIHwgIkNyaXRpY2FsIEthdGUiIFdpbGzDpnJ0G1swbSAgICAgICAgICAgIDI0TSAgICAgClNwYWNlWCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMjFNICAgICAK"));
+
+Deno.test("progress", async () =>
+{
+	const statusMessages =
+	[
+		"Loading internet...",
+		"Downloading internet...",
+		"Petting cat...",
+		"Shaving sheep...",
+		"Taking on Neuromancer AI...",
+		"Upgrading software..."
+	];
+	const delays = [...Array(150).fill(100), ...Array(25).fill(250), 1000, 1000, 1500];
+	const progress = printUtil.progress({max : 555});
+	for(let i=0;i<=555;i++)
+	{
+		if(Math.randomInt(1, 5)===1)
+			i++;
+
+		progress.set(i, Math.randomInt(1, 10)===1 ? statusMessages.pickRandom()[0] : undefined);
+		if(Math.randomInt(1, 14)===1)
+			await delay(delays.pickRandom()[0]);
+	}
+});

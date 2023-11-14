@@ -237,3 +237,42 @@ export function list(items, options={})
 	
 	return r.join("");
 }
+
+/* eslint-disable unicorn/no-hex-escape */
+class Progress
+{
+	constructor({min=0, max=100, barWidth=70, status=""}={})
+	{
+		this.min = min;
+		this.max = max;
+		this.barWidth = barWidth;
+		this.status = status;
+
+		xu.stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]   ${xu.c.fg.white}0.00${xu.c.fg.cyan}% ${xu.c.fg.whiteDim}${status}`);
+	}
+
+	set(v, status)
+	{
+		v = Math.max(Math.min(v, this.max), this.min);
+		const pos = Math.floor(v.scale(this.min, this.max, 0, this.barWidth));
+		xu.stdoutWrite(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);
+		const percent = ((v/this.max)*100).toFixed(2).padStart(6, " ");
+		xu.stdoutWrite(`\x1B[${this.barWidth+4}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% ${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
+		if(status)
+			this.status = status;
+		if(v===this.max)
+			this.abort();
+	}
+
+	abort(msg="")
+	{
+		console.log(`${msg}${xu.c.reset}${xu.c.cursor.show}`);
+	}
+}
+/* eslint-enable unicorn/no-hex-escape */
+
+export function progress(o)
+{
+	return new Progress(o);
+}
+
