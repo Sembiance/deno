@@ -4,6 +4,8 @@ import {runUtil, fileUtil} from "xutil";
 
 const MAX_INLINE_FILE_SIZE = xu.GB*2;
 
+// For list of supported algos: https://deno.land/std/crypto/mod.ts
+
 export async function hashData(algorithm, dataRaw)
 {
 	const data = typeof dataRaw==="string" ? new TextEncoder().encode(dataRaw) : dataRaw;

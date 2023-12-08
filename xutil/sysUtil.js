@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import {run} from "./runUtil.js";
-import {fileUtil} from "xutil";
+import {fileUtil, runUtil} from "xutil";
 
 /* returns info about current system memory */
 export async function memInfo()
@@ -73,4 +73,21 @@ export async function optimalParallelism(totalCount)
 	const idleUsage = await getCPUIdleUsage();
 	optimalCount = Math.max(1, Math.floor(idleUsage.scale(0, 100, 1, navigator.hardwareConcurrency*0.50)));
 	return optimalCount;
+}
+
+export async function getAudioPlaybackDevices()
+{
+	const devices = [];
+
+	const lines = (await runUtil.run("aplay", ["-l"])).stdout.trim().split("\n");
+	for(const line of lines)
+	{
+		if(!line.startsWith("card"))
+			continue;
+
+		const {num, shortName, longName} = line.match(/card (?<num>\d+): (?<shortName>[^ ]+) \[(?<longName>[^\]]+)].*/).groups;
+		devices.push({num : +num, shortName, longName});
+	}
+
+	return devices;
 }

@@ -1,5 +1,5 @@
 import {xu} from "../xu.js";
-import {base64Encode, delay, assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "std";
+import {delay, assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("clone", () =>
 {
@@ -34,15 +34,6 @@ Deno.test("freeze", () =>
 	assertThrows(() => { a.goodbye = "world"; });
 	assertThrows(() => { delete a.hello; });
 	assertThrows(() => { a.hello = "goodbye"; });
-});
-
-Deno.test("inspect", () =>
-{
-	let o = {abc : () => {}, xyz : false, numbers : [23, 213, 125, 123_523_523, 23423], moreProps : {subObj : "keys", andMore : "live\nlong\nand\nprosper"}};
-	assertStrictEquals(base64Encode(xu.inspect(o)), "eyBhYmM6IBtbMzZtW0Z1bmN0aW9uOiBhYmNdG1szOW0sCiAgeHl6OiAbWzMzbWZhbHNlG1szOW0sCiAgbnVtYmVyczogWyAbWzMzbTIzG1szOW0sIBtbMzNtMjEzG1szOW0sIBtbMzNtMTI1G1szOW0sIBtbMzNtMTIzNTIzNTIzG1szOW0sIBtbMzNtMjM0MjMbWzM5bSBdLAogIG1vcmVQcm9wczogeyBzdWJPYmo6IBtbMzJtImtleXMiG1szOW0sIGFuZE1vcmU6IBtbMzJtImxpdmVcbmxvbmdcbmFuZFxucHJvc3BlciIbWzM5bSB9IH0=");
-	o = {abc : 123, longStr : "This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated This is a long string that should be truncated"};
-	assertStrictEquals(base64Encode(xu.inspect(o)), "eyBhYmM6IBtbMzNtMTIzG1szOW0sCiAgbG9uZ1N0cjoKICAgG1szMm0iVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpcyBhIhtbMzltLi4uIDEzMSBtb3JlIGNoYXJhY3RlcnMgfQ==");
-	assertStrictEquals(base64Encode(xu.inspect(o, {strAbbreviateSize : 5000})), "eyBhYmM6IBtbMzNtMTIzG1szOW0sCiAgbG9uZ1N0cjoKICAgG1szMm0iVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQiG1szOW0gfQ==");
 });
 
 Deno.test("parseJSON", () =>

@@ -1,6 +1,6 @@
 import {xu, fg} from "xu";
 import {path} from "std";
-import {fileUtil} from "xutil";
+import {fileUtil, printUtil} from "xutil";
 
 const LEVELS = ["none", "fatal", "error", "warn", "info", "debug", "trace"];
 
@@ -60,7 +60,7 @@ export class XLog
 						if(typeof val==="string")
 							r.push(xu.cf.fg.greenDim(val));
 						else
-							r.push(xu.inspect(val, this.inspectOptions));
+							r.push(printUtil.inspect(val, this.inspectOptions));
 					}
 				});
 

@@ -1,5 +1,6 @@
 /* eslint-disable unicorn/catch-error-name */
 import {xu} from "xu";
+import {printUtil} from "xutil";
 import {XLog} from "xlog";
 import {delay} from "std";
 
@@ -120,13 +121,13 @@ export class WebServer
 			}).catch(err =>
 			{
 				this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-				return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
+				return httpRequest.respondWith(new Response(`error<br>${printUtil.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 			});
 		}
 		catch(err)
 		{
 			this.xlog.error`${this.host}:${this.port} request handler ${l} threw error ${err}`;
-			return httpRequest.respondWith(new Response(`error<br>${xu.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
+			return httpRequest.respondWith(new Response(`error<br>${printUtil.inspect(err)}`, {status : 500})).catch(err2 => this.respondWithErrorHandler(err2));
 		}
 	}
 

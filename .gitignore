@@ -1,3 +1,4 @@
 *.code-workspace
 xutil/test/files/
 denoLandX/
+deno-dom/

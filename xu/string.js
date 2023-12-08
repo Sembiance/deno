@@ -30,7 +30,7 @@ String.prototype.encodeURLPath ||= function encodeURLPath({skipEncodePercent=fal
 /** Escape the string for inclusion in regex */
 String.prototype.escapeRegex ||= function escapeRegex()
 {
-	return this.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');	// eslint-disable-line unicorn/better-regex, no-useless-escape, quotes
+	return this.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');	// eslint-disable-line unicorn/better-regex, no-useless-escape, @stylistic/quotes
 };
 
 /** Escape the string for HTML/XML and other markup language documents */

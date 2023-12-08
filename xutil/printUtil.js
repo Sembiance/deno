@@ -114,6 +114,12 @@ export function columnizeObjects(objects, options={})
 	return (options.noHeader ? result.split("\n").slice(2).join("\n") : result);
 }
 
+/** returns a nice pretty representation of val */
+export function inspect(val, options={})
+{
+	return Deno.inspect(val, {colors : true, compact : true, depth : 7, iterableLimit : 200, strAbbreviateSize : 150, showProxy : false, sorted : false, trailingComma : false, getters : false, showHidden : false, ...options});
+}
+
 /** Prints out a multi-line pie chart */
 export function multiLineBarChart(o, label="Label", lineLength=120)
 {
@@ -238,6 +244,12 @@ export function list(items, options={})
 	return r.join("");
 }
 
+const stdoutEncoder = new TextEncoder();
+export function stdoutWrite(str)
+{
+	Deno.stdout.writeSync(stdoutEncoder.encode(str));
+}
+
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
@@ -248,16 +260,16 @@ class Progress
 		this.barWidth = barWidth;
 		this.status = status;
 
-		xu.stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]   ${xu.c.fg.white}0.00${xu.c.fg.cyan}% ${xu.c.fg.whiteDim}${status}`);
+		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]   ${xu.c.fg.white}0.00${xu.c.fg.cyan}% ${xu.c.fg.whiteDim}${status}`);
 	}
 
 	set(v, status)
 	{
 		v = Math.max(Math.min(v, this.max), this.min);
 		const pos = Math.floor(v.scale(this.min, this.max, 0, this.barWidth));
-		xu.stdoutWrite(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);
+		stdoutWrite(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);
 		const percent = ((v/this.max)*100).toFixed(2).padStart(6, " ");
-		xu.stdoutWrite(`\x1B[${this.barWidth+4}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% ${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
+		stdoutWrite(`\x1B[${this.barWidth+4}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% ${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
 		if(status)
 			this.status = status;
 		if(v===this.max)

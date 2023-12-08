@@ -20,7 +20,7 @@ for(const o of [eslintGlobals, denoGlobals])
 
 if(!Object.equals(eslintGlobals, denoGlobals))
 {
-	console.log(`${JSON.stringify(denoGlobals)},	// eslint-disable-line key-spacing, comma-spacing`);
+	console.log(`${JSON.stringify(denoGlobals)},	// eslint-disable-line @stylistic/key-spacing, @stylistic/comma-spacing`);
 	console.log(`\n${fg.peach(`${xu.c.blink}Globals have changed!`)} Update the ${xu.quote(fg.magenta("globals"))} key in ${fg.yellowDim("/mnt/compendium/DevLab/common/eslint/shared-deno.eslintrc.js")} with the above line\nChanged:`);
 	console.log(`\t${diffUtil.diff(eslintGlobals, denoGlobals).squeeze()}`);
 }

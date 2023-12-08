@@ -104,7 +104,7 @@ Deno.test("stderr", async () =>
 
 Deno.test("stdoutFilePath", async () =>
 {
-	let outFilePath = await fileUtil.genTempPath(); // eslint-disable-line prefer-const
+	const outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("uname", [], {stdoutFilePath : outFilePath});
 	assertStrictEquals(await fileUtil.readTextFile(outFilePath), "Linux\n");
 	await fileUtil.unlink(outFilePath);

@@ -1,8 +1,9 @@
-/* eslint-disable brace-style */
+/* eslint-disable @stylistic/brace-style */
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import * as sysUtil from "./sysUtil.js";
+import * as printUtil from "./printUtil.js";
 import {path, TextLineStream} from "std";
 
 // requires kernel CONFIG_PROC_CHILDREN
@@ -141,13 +142,15 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	}
 
 	if(verbose)
-		console.log(`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${xu.inspect({...runArgs, cmd : []}).squeeze()}`);
+		console.log(`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${printUtil.inspect({...runArgs, cmd : []}).squeeze()}`);
 
 	// Kick off the process
 	if(cwd && !(await fileUtil.exists(cwd)))
 		await Deno.mkdir(cwd, {recursive : true});
 
-	const p = Deno.run(runArgs);
+	let p = undefined;
+	try { p = Deno.run(runArgs); }
+	catch(err) { throw new Error(`runUtil.run failed for ${cmd} and args ${JSON.stringify(args)} with runArgs ${JSON.stringify(runArgs)}`, { cause : err }); }
 
 	// Start our timer
 	let timerid = null;
@@ -189,8 +192,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		cbCalled = true;
 
 		// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
-		const stdoutPromise = liveOutput || stdoutFilePath ? Promise.resolve() : stdoutcbPromise || p.output();
-		const stderrPromise = liveOutput || stderrFilePath ? Promise.resolve() : stderrcbPromise || p.stderrOutput();
+		const stdoutPromise = runArgs.stdout==="inherit" || stdoutFilePath ? Promise.resolve() : stdoutcbPromise || p.output();
+		const stderrPromise = runArgs.stderr==="inherit" || stderrFilePath ? Promise.resolve() : stderrcbPromise || p.stderrOutput();
 
 		let stdinPromise = null;
 		if(stdinFilePath)
@@ -315,7 +318,7 @@ export async function checkNumserver(dontExit)
 	return numserverAvaialble;
 }
 
-export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, verbose, dereferenceSymlinks, progress, noOwnership}={})
+export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, port, verbose, dereferenceSymlinks, progress, noOwnership, identityFilePath}={})
 {
 	const r = [];
 
@@ -347,8 +350,18 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 	if(noOwnership)
 		r.push("--no-o", "--no-g");
 	
-	if(fast && (srcHost || destHost))
-		r.push("-e", "ssh -T -c aes256-gcm@openssh.com -o Compression=no -x");
+	if((srcHost || destHost) && (fast || identityFilePath))
+	{
+		const sshArgs = ["-T -x"];
+		if(fast)
+			sshArgs.push("-c aes256-gcm@openssh.com -o Compression=no");
+		if(identityFilePath)
+			sshArgs.push(`-i "${identityFilePath}"`);
+		if(port)
+			sshArgs.push(`-p ${port}`);
+
+		r.push("-e", `ssh ${sshArgs.join(" ")}`);
+	}
 	
 	r.push(`${srcHost ? `${srcHost}:` : ""}${src}`);
 	r.push(`${destHost ? `${destHost}:` : ""}${dest}`);

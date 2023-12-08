@@ -6,6 +6,7 @@ import {xu} from "xu";
  *   desc				A textual description of the program
  *   version			Version numebr of the program
  *   opts				An object representing the various options that can be set. The key is the optid and each opt has properties:
+ * 		allowed				An array of approved values
  * 		defaultValue		Set to the value you want it to hold if the user doesn't specify. If set, it implies hasValue.
  * 	 	desc				The description of this option
  * 		hasValue			Set to true if this option takes a value (otherwise the option is simply a boolean toggle)
@@ -44,7 +45,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 		if(errorMsg)
 			console.log(`Error: ${errorMsg}\n`);
 			
-		console.log(`Usage: ${cmdid}${Object.keys(opts).length>0 ? " [options]" : ""}${args.map(({argid, required, multiple}) => ` ${required ? "<" : "["}${argid}${multiple ? "..." : ""}${required ? ">" : "]"}`).join(" ")}`);
+		console.log(`Usage: ${cmdid}${Object.keys(opts).length>0 ? " [options]" : ""}${args.map(({argid, required, multiple}) => ` ${required ? "<" : "["}${argid}${multiple ? "..." : ""}${required ? ">" : "]"}`).join(" ").replaceAll("  ", " ")}`);
 		if(desc.length>0)
 			console.log(`\n${desc}`);
 
@@ -54,7 +55,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 			console.log(`\nArguments:\n${args.map(arg => `  ${arg.argid.padEnd(argOptPadding, " ")}${arg.desc}${arg.allowed ? ` (${arg.allowed.join(" | ")})` : ""}${Object.hasOwn(arg, "defaultValue") ? ` (Default: ${arg.defaultValue})` : ""}`).join("\n")}`);
 		
 		console.log(`\nOptions:\n${Object.entries(opts).map(([optid, opt]) =>
-			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}${opt.multiple ? " ..." : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}`).join("\n")}`);
+			`${`  ${opt.short ? `-${opt.short}, ` : "    "}--${optid}${opt.hasValue ? " <value>" : ""}${opt.multiple ? " ..." : ""}`.padEnd(argOptPadding+2, " ")}${opt.desc}${Object.hasOwn(opt, "defaultValue") ? ` (Default: ${opt.defaultValue})` : ""}${opt.allowed ? ` (${opt.allowed.join(" | ")})` : ""}${opt.required ? " (REQUIRED)" : ""}`).join("\n")}`);
 
 		Deno.exit(0);
 	}
@@ -176,13 +177,13 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 	});
 
 	// Verify that we have allowed values
-	for(const arg of args)
+	for(const [argoptid, allowed] of [...args.filter(arg => arg.allowed?.length).map(arg => [arg.argid, arg.allowed]), ...Object.entries(opts).filter(([, opt]) => opt.allowed?.length).map(([optid, opt]) => [optid, opt.allowed])])
 	{
-		if(arg.allowed && Object.hasOwn(argv, arg.argid))
+		if(allowed && Object.hasOwn(argv, argoptid))
 		{
-			const invalidValues = Array.force(argv[arg.argid]).unique().subtractOnce(arg.allowed);
+			const invalidValues = Array.force(argv[argoptid]).unique().subtractOnce(allowed);
 			if(invalidValues.length>0)
-				return showUsage(`Argument ${arg.argid} has ${invalidValues.length===1 ? "an invalid value" : "several invalid values"}: [${invalidValues.join("], [")}]. Allowed: [${arg.allowed.join("] [")}]`);
+				return showUsage(`Argument/Option ${argoptid} has ${invalidValues.length===1 ? "an invalid value" : "several invalid values"}: [${invalidValues.join("], [")}]. Allowed: [${allowed.join("] [")}]`);
 		}
 	}
 

@@ -17,7 +17,7 @@ Number.prototype.clearBit ||= function clearBit(loc)
 };
 
 /** Eases a number */
-/* eslint-disable no-mixed-operators */
+/* eslint-disable @stylistic/no-mixed-operators */
 // Visual explanations of various easing types: https://easings.net/en
 Number.prototype.ease ||= function ease(type)
 {
@@ -119,7 +119,7 @@ Number.prototype.ease ||= function ease(type)
 	// Default is "easeOutSine"
 	return Math.sin(x*Math.PI/2);
 };
-/* eslint-enable no-mixed-operators */
+/* eslint-enable @stylistic/no-mixed-operators */
 
 /** Flips the given bit in the number */
 Number.prototype.flipBit ||= function flipBit(loc)
