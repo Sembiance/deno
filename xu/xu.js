@@ -169,6 +169,50 @@ xu.parseJSON = function parseJSON(raw, fallback)
 	}
 };
 
+/** convience method for fetch. Additional valid args:
+ * timeout - ms duration after which the fetch will be aborted
+ *    json - Object to POST as JSON to the remote host
+ *  asJSON - Instead of .text() return the result as JSON
+ **/
+xu.fetch = async function xuFetch(url, opts={})
+{
+	const fetchOpts = {...opts};
+
+	if(fetchOpts.json)
+	{
+		fetchOpts.method ||= "POST";
+		fetchOpts.headers ||= {};
+		fetchOpts.headers["content-type"] ||= "application/json";
+		fetchOpts.body = JSON.stringify(fetchOpts.json);
+
+		delete fetchOpts.json;
+	}
+
+	let abortTimeout = null;
+	if(fetchOpts.timeout)
+	{
+		const abortController = new AbortController();
+		fetchOpts.signal = abortController.signal;
+
+		abortTimeout = setTimeout(() =>
+		{
+			abortTimeout = null;
+			abortController.abort();
+		}, fetchOpts.timeout);
+
+		delete fetchOpts.timeout;
+	}
+
+	const asJSON = fetchOpts.asJSON;
+	delete fetchOpts.asJSON;
+
+	const r = await (await fetch(url, fetchOpts))[asJSON ? "json" : "text"]();
+	if(abortTimeout)
+		clearTimeout(abortTimeout);
+
+	return r;
+};
+
 /** template literaly that allows you to easily include multi-line strings and each line will be trimmed */
 xu.trim = function trim(strs, ...vals)
 {

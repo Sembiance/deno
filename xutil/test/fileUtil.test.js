@@ -240,6 +240,22 @@ Deno.test("tree", async () =>
 		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt")
 	]);
 
+	r = await fileUtil.tree(GLOB_DIR, {relative : true});
+	assertEquals(r.sort(), [
+		"emptyDir",
+		"file1.txt",
+		"file2.txt",
+		"subdir",
+		"subdir/file3.txt"
+	]);
+
+	r = await fileUtil.tree(path.join(FILES_DIR, "globTestSort"), {sort : true});
+	assertEquals(r.sort(), [
+		path.join(FILES_DIR, "globTestSort", "1"),
+		path.join(FILES_DIR, "globTestSort", "2"),
+		path.join(FILES_DIR, "globTestSort", "5")
+	]);
+
 	r = await fileUtil.tree(GLOB_DIR, {depth : 1});
 	assertEquals(r.sort(), [
 		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir"),

@@ -198,17 +198,19 @@ export async function readTextFile(filePath, encoding="utf-8")
 
 /** Returns a recursive list of all files and directories contained in dirPath.
  * Options:
- *  regex	If set, the relative path from the root must match this regex to be included
- *  glob    If set, the relative path from the root must match this glob to be included
- * 	nodir	Set to true to omit directories from the results
- *  nofile	Set to true to omit files from the results
- *  depth   Maximum levels deep to look. Default, infinite.
+ *  depth   	Maximum levels deep to look. Default, infinite.
+ *  glob    	If set, the relative path from the root must match this glob to be included
+ * 	nodir		Set to true to omit directories from the results
+ *  nofile		Set to true to omit files from the results
+ *  regex		If set, the relative path from the root must match this regex to be included
+ *  relative	If set the returning files will be relative to root rather than absolute
+ *  sort		Sort the results by depth, then alphabetically
  *
  * Deno's fs.expandGlob() isn't anywhere close to being ready for prime time usage, lots of weird bugs (glob is hard to get right)
  * Likewise, fs.walk() suffers from issues such as throwing exceptions whenever it encounters non-standard files, such as sockets
  * Deno.readDir() doesn't suffer from these problems, so I've rolled my own simplified blog with a simple regex match
  */
-export async function tree(root, {nodir=false, nofile=false, regex, glob, depth=Number.MAX_SAFE_INTEGER, _originalRoot=root}={})
+export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=false, nofile=false, regex, relative, sort, _originalRoot=root}={})
 {
 	if(depth===0 || !(await exists(root)))
 		return [];
@@ -225,7 +227,7 @@ export async function tree(root, {nodir=false, nofile=false, regex, glob, depth=
 	if(regex && regex instanceof RegExp===false)
 		throw new TypeError(`regex must be an actual RegExp to avoid all sorts of edge cases when matching`);
 
-	const r = [];
+	let r = [];
 	try
 	{
 		for await(const entry of Deno.readDir(root))	// if root dir is removed while traversing, this will throw an exception
@@ -245,6 +247,12 @@ export async function tree(root, {nodir=false, nofile=false, regex, glob, depth=
 		}
 	}
 	catch {}
+
+	if(relative)
+		r = r.map(v => path.relative(_originalRoot, v));
+
+	if(sort)
+		r = r.sortMulti();
 
 	return r;
 }

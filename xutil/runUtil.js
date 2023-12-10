@@ -328,7 +328,7 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 	if(pretend)
 		r.push("-rlpgoD", "--dry-run");
 	else
-		r.push("--archive");
+		r.push("--archive");	// -rlptgoD
 	
 	if(progress)
 		r.push("--progress");

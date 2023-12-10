@@ -253,27 +253,62 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status=""}={})
+	constructor({min=0, max=100, barWidth=70, status="", includeCount=true}={})
 	{
 		this.min = min;
 		this.max = max;
 		this.barWidth = barWidth;
 		this.status = status;
+		this.includeCount = includeCount;
+		this.maxLength = this.max.toLocaleString().length;
+		this.lastValue = min;
 
-		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]   ${xu.c.fg.white}0.00${xu.c.fg.cyan}% ${xu.c.fg.whiteDim}${status}`);
+		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
+		this.set(min);
 	}
 
 	set(v, status)
 	{
 		v = Math.max(Math.min(v, this.max), this.min);
+		this.lastValue = v;
 		const pos = Math.floor(v.scale(this.min, this.max, 0, this.barWidth));
 		stdoutWrite(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);
+
+		let curPos = this.barWidth+4;
+		if(this.includeCount)
+		{
+			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${v.toLocaleString().padStart(this.maxLength)} ${xu.c.fg.cyan}/${xu.c.fg.white} ${this.max.toLocaleString().padStart(this.maxLength)}  `);
+			curPos += (this.maxLength*2)+5;
+		}
+
 		const percent = ((v/this.max)*100).toFixed(2).padStart(6, " ");
-		stdoutWrite(`\x1B[${this.barWidth+4}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% ${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
+		stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% ${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
 		if(status)
 			this.status = status;
 		if(v===this.max)
 			this.abort();
+	}
+
+	setStatus(status)
+	{
+		this.set(this.lastValue, status);
+	}
+
+	increment()
+	{
+		this.set(++this.lastValue);
+	}
+
+	incrementMax()
+	{
+		this.setMax(++this.max);
+	}
+
+	setMax(max)
+	{
+		this.max = max;
+		this.maxLength = this.max.toLocaleString().length;
+		this.set(this.lastValue);
 	}
 
 	abort(msg="")

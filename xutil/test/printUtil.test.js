@@ -32,26 +32,48 @@ Deno.test("inspect", () =>
 	assertStrictEquals(base64Encode(printUtil.inspect(o, {strAbbreviateSize : 5000})), "eyBhYmM6IBtbMzNtMTIzG1szOW0sCiAgbG9uZ1N0cjoKICAgG1szMm0iVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQgVGhpcyBpcyBhIGxvbmcgc3RyaW5nIHRoYXQgc2hvdWxkIGJlIHRydW5jYXRlZCBUaGlzIGlzIGEgbG9uZyBzdHJpbmcgdGhhdCBzaG91bGQgYmUgdHJ1bmNhdGVkIFRoaXMgaXMgYSBsb25nIHN0cmluZyB0aGF0IHNob3VsZCBiZSB0cnVuY2F0ZWQiG1szOW0gfQ==");
 });
 
+const PROGRESS_STATUS_MESSAGES =
+[
+	"Loading internet...",
+	"Downloading internet...",
+	"Petting cat...",
+	"Shaving sheep...",
+	"Taking on Neuromancer AI...",
+	"Upgrading software..."
+];
+const PROGRESS_DELAYS = [...Array(150).fill(100), ...Array(25).fill(250), 1000, 1000, 1500];
+
 Deno.test("progress", async () =>
 {
-	const statusMessages =
-	[
-		"Loading internet...",
-		"Downloading internet...",
-		"Petting cat...",
-		"Shaving sheep...",
-		"Taking on Neuromancer AI...",
-		"Upgrading software..."
-	];
-	const delays = [...Array(150).fill(100), ...Array(25).fill(250), 1000, 1000, 1500];
 	const progress = printUtil.progress({max : 555});
 	for(let i=0;i<=555;i++)
 	{
 		if(Math.randomInt(1, 5)===1)
 			i++;
 
-		progress.set(i, Math.randomInt(1, 10)===1 ? statusMessages.pickRandom()[0] : undefined);
+		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)
-			await delay(delays.pickRandom()[0]);
+			await delay(PROGRESS_DELAYS.pickRandom()[0]);
+	}
+});
+
+Deno.test("progressMaxChanges", async () =>
+{
+	const progress = printUtil.progress({max : 555});
+	let curMax = 555;
+	for(let i=0;i<=curMax;i++)
+	{
+		if([100, 400, 800].includes(i))
+		{
+			curMax = {100 : 600, 400 : 1000, 800 : 1500}[i];
+			progress.setMax(curMax);
+		}
+
+		if(Math.randomInt(1, 5)===1)
+			i++;
+
+		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
+		if(Math.randomInt(1, 14)===1)
+			await delay(PROGRESS_DELAYS.pickRandom()[0]);
 	}
 });
