@@ -4,15 +4,16 @@ import {runUtil} from "xutil";
 
 export class HTML
 {
-	constructor(_baseDirPath)
+	constructor(_baseDirPath, {devMode}={})
 	{
 		this.baseDirPath = _baseDirPath;
+		this.devMode = devMode;
 	}
 
 	async render(subPath, data={})
 	{
 		const self=this;
-		const {default : renderer} = await import(path.join(this.baseDirPath, `${subPath}.js`));
+		const {default : renderer} = await import(path.join(this.baseDirPath, `${subPath}.js${this.devMode ? `#${xu.randStr()}` :""}`));
 		const htmlRaw = await renderer(data, {
 			html : this.html.bind(this),
 			compileStylus : this.compileStylus.bind(this),
