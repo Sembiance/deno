@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import {assertRejects, assertStrictEquals, assert, delay} from "std";
-import {runUtil} from "xutil";
+import {runUtil, fileUtil} from "xutil";
 import {XLog} from "xlog";
 import {WebServer} from "./WebServer.js";
 
@@ -37,6 +37,33 @@ Deno.test("external", async () =>
 	webServer.stop();
 });
 
+Deno.test("devMode", async () =>
+{
+	const handlerFilePath = await fileUtil.genTempPath(undefined, "-WebServer-test-handler.js");
+	await fileUtil.writeTextFile(handlerFilePath, `export default async function testHandler() { return new Response("Dev Mode 1"); }\n`);
+
+	const portNum = Math.randomInt(30010, 39990);
+	const webServer = new WebServer("127.0.0.1", portNum, {xlog : new XLog("error"), devMode : true});
+	await webServer.start();
+	webServer.add("/test", handlerFilePath);
+	let a = await fetch(`http://127.0.0.1:${portNum}/test`);
+	assertStrictEquals(a.status, 200);
+	assertStrictEquals(await a.text(), "Dev Mode 1");
+
+	a = await fetch(`http://127.0.0.1:${portNum}/test`);
+	assertStrictEquals(a.status, 200);
+	assertStrictEquals(await a.text(), "Dev Mode 1");
+
+	await fileUtil.writeTextFile(handlerFilePath, `export default async function testHandler() { return new Response("Dev Mode 2"); }\n`);
+
+	a = await fetch(`http://127.0.0.1:${portNum}/test`);
+	assertStrictEquals(a.status, 200);
+	assertStrictEquals(await a.text(), "Dev Mode 2");
+
+	webServer.stop();
+	await fileUtil.unlink(handlerFilePath);
+});
+
 Deno.test("basic", async () =>
 {
 	const webServer = new WebServer("127.0.0.1", 37291, {xlog : new XLog("error")});
@@ -53,6 +80,16 @@ Deno.test("basic", async () =>
 	a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 200);
 	assertStrictEquals(await a.text(), "Hello, World!");
+
+	webServer.add("/args", async (request, reply, v, o) =>
+	{
+		await delay(xu.SECOND*1);
+		return new Response(`${v} Hello, ${o.hello}`);
+	}, {args : [47, {hello : "Dolly!"}]});
+	a = await fetch("http://127.0.0.1:37291/args");
+	assertStrictEquals(a.status, 200);
+	assertStrictEquals(await a.text(), "47 Hello, Dolly!");
+
 	webServer.add("/noResponse", async () => {});
 	a = await fetch("http://127.0.0.1:37291/noResponse");
 	assertStrictEquals(a.status, 500);

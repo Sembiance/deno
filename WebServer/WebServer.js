@@ -9,11 +9,12 @@ export class WebServer
 	routes = {};
 	prefixRoutes = {};
 
-	constructor(host, port, {xlog=new XLog()}={})
+	constructor(host, port, {devMode, xlog=new XLog()}={})
 	{
 		this.host = host;
 		this.port = port;
 		this.xlog = xlog;
+		this.devMode = devMode;
 		this.stopping = false;
 	}
 
@@ -105,7 +106,21 @@ export class WebServer
 			this.xlog.info`${this.host}:${this.port} request ${l}`;
 		try
 		{
-			await route.handler(httpRequest.request, r => httpRequest.respondWith(r).catch(err => this.respondWithErrorHandler(err))).then(response =>
+			let handler = route.handler;
+			if(typeof route.handler==="string")
+			{
+				if(this.devMode)
+				{
+					handler = (await import(`${route.handler}${this.devMode ? `#${xu.randStr()}` :""}`)).default;
+				}
+				else
+				{
+					handler = (await import(route.handler)).default;
+					route.handler = handler;
+				}
+			}
+			
+			await handler(httpRequest.request, r => httpRequest.respondWith(r).catch(err => this.respondWithErrorHandler(err)), ...(route.args || [])).then(response =>
 			{
 				// if we are a detached route, then the handler will take care of calling the respondWith second arg on it's own
 				if(route.detached)
@@ -140,14 +155,14 @@ export class WebServer
 		delete this.server;
 	}
 
-	add(pathname, handler, {method="GET", detached, logCheck, prefix}={})
+	add(pathname, handler, {method="GET", detached, logCheck, prefix, args}={})
 	{
 		const ro = prefix ? this.prefixRoutes : this.routes;
 		if(!Object.hasOwn(ro, pathname))
 			ro[pathname] = {};
 
 		this.xlog.info`Route ${method} ${pathname} added${prefix ? " (PREFIX ROUTE)" : ""}`;
-		ro[pathname][method] = {handler, detached, logCheck};
+		ro[pathname][method] = {handler, detached, logCheck, args};
 	}
 
 	remove(route)
