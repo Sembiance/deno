@@ -253,15 +253,17 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status="", includeCount=true}={})
+	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration}={})
 	{
 		this.min = min;
 		this.max = max;
 		this.barWidth = barWidth;
 		this.status = status;
 		this.includeCount = includeCount;
+		this.includeDuration = includeDuration;
 		this.maxLength = this.max.toLocaleString().length;
 		this.lastValue = min;
+		this.startedAt = performance.now();
 
 		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
 		this.set(min);
@@ -282,7 +284,17 @@ class Progress
 		}
 
 		const percent = ((v/this.max)*100).toFixed(2).padStart(6, " ");
-		stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% ${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
+		stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% `);
+		curPos += 6+2;
+
+		if(this.includeDuration)
+		{
+			const durationText = (performance.now()-this.startedAt).msAsHumanReadable({short : true, maxParts : 2}).padEnd(7);
+			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white} ${durationText} `);
+			curPos += durationText.length+2;
+		}
+
+		stdoutWrite(`\x1B[${curPos}G${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
 		if(status)
 			this.status = status;
 		if(v===this.max)
