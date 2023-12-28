@@ -11,6 +11,7 @@
 		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
 		"GAPI"			   : "/mnt/compendium/DevLab/deno/GAPI/GAPI.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
+		"MediaWiki"        : "/mnt/compendium/DevLab/deno/MediaWiki/MediaWiki.js",
 		"RateLimitedQueue" : "/mnt/compendium/DevLab/deno/RateLimitedQueue/RateLimitedQueue.js",
 		"typesense"        : "/mnt/compendium/DevLab/deno/Typesense/Typesense.js",
 		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",

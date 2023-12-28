@@ -6,10 +6,13 @@ export function queryObjectToSearchString(queryObject)
 	const r = [];
 	for(const [k, v] of Object.entries(queryObject))
 	{
+		if(v===undefined)
+			continue;
+
 		if(Array.isArray(v))
-			r.push(...v.map(sub => `${k}=${sub.toString().encodeURLPath()}`));
+			r.push(...v.map(sub => `${k}=${encodeURIComponent(sub.toString())}`));
 		else
-			r.push(`${k}=${v.toString().encodeURLPath()}`);
+			r.push(`${k}=${encodeURIComponent(v.toString())}`);
 	}
 	return r.join("&");
 }

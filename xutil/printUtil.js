@@ -233,7 +233,7 @@ export function list(items, options={})
 		if(options.headerType==="major")
 			r.push(majorHeader(...headerArgs));
 		else
-			r.push(minorHeader(...headerArgs));
+			r.push(minorHeader(...headerArgs), "\n");
 	}
 
 	items.forEach(item => r.push(`${" ".repeat(options.indent || 2)}${xu.cf.fg.yellow("*")} ${item}\n`));
@@ -309,6 +309,11 @@ class Progress
 	increment()
 	{
 		this.set(++this.lastValue);
+	}
+
+	tick()
+	{
+		this.increment();
 	}
 
 	incrementMax()
