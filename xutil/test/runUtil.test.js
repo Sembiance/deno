@@ -57,6 +57,20 @@ Deno.test("xlog", async () =>
 	assert(xlogLines.find(line => line==="WARN: stderr"));
 });
 
+Deno.test("stdoutUnbuffered", async () =>
+{
+	if(!await fileUtil.exists("/usr/bin/zxtune123"))
+	{
+		console.log("Skipping test because zxtune123 is not installed");
+		return;
+	}
+
+	let {stdout} = await runUtil.run("zxtune123", ["--file", path.join(xu.dirname(import.meta), "files", "m-fuyu.ssf"), "--null", "--quiet"], {timeout : xu.SECOND*2});
+	assertStrictEquals(stdout?.length, 0);
+	({stdout} = await runUtil.run("zxtune123", ["--file", path.join(xu.dirname(import.meta), "files", "m-fuyu.ssf"), "--null", "--quiet"], {timeout : xu.SECOND*2, stdoutUnbuffer : true}));
+	assertStrictEquals(stdout.includes("Romance of the Three Kingdoms"), true);
+});
+
 Deno.test("stdoutcb", async () =>
 {
 	let foundPS = false;

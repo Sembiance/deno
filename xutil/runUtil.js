@@ -57,6 +57,8 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   stderrcb			If set, this function will be called for every 'line' read from stderr
  *   stdoutNull			If set, stdout will be set to "null" thus preventing any output from being buffered.
  *   stderrNull			If set, stderr will be set to "null" thus preventing any output from being buffered.
+ *   stdoutUnbuffer     If set, stdout will be unbuffered with stdbuf -o0
+ *   stderrUnbuffer     If set, stderr will be unbuffered with stdbuf -o0
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
  *   verbose            Set to true to output some details about the program
@@ -68,11 +70,20 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
 export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput, exitcb,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
-	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb,
-	stderrEncoding="utf-8", stderrFilePath, stderrcb,
+	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer,
+	stderrEncoding="utf-8", stderrFilePath, stderrcb, stderrUnbuffer,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, virtualXVNCPort, xlog}={})
 {
 	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData || stdinFilePath) ? "piped" : "null")};
+
+	if(stdoutUnbuffer || stderrUnbuffer)
+	{
+		if(stdoutUnbuffer)
+			runArgs.cmd.unshift("-o0");
+		if(stderrUnbuffer)
+			runArgs.cmd.unshift("-e0");
+		runArgs.cmd.unshift("stdbuf");
+	}
 
 	if(inheritEnv!==true)
 	{
