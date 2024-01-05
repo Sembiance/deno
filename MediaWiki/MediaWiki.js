@@ -111,4 +111,10 @@ export class MediaWiki
 		
 		return editR;
 	}
+
+	async searchTitles(text)
+	{
+		const r = await this.api({action : "query", list : "search", srsearch : text, limit : 10, format : "json"});
+		return (r?.query?.search || []).map(o => o.title);
+	}
 }
