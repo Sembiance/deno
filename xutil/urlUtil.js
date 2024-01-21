@@ -36,3 +36,8 @@ export function urlSearchParamsToQueryObject(searchParams)
 	}
 	return o;
 }
+
+export function urlToQueryObject(url)
+{
+	return urlSearchParamsToQueryObject((typeof url==="string" ? (new URL(url)) : url).searchParams);
+}

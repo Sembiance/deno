@@ -45,7 +45,7 @@ const PROGRESS_DELAYS = [...Array(150).fill(100), ...Array(25).fill(250), 1000, 
 
 Deno.test("progress", async () =>
 {
-	const progress = printUtil.progress({max : 555});
+	const progress = printUtil.progress({barWidth : 30, max : 555});
 	for(let i=0;i<=555;i++)
 	{
 		if(Math.randomInt(1, 5)===1)
@@ -59,7 +59,7 @@ Deno.test("progress", async () =>
 
 Deno.test("progressMaxChanges", async () =>
 {
-	const progress = printUtil.progress({max : 555});
+	const progress = printUtil.progress({barWidth : 30, max : 555});
 	let curMax = 555;
 	for(let i=0;i<=curMax;i++)
 	{
@@ -76,4 +76,30 @@ Deno.test("progressMaxChanges", async () =>
 		if(Math.randomInt(1, 14)===1)
 			await delay(PROGRESS_DELAYS.pickRandom()[0]);
 	}
+});
+
+
+Deno.test("progressMaxStartZero", async () =>
+{
+	const bar = printUtil.progress({barWidth : 30, max : 0, dontAutoFinish : true});
+	let curMax = 555;
+	for(let i=0;i<=curMax;i++)
+	{
+		if(i<100)
+			bar.setMax(i);
+
+		if([100, 400, 800].includes(i))
+		{
+			curMax = {100 : 600, 400 : 1000, 800 : 1500}[i];
+			bar.setMax(curMax);
+		}
+
+		if(Math.randomInt(1, 5)===1)
+			i++;
+
+		bar.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
+		if(Math.randomInt(1, 14)===1)
+			await delay(PROGRESS_DELAYS.pickRandom()[0]);
+	}
+	bar.finish();
 });

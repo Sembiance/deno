@@ -253,7 +253,7 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration}={})
+	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration, dontAutoFinish}={})
 	{
 		this.min = min;
 		this.max = max;
@@ -264,6 +264,7 @@ class Progress
 		this.maxLength = this.max.toLocaleString().length;
 		this.lastValue = min;
 		this.startedAt = performance.now();
+		this.dontAutoFinish = dontAutoFinish;
 
 		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
 		this.set(min);
@@ -297,8 +298,8 @@ class Progress
 		stdoutWrite(`\x1B[${curPos}G${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
 		if(status)
 			this.status = status;
-		if(v===this.max)
-			this.abort();
+		if(v===this.max && !this.dontAutoFinish)
+			this.finish();
 	}
 
 	setStatus(status)
@@ -328,7 +329,7 @@ class Progress
 		this.set(this.lastValue);
 	}
 
-	abort(msg="")
+	finish(msg="")
 	{
 		console.log(`${msg}${xu.c.reset}${xu.c.cursor.show}`);
 	}
