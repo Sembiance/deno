@@ -287,7 +287,8 @@ xu.randStr = function randStr()
 	if(TMP_COUNTER>=MAX_COUNTER)
 		TMP_COUNTER = 0;
 
-	return `${Deno ? Deno.pid.toString(36) : Math.randomInt(0, 32767)}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(TMP_COUNTER++).toString(36)}`;
+	const randPrefix = xu.tryFallback(() => Deno.pid.toString(36), Math.randomInt(0, 32767));
+	return `${randPrefix}_${Math.randomInt(0, MAX_COUNTER).toString(36)}_${(TMP_COUNTER++).toString(36)}`;
 };
 
 export { xu, fg };
