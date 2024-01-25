@@ -58,7 +58,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 	// One time initialization check to see if our preferred /mnt/ram/tmp directory exists or not
 	if(TMP_DIR_PATH===null)
 	{
-		try { TMP_DIR_PATH = (Deno.statSync("/mnt/ram/tmp").isDirectory ? "/mnt/ram/tmp" : "/tmp");	}	// Synchronouse to avoid potential race conditions with multiple calls to genTempPath()
+		try { TMP_DIR_PATH = (Deno.statSync("/mnt/ram/tmp").isDirectory ? "/mnt/ram/tmp" : "/tmp");	}	// Synchronous to avoid potential race conditions with multiple calls to genTempPath()
 		catch {	TMP_DIR_PATH = "/tmp"; }
 	}
 	
@@ -66,7 +66,7 @@ export async function genTempPath(prefix, suffix=".tmp")
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do
-		r = path.join(fullPrefix, `${Deno.pid}${xu.randStr()}${suffix}`);
+		r = path.join(fullPrefix, `${xu.randStr()}${suffix}`);
 	while(await exists(r));
 
 	return r;
