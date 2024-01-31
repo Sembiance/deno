@@ -25,7 +25,7 @@ export async function setLayout(layoutName, workspaceNum, screenNum=null)
 	end`);
 }
 
-// Current AVL setup: 2==left 1===middle 3===right
+// Current AVL setup: 2===left 1===middle 3===right    crystalsummit w/ 2 monitors: 2===left  1===middle
 export async function switchToWorkspace(workspaceNum, screenNum=null)
 {
 	await runAwesomeCode(`local awful = require("awful");

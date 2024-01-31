@@ -307,6 +307,11 @@ class Progress
 		this.set(this.lastValue, status);
 	}
 
+	incrementBy(amount)
+	{
+		this.set(this.lastValue+amount);
+	}
+
 	increment()
 	{
 		this.set(++this.lastValue);
