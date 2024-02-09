@@ -1,28 +1,23 @@
 {
 	"imports" :
 	{
-		"xu"        : "/mnt/compendium/DevLab/deno/xu/xu.js",
-		"xutil"     : "/mnt/compendium/DevLab/deno/xutil/xutil.js",
-		"std"       : "/mnt/compendium/DevLab/deno/std.js",
-		"denoLandX" : "/mnt/compendium/DevLab/deno/denoLandX.js",
-
-		"xpriv"     : "/mnt/compendium/DevLab/xpriv/xpriv.js",
-
 		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
-		"GAPI"			   : "/mnt/compendium/DevLab/deno/GAPI/GAPI.js",
+		"denoLandX"        : "/mnt/compendium/DevLab/deno/denoLandX.js",
+		"GAPI"             : "/mnt/compendium/DevLab/deno/GAPI/GAPI.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"MediaWiki"        : "/mnt/compendium/DevLab/deno/MediaWiki/MediaWiki.js",
 		"RateLimitedQueue" : "/mnt/compendium/DevLab/deno/RateLimitedQueue/RateLimitedQueue.js",
 		"Sparkey"          : "/mnt/compendium/DevLab/deno/Sparkey/Sparkey.js",
-		"Typesense"        : "/mnt/compendium/DevLab/deno/Typesense/Typesense.js",
+		"std"              : "/mnt/compendium/DevLab/deno/std.js",
+		"thirdParty"       : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js",
 		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",
+		"xu"               : "/mnt/compendium/DevLab/deno/xu/xu.js",
+		"xutil"            : "/mnt/compendium/DevLab/deno/xutil/xutil.js",
 		"validator"        : "/mnt/compendium/DevLab/deno/validator.js",
 		"vinput"           : "/mnt/compendium/DevLab/deno/vinput/vinput.js",
 		"WebServer"        : "/mnt/compendium/DevLab/deno/WebServer/WebServer.js",
 		"xlog"             : "/mnt/compendium/DevLab/deno/xlog/xlog.js",
 		"xwork"            : "/mnt/compendium/DevLab/deno/xwork/xwork.js",
-		"XWorkerPool"      : "/mnt/compendium/DevLab/deno/XWorkerPool/XWorkerPool.js",
-
-		"thirdParty" : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js"
+		"XWorkerPool"      : "/mnt/compendium/DevLab/deno/XWorkerPool/XWorkerPool.js"
 	}
 }
