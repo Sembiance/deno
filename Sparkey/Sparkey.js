@@ -11,15 +11,15 @@ export class Sparkey
 		this.dbFilePathPrefixBuffer = this.encoder.encode(dbFilePathPrefix);
 
 		this.sparkey = Deno.dlopen(path.join(xu.dirname(import.meta), "sparkey.so"), {
-			get : { parameters : ["buffer", "u32", "buffer", "u32"], result : "buffer" },
+			get : { parameters : ["buffer", "u32", "buffer", "u32", "u64"], result : "buffer" },
 			put : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" }
 		});
 	}
 
-	get(k)
+	get(k, maxLen=0)
 	{
 		const keyBuffer = this.encoder.encode(k);
-		const callResult = this.sparkey.symbols.get(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length);
+		const callResult = this.sparkey.symbols.get(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length, maxLen);
 		if(!callResult)
 			return;
 
@@ -30,9 +30,9 @@ export class Sparkey
 		return r;
 	}
 
-	getText(k)
+	getText(k, maxLen)
 	{
-		const r = this.get(k);
+		const r = this.get(k, maxLen);
 		return r ? this.decoder.decode(r) : undefined;
 	}
 

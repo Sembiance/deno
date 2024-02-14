@@ -84,7 +84,7 @@ export class XLog
 					this.logger(outText);
 				
 				if((!this.logFilePath && !this.logger) || this.alwaysEcho)
-					console.log(outText);
+					console[(["fatal", "error"].includes(levelName) ? "error" : "log")](outText);
 				
 				return outText;
 			};

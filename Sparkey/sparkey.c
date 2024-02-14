@@ -5,7 +5,10 @@
 
 #include "sparkey/sparkey.h"
 
-uint8_t * get(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen)
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
+uint8_t * get(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen, uint64_t maxLen)
 {
 	sparkey_hashreader * reader;
 
@@ -35,6 +38,8 @@ uint8_t * get(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyL
 		return 0;
 
 	uint64_t valueLen = sparkey_logiter_valuelen(iter);
+	if(maxLen!=0)
+		valueLen = MIN(valueLen, maxLen);
 	uint8_t * valueBuf = (uint8_t *)malloc(4 + valueLen);
 	uint64_t actualValueLen;
 	r = sparkey_logiter_fill_value(iter, sparkey_hash_getreader(reader), valueLen, valueBuf+4, &actualValueLen);

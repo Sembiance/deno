@@ -24,6 +24,20 @@ Deno.test("putGet", async () =>
 	db.unload();
 });
 
+Deno.test("maxLen", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");
+	const db = new Sparkey(dbFilePathPrefix);
+	
+	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.getText("hello"), "Hello, World!");
+
+	assertStrictEquals(db.getText("hello", 4), "Hell");
+
+	await db.truncate();
+	db.unload();
+});
+
 Deno.test("truncate", async () =>
 {
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-truncate");
