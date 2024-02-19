@@ -53,7 +53,7 @@ export async function exists(v)
 
 let TMP_DIR_PATH = null;
 /** Finds a unique (at time of checking) temporary file path to use */
-export async function genTempPath(prefix, suffix=".tmp")
+export async function genTempPath(prefix, suffix=".tmp", {maxFilenameLength}={})
 {
 	// One time initialization check to see if our preferred /mnt/ram/tmp directory exists or not
 	if(TMP_DIR_PATH===null)
@@ -63,11 +63,16 @@ export async function genTempPath(prefix, suffix=".tmp")
 	}
 	
 	let r = null;
+	let randPart = null;
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do
-		r = path.join(fullPrefix, `${xu.randStr()}${suffix}`);
-	while(await exists(r));
+	{
+		randPart = xu.randStr();
+		if(maxFilenameLength && maxFilenameLength<(randPart.length+suffix.length))
+			randPart = randPart.split("").pickRandom(maxFilenameLength-suffix.length).join("");
+		r = path.join(fullPrefix, `${randPart}${suffix}`);
+	} while(await exists(r));
 
 	return r;
 }

@@ -61,8 +61,12 @@ Deno.test("genTempPath", async () =>
 	assertStrictEquals((await fileUtil.genTempPath("/tmp")).startsWith("/tmp"), true);
 	assertStrictEquals((await fileUtil.genTempPath(undefined, ".png")).endsWith(".png"), true);
 
-	const tempPaths = await [].pushSequence(1, 5000).parallelMap(() => fileUtil.genTempPath());
+	let tempPaths = await [].pushSequence(1, 100_000).parallelMap(() => fileUtil.genTempPath());
 	assertStrictEquals(tempPaths.unique().length, tempPaths.length);
+
+	tempPaths = await [].pushSequence(1, 10000).parallelMap(() => fileUtil.genTempPath(undefined, [].pushSequence(97, 122).pickRandom(Math.randomInt(0, 4)).map(v => String.fromCharCode(v)).join(""), {maxFilenameLength : 8}));
+	assertStrictEquals(tempPaths.unique().length, tempPaths.length);
+	assertStrictEquals(tempPaths.every(v => path.basename(v).length<=8), true);
 });
 
 Deno.test("gunzip", async () =>
