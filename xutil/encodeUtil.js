@@ -29,7 +29,7 @@ let MACINTOSH = null;
 // processors is an array of arrays: [ [matcher, replacer], ... ]
 // matcher should be a RegExp that ALWAYS matches the START of a string
 // replacer(match.groups) should return a byte number that the match represents
-export async function decodeMacintosh({data, processors=[], region="roman", preserveWhitespace})
+export async function decodeMacintosh({data, processors=[], region="roman", preserveWhitespace, skipNullBytes})
 {
 	if(!MACINTOSH)
 		({default : MACINTOSH} = await import(path.join(xu.dirname(import.meta), "encodeData", "macintosh.js")));
@@ -74,6 +74,8 @@ export async function decodeMacintosh({data, processors=[], region="roman", pres
 	{
 		let c = null;
 		const byte = bytes[i];
+		if(skipNullBytes && byte===0)
+			continue;
 
 		if(preserveWhitespace && [0x09, 0x0A, 0x0D, 0x20].includes(byte))
 		{
@@ -101,7 +103,6 @@ export const macintoshProcessors =
 	[
 		[/^(?<c>.)/, ({c}) => (MACINTOSH.romanReversed[c] ? +MACINTOSH.romanReversed[c] : c.charCodeAt(0))]
 	],
-
 	octal      :
 	[
 		// Mac files can contain forward slashes, so we replace them with a unicode fraction slash
