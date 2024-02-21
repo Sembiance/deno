@@ -31,7 +31,7 @@ Deno.test("abortedWorker", async () =>
 		allDone = true;
 	}
 	pool = new XWorkerPool({workercb, emptycb, xlog});
-	await pool.start(path.join(xu.dirname(import.meta), "abortedWorker.js"), {size : 10});
+	await pool.start(path.join(import.meta.dirname, "abortedWorker.js"), {size : 10});
 	xlog.debug`pool started, adding to queue...`;
 	pool.process([].pushSequence(1, 3).map(v => ({testid : v})));
 	pool.process([].pushSequence(4, 15).map(v => ({testid : v})));
@@ -214,7 +214,7 @@ Deno.test("processCrashRecover", async () =>
 	assert(await xu.waitUntil(() => results.length===vals.length-1, {timeout : xu.SECOND*20}));
 
 	await pool.stop();
-	await fileUtil.unlink(path.join(xu.dirname(import.meta), "core"));
+	await fileUtil.unlink(path.join(import.meta.dirname, "core"));
 
 	assertStrictEquals(emptyCount, 1);
 	assertStrictEquals(crashCount, 1);

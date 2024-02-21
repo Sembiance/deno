@@ -21,16 +21,6 @@ export async function memInfo()
 	return {total, available, usedPercent : Math.floor((1-(available/total))*100)};
 }
 
-export function getAvailablePorts(qty=1)
-{
-	return Array.from({length : qty}).fill(1).map(() => Deno.listen({port : 0})).map(l => { l.close(); return l.addr.port; });
-}
-
-export function getAvailablePort()
-{
-	return getAvailablePorts(1)[0];
-}
-
 export async function coreCount()
 {
 	const {stdout} = await run("nproc");

@@ -4,7 +4,7 @@ import * as hashUtil from "../hashUtil.js";
 import * as fileUtil from "../fileUtil.js";
 import * as runUtil from "../runUtil.js";
 
-const FILES_DIR = path.join(xu.dirname(import.meta), "files");
+const FILES_DIR = path.join(import.meta.dirname, "files");
 const TEST_FILE_PATH = path.join(FILES_DIR, "input.png");
 const TEST_FILE_MD5 = "8be8ce12e5e0589d69a54b21b1d4af9e";
 

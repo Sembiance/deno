@@ -10,7 +10,7 @@ export class Sparkey
 		this.decoder = new TextDecoder();
 		this.dbFilePathPrefixBuffer = this.encoder.encode(dbFilePathPrefix);
 
-		this.sparkey = Deno.dlopen(path.join(xu.dirname(import.meta), "sparkey.so"), {
+		this.sparkey = Deno.dlopen(path.join(import.meta.dirname, "sparkey.so"), {
 			get : { parameters : ["buffer", "u32", "buffer", "u32", "u64"], result : "buffer" },
 			put : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" }
 		});

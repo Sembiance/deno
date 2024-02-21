@@ -82,7 +82,7 @@ Deno.test("detachedKill", async () =>
 	{
 		await delay(50);
 		assertStrictEquals(status.success, false);
-		assertStrictEquals(status.signal, 15);
+		assertStrictEquals(status.signal, "SIGTERM");
 		failed = true;
 	};
 	const {ready, kill} = await xwork.run(f, "Hello, World!", {imports : {std : ["delay"]}, detached : true, recvcb : msg => { assertEquals(msg, "Hello, World!".reverse()); msgCount++; }, exitcb});

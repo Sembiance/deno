@@ -22,7 +22,7 @@ Deno.test("clone", () =>
 
 Deno.test("dirname", () =>	// eslint-disable-line sembiance/shorter-arrow-funs
 {
-	assertStrictEquals(xu.dirname(import.meta), "/mnt/compendium/DevLab/deno/xu/test");
+	assertStrictEquals(import.meta.dirname, "/mnt/compendium/DevLab/deno/xu/test");
 });
 
 Deno.test("freeze", () =>

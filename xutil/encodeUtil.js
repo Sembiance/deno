@@ -7,7 +7,7 @@ let run = null;
 // for a list of valid encodings, run: iconv --list
 // NOTE: Custom dexvert patch was added to add RISCOS and ATARI-ST support
 // Detect encoding of a file visually: https://base64.guru/tools/character-encoding
-export async function decode(data, fromEncoding)
+export async function decode(data, fromEncoding, {iconvPath="iconv"}={})
 {
 	// used to use tcl to convert, but found that it has some glitches that my custom converter doesn't have any problems with
 	// ideally some day I should patch MacJapanese support into iconv
@@ -15,9 +15,9 @@ export async function decode(data, fromEncoding)
 		return await decodeMacintosh({data, region : "japan", preserveWhitespace : true});
 
 	if(!run)
-		({run} = await import(path.join(xu.dirname(import.meta), "runUtil.js")));
+		({run} = await import(path.join(import.meta.dirname, "runUtil.js")));
 
-	let cmdArgs = ["iconv", ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
+	let cmdArgs = [iconvPath, ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
 	if(fromEncoding==="PETSCII")
 		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
 
@@ -32,7 +32,7 @@ let MACINTOSH = null;
 export async function decodeMacintosh({data, processors=[], region="roman", preserveWhitespace, skipNullBytes})
 {
 	if(!MACINTOSH)
-		({default : MACINTOSH} = await import(path.join(xu.dirname(import.meta), "encodeData", "macintosh.js")));
+		({default : MACINTOSH} = await import(path.join(import.meta.dirname, "encodeData", "macintosh.js")));
 
 	// first, convert the filename into an array of bytes, leveraging the processors
 	const bytes = data instanceof Uint8Array ? Array.from(data) : [];

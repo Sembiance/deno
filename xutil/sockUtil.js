@@ -6,29 +6,32 @@ const textEncoder = new TextEncoder();
 
 export async function listen(sock, {linecb, conncb})		// eslint-disable-line require-await
 {
-	let activeConnectionCount = 0;
+	const activeConnections = new Set();
 	let serverLineCount = 0;
 	const handleConnection = async function(conn)
 	{
-		activeConnectionCount++;
+		activeConnections.add(conn);
 
 		if(conncb)
 			await conncb(conn);
-			
-		if(linecb)
-		{
-			let connectionLineCount = 0;
-			try
-			{
-				for await(const line of conn.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
-					await linecb(line, conn, connectionLineCount++, serverLineCount++);
-			}
-			catch {}
-		}
 		
-		await conn.readable.cancel();
+		try
+		{
+			if(linecb)
+			{
+				let connectionLineCount = 0;
+				try
+				{
+					for await(const line of conn.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
+						await linecb(line, conn, connectionLineCount++, serverLineCount++);
+				}
+				catch {}
+			}
+			await conn.readable.cancel();
+		}
+		catch {}
 
-		activeConnectionCount--;
+		activeConnections.delete(conn);
 	};
 
 	const listener = Deno.listen(sock);
@@ -47,7 +50,12 @@ export async function listen(sock, {linecb, conncb})		// eslint-disable-line req
 		catch {}
 		if(sock.path)
 			await fileUtil.unlink(sock.path);
-		await xu.waitUntil(() => activeConnectionCount===0);
+		for(const conn of activeConnections)
+		{
+			try { conn.close(); }
+			catch {}
+		}
+		await xu.waitUntil(() => activeConnections.size===0);
 	};
 
 	return {close};
@@ -71,10 +79,7 @@ export async function sendReceiveLine(sock, line)
 		lineRead = l;
 		break;
 	}
-
-	await textLineStream.readable.cancel();
-	await textDecoderStream.readable.cancel();
-	await conn.readable.cancel();
+	conn.close();
 	
 	return lineRead;
 }

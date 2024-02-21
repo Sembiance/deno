@@ -2,9 +2,11 @@
 import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
-import * as sysUtil from "./sysUtil.js";
 import * as printUtil from "./printUtil.js";
-import {path, TextLineStream} from "std";
+import {path, TextLineStream, delay, Buffer, getAvailablePort} from "std";
+
+const XVFB_NUM_MIN = 10;
+const XVFB_NUM_MAX = 59999;	// in theory since we call runUtil with -nolisten tcp, we just have unix sockets, so no real upper limit on number (billions) but 59,999 - 10 should be plenty
 
 // requires kernel CONFIG_PROC_CHILDREN
 async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
@@ -74,93 +76,83 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	stderrEncoding="utf-8", stderrFilePath, stderrcb, stderrUnbuffer,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, virtualXVNCPort, xlog}={})
 {
-	const runArgs = {cmd : [cmd, ...args.map(v => (typeof v!=="string" ? v.toString() : v))], stdout : "piped", stderr : "piped", stdin : ((stdinPipe || stdinData || stdinFilePath) ? "piped" : "null")};
+	if([!!stdoutcb, !!stdoutFilePath, !!stdoutNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
+		throw new Error("You can't set more than one of stdoutcb, stdoutFilePath, stdoutNull, lievOutput, xlog");
+	if([!!stderrcb, !!stderrFilePath, !!stderrNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
+		throw new Error("You can't set more than one of stderrcb, stderrFilePath, stderrNull, liveOutput, xlog");
+	if([!!stdinPipe, !!stdinFilePath, !!stdinData].filter(v => v===true).length>1)
+		throw new Error("You can't set more than one of stdinPipe, stdinFilePath, stdinData");
+
+	let runCmd = cmd;
+	const runArgs = args.map(v => (typeof v!=="string" ? v.toString() : v));
+	const runOpts = {};
 
 	if(stdoutUnbuffer || stderrUnbuffer)
 	{
+		runArgs.unshift(runCmd);
 		if(stdoutUnbuffer)
-			runArgs.cmd.unshift("-o0");
+			runArgs.unshift("-o0");
 		if(stderrUnbuffer)
-			runArgs.cmd.unshift("-e0");
-		runArgs.cmd.unshift("stdbuf");
+			runArgs.unshift("-e0");
+		runCmd = "stdbuf";
 	}
 
 	if(inheritEnv!==true)
 	{
-		runArgs.clearEnv = true;
+		runOpts.clearEnv = true;
 		if(Array.isArray(inheritEnv))
-			runArgs.env = Object.fromEntries(inheritEnv.map(k => [k, Deno.env.get(k)]));
+			runOpts.env = Object.fromEntries(inheritEnv.map(k => [k, Deno.env.get(k)]));
 	}
 	
 	if(env)
 	{
-		runArgs.env ||= {};
-		Object.assign(runArgs.env, Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()]))));
+		runOpts.env ||= {};
+		Object.assign(runOpts.env, Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()]))));
 	}
 
 	if(cwd)
-		runArgs.cwd = cwd;
-	
-	if(liveOutput)
-	{
-		runArgs.stdout = "inherit";
-		runArgs.stderr = "inherit";
-	}
+		runOpts.cwd = cwd;
 
-	// stdoutFilePath will override stdout liveOutput
-	if(stdoutFilePath)
-	{
-		const stdoutFile = await Deno.open(stdoutFilePath.startsWith("/") ? stdoutFilePath : path.join(runArgs.cwd || Deno.cwd(), stdoutFilePath), {write : true, createNew : true});
-		runArgs.stdout = stdoutFile.rid;
-	}
-
-	// stderrFilePath will override stderr liveOutput
-	if(stderrFilePath)
-	{
-		const stderrFile = await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runArgs.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true});
-		runArgs.stderr = stderrFile.rid;
-	}
-
-	if(stdoutNull)
-		runArgs.stdout = "null";
-	if(stderrNull)
-		runArgs.stderr = "null";
+	runOpts.stdout = (stdoutFilePath || stdoutcb) ? "piped" : (stdoutNull ? "null" : (liveOutput ? "inherit" : "piped"));
+	runOpts.stderr = (stderrFilePath || stderrcb) ? "piped" : (stderrNull ? "null" : (liveOutput ? "inherit" : "piped"));
+	runOpts.stdin = (stdinPipe || stdinData || stdinFilePath) ? "piped" : "null";
 
 	let xvfbProc = null;
 	let xvfbPort = null;
 	let x11vncProc = null;
 	if(virtualX || virtualXGLX)
 	{
-		xvfbPort = await xu.tryFallbackAsync(async () => +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim(), Math.randomInt(10, 59999));
+		xvfbPort = await xu.tryFallbackAsync(async () => await getXVFBNum(), Math.randomInt(XVFB_NUM_MIN, XVFB_NUM_MAX));
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
 		xvfbArgs.push("-xkbdir", "/usr/share/X11/xkb");	// Gentoo puts the xkb files here
 		xvfbArgs.push("-screen", "0", "1920x1080x24");
-		xvfbProc = Deno.run({cmd : ["Xvfb", ...xvfbArgs], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"});
+		xvfbProc = new Deno.Command("Xvfb", {args : xvfbArgs, clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 	
 		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*20}))
 			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 20 seconds`);
 
-		runArgs.env ||= {};
-		runArgs.env.DISPLAY = `:${xvfbPort}`;
+		runOpts.env ||= {};
+		runOpts.env.DISPLAY = `:${xvfbPort}`;
 
 		if(virtualXVNCPort)
 		{
 			if(virtualXVNCPort===true)
-				virtualXVNCPort = sysUtil.getAvailablePort();
+				virtualXVNCPort = getAvailablePort();
 
-			x11vncProc = Deno.run({cmd : ["x11vnc", "-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"});
+			x11vncProc = new Deno.Command("x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 		}
 	}
 
 	if(verbose)
-		console.log(`runUtil.run running \`${fg.orange(runArgs.cmd[0])} ${runArgs.cmd.slice(1).map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${printUtil.inspect({...runArgs, cmd : []}).squeeze()}`);
+		console.log(`runUtil.run running \`${fg.orange(runCmd)} ${runArgs.map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${printUtil.inspect(runOpts).squeeze()}`);
 
-	// Kick off the process
+	// Create our cwd if needed, otherwise we'll get an error
 	if(cwd && !(await fileUtil.exists(cwd)))
 		await Deno.mkdir(cwd, {recursive : true});
 
-	let p = undefined;
-	try { p = Deno.run(runArgs); }
+	// Kick off our process
+	let p = null;
+	try { p = new Deno.Command(runCmd, {...runOpts, args : runArgs}).spawn(); }
 	catch(err) { throw new Error(`runUtil.run failed for ${cmd} and args ${JSON.stringify(args)} with runArgs ${JSON.stringify(runArgs)}`, { cause : err }); }
 
 	// Start our timer
@@ -185,14 +177,60 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	if(timeout)
 		timerid = setTimeout(timeoutHandler, timeout);
 
-	const lineReader = async function(reader, cb)
+	const lineReader = async function(readable, cb)
 	{
-		for await(const line of reader.readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
+		for await(const line of readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
 			await cb(line);
 	};
 
-	const stdoutcbPromise = stdoutcb || xlog ? lineReader(p.stdout, stdoutcb || (line => xlog.info`${line}`)) : null;
-	const stderrcbPromise = stderrcb || xlog ? lineReader(p.stderr, stderrcb || (line => xlog.warn`${line}`)) : null;
+	// stdout
+	let stdoutPromise = null;
+	let stdoutBuffer = null;
+	if(stdoutcb || xlog)
+	{
+		stdoutPromise = lineReader(p.stdout, stdoutcb || (line => xlog.info`${line}`));
+	}
+	else if(stdoutFilePath)
+	{
+		stdoutPromise = p.stdout.pipeTo((await Deno.open(stdoutFilePath.startsWith("/") ? stdoutFilePath : path.join(runArgs.cwd || Deno.cwd(), stdoutFilePath), {write : true, createNew : true})).writable);
+	}
+	else if(!liveOutput)
+	{
+		stdoutBuffer = new Buffer();
+		stdoutPromise = p.stdout.pipeTo(stdoutBuffer.writable);
+	}
+	else
+	{
+		stdoutPromise = Promise.resolve();
+	}
+
+	// stderr
+	let stderrPromise = null;
+	let stderrBuffer = null;
+	if(stderrcb || xlog)
+	{
+		stderrPromise = lineReader(p.stderr, stderrcb || (line => xlog.warn`${line}`));
+	}
+	else if(stderrFilePath)
+	{
+		stderrPromise = p.stderr.pipeTo((await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runArgs.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true})).writable);
+	}
+	else if(!liveOutput)
+	{
+		stderrBuffer = new Buffer();
+		stderrPromise = p.stderr.pipeTo(stderrBuffer.writable);
+	}
+	else
+	{
+		stderrPromise = Promise.resolve();
+	}
+
+	// stdin
+	let stdinPromise = Promise.resolve();
+	if(stdinFilePath)
+		stdinPromise = (await Deno.open(stdinFilePath)).readable.pipeTo(p.stdin);
+	else if(stdinData)
+		stdinPromise = (new Blob([(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData)])).stream().pipeTo(p.stdin);
 
 	let cbCalled = false;
 	const cb = async () =>
@@ -202,32 +240,13 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 		cbCalled = true;
 
-		// Create our stdout/stderr promises which will either be a copy to a file or a read from the p.output/p.stderrOutput buffering functions
-		const stdoutPromise = runArgs.stdout==="inherit" || stdoutFilePath ? Promise.resolve() : stdoutcbPromise || p.output();
-		const stderrPromise = runArgs.stderr==="inherit" || stderrFilePath ? Promise.resolve() : stderrcbPromise || p.stderrOutput();
-
-		let stdinPromise = null;
-		if(stdinFilePath)
-		{
-			const stdinFile = await Deno.open(stdinFilePath);
-			stdinPromise = stdinFile.readable.pipeTo(p.stdin.writable).finally(() => { stdinFile.close(); p.stdin.close(); });
-		}
-		else if(stdinData)
-		{
-			stdinPromise = new Blob([(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData)]).stream().pipeTo(p.stdin.writable).finally(() => p.stdin.close());
-		}
-		else
-		{
-			stdinPromise = Promise.resolve();
-		}
-
 		// Wait for the process to finish (or be killed by the timeoutHandler)
-		const [status, stdoutData, stderrData] = await Promise.all([p.status().catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {}), stdinPromise.catch(() => {})]);
+		const [{success, code, signal}] = await Promise.all([p.status.catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {}), stdinPromise.catch(() => {})]);
 
 		// If we have a timeout still running, clear it
 		if(typeof timerid==="number")
 			clearTimeout(timerid);
-		
+
 		if(x11vncProc)
 		{
 			await kill(x11vncProc, "SIGTERM");
@@ -239,39 +258,25 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			xvfbProc = null;
 		}
 
-		// Close the process
-		try { p.close(); } catch {}
+		const r = {status : {success, code, signal}, stdout : "", stderr : "", timedOut : (timeout && timerid===true)};
+		if(stdoutBuffer?.length)
+			r.stdout = stdoutEncoding==="utf-8" ? new TextDecoder().decode(stdoutBuffer.bytes()) : (stdoutEncoding==="binary" ? stdoutBuffer.bytes() : await encodeUtil.decode(stdoutBuffer.bytes(), stdoutEncoding));
 
-		// Form our return data
-		const r = {status, timedOut : (timeout && timerid===true)};
-		if(stdoutFilePath)
-			Deno.close(runArgs.stdout);
-		else
-			r.stdout = stdoutEncoding==="utf-8" ? new TextDecoder().decode(stdoutData) : (stdoutEncoding==="binary" ? stdoutData : await encodeUtil.decode(stdoutData, stdoutEncoding));
-
-		if(stderrFilePath)
-			Deno.close(runArgs.stderr);
-		else
-			r.stderr = stderrEncoding==="utf-8" ? new TextDecoder().decode(stderrData) : (stderrEncoding==="binary" ? stderrData : await encodeUtil.decode(stderrData, stderrEncoding));
-		
-		// If we used lineReader due to have a stdoutcb/stderrcb, it opened up the handle so we need to close it
-		if(stdoutcb)
-			xu.tryFallback(() => p.stdout.close());
-		if(stderrcb)
-			xu.tryFallback(() => p.stderr.close());
+		if(stderrBuffer?.length)
+			r.stderr = stderrEncoding==="utf-8" ? new TextDecoder().decode(stderrBuffer.bytes()) : (stderrEncoding==="binary" ? stderrBuffer.bytes() : await encodeUtil.decode(stderrBuffer.bytes(), stderrEncoding));
 
 		return r;
 	};
 
 	if(detached)
 	{
-		p.status().then(async status =>
+		p.status.then(async ({success, code, signal}) =>
 		{
 			if(!cbCalled)
 				await cb();
 			
 			if(exitcb)
-				await exitcb(status);
+				await exitcb({success, code, signal});
 		});
 
 		const r = {p, cb};
@@ -292,8 +297,7 @@ export async function kill(p, signal="SIGTERM", {killChildren}={})
 		await killPIDKids(p.pid, signal);
 		
 	try { p.kill(signal); } catch {}
-	try { await p.status(); } catch {}	// allows the process to gracefully close before I close the handle
-	try { p.close(); } catch {}
+	try { await p.status; } catch {}	// allows the process to gracefully close before I close the handle
 }
 
 // returns args needed to call a sub deno script
@@ -302,7 +306,7 @@ export function denoArgs(...args)
 	return ["run",
 		"--v8-flags=--max-old-space-size=32768,--enable-experimental-regexp-engine-on-excessive-backtracks",
 		"--import-map", "/mnt/compendium/DevLab/deno/importMap.json",
-		"--no-check", "--no-config", "--no-npm", "--no-lock", "--unstable", "--allow-all", ...args];
+		"--no-check", "--no-config", "--no-npm", "--no-lock", "--unstable-ffi", "--unstable-fs", "--unstable-net", "--unstable-temporal", "--allow-all", ...args];
 }
 
 // returns env needed to properly run deno scripts
@@ -318,15 +322,6 @@ export function denoEnv()
 export function denoRunOpts(o={})
 {
 	return {...o, env : { ...denoEnv(), ...(o.env)}};
-}
-
-export async function checkNumserver(dontExit)
-{
-	const numserverAvaialble = !!(await xu.tryFallbackAsync(async () => +(await (await fetch("http://127.0.0.1:21787/getNum")).text()).trim(), 0));
-	if(!numserverAvaialble && !dontExit)
-		Deno.exit(console.error(`numserver not running, exiting`));
-	
-	return numserverAvaialble;
 }
 
 export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, port, verbose, dereferenceSymlinks, progress, noOwnership, identityFilePath}={})
@@ -378,4 +373,37 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 	r.push(`${destHost ? `${destHost}:` : ""}${dest}`);
 
 	return r;
+}
+
+export async function getXVFBNum()
+{
+	const xvfbNumLockFilePath = "/mnt/ram/tmp/xvfbNum.lock";
+	const xvfbNumCounterFilePath = "/mnt/ram/tmp/xvfbNum.counter";
+
+	// todo TEMPORARY DUE TO BUG: https://github.com/denoland/deno/issues/22504
+	await delay(Math.randomInt(250, 1000));
+
+	const lockFile = await Deno.open(xvfbNumLockFilePath, {append : true, create : true});
+	await Deno.flock(lockFile.rid, true);
+	let xvfbCounter = +(await xu.tryFallbackAsync(async () => await fileUtil.readTextFile(xvfbNumCounterFilePath), XVFB_NUM_MIN));
+
+	let xvfbNum = null;
+	do
+	{
+		xvfbNum = xvfbCounter++;
+		if(xvfbCounter>XVFB_NUM_MAX)
+			xvfbCounter = XVFB_NUM_MIN;
+
+		// skip this number if there is an existing X socket for this number
+		if(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbNum}`))
+			continue;
+		
+		break;
+	} while(true);
+
+	await fileUtil.writeTextFile(xvfbNumCounterFilePath, xvfbCounter.toString());
+	await Deno.funlock(lockFile.rid);
+	lockFile.close();
+
+	return xvfbNum;
 }

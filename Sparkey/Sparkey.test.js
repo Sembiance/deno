@@ -70,7 +70,7 @@ Deno.test("binary", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-binary");
 	const db = new Sparkey(dbFilePathPrefix);
 	
-	const srcFilePath = path.join(xu.dirname(import.meta), "test.png");
+	const srcFilePath = path.join(import.meta.dirname, "test.png");
 	assertStrictEquals(db.put("myFileData", await Deno.readFile(srcFilePath)), true);
 
 	const tmpFilePath = await fileUtil.genTempPath(undefined, "-Sparkey-test-binary.png");

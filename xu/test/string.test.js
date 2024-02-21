@@ -55,6 +55,13 @@ Deno.test("replaceAsync", async () =>
 	}));
 });
 
+Deno.test("reverse", () =>
+{
+	const a = "abc123";
+	const r = "321cba";
+	assertStrictEquals(r, a.reverse());
+});
+
 Deno.test("strip", () =>
 {
 	const a = "hello, world";
@@ -91,4 +98,5 @@ Deno.test("trimChars", () =>
 	const r = "Hello World";
 	assertStrictEquals(r, a.trimChars("-="));
 	assertStrictEquals(r, a.trimChars(["-", "="]));
+	assertStrictEquals("abc123", "  \nabc123\t  ".trimChars());
 });

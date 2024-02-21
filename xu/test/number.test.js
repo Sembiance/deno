@@ -4,9 +4,17 @@ import {assertEquals, assertStrictEquals} from "std";
 Deno.test("bytesToSize", () =>
 {
 	let a = Number(128_939_123);
-	assertStrictEquals(a.bytesToSize(), "129MB");
+	assertStrictEquals(a.bytesToSize(), "123MB");
 	a = Number(47);
 	assertStrictEquals(a.bytesToSize(), "47b");
+	a = Number(xu.MB);
+	assertStrictEquals(a.bytesToSize(), "1MB");
+	a = Number(xu.GB);
+	assertStrictEquals(a.bytesToSize(), "1GB");
+	a = Number(xu.TB);
+	assertStrictEquals(a.bytesToSize(), "1TB");
+	a = Number(xu.PB);
+	assertStrictEquals(a.bytesToSize(), "1PB");
 });
 
 Deno.test("clearBit", () =>

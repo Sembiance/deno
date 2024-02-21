@@ -7,32 +7,36 @@
 // Then go run the dtest in deno/xu to pull down the new std code, but also to test that nothing broke
 
 // assert
-export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertRejects} from "https://deno.land/std@0.203.0/assert/mod.ts";
+export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertRejects} from "https://deno.land/std@0.216.0/assert/mod.ts";
 
 // async
-export {delay} from "https://deno.land/std@0.203.0/async/delay.ts";
-export {deadline} from "https://deno.land/std@0.203.0/async/deadline.ts";
+export {delay} from "https://deno.land/std@0.216.0/async/delay.ts";
+export {deadline} from "https://deno.land/std@0.216.0/async/deadline.ts";
 
 // csv
-export {parse as csvParse} from "https://deno.land/std@0.203.0/csv/parse.ts";
+export {parse as csvParse} from "https://deno.land/std@0.216.0/csv/parse.ts";
 
 // crypto
-export {crypto} from "https://deno.land/std@0.203.0/crypto/crypto.ts";
+export {crypto} from "https://deno.land/std@0.216.0/crypto/crypto.ts";
 
 // datetime
-export {format as dateFormat} from "https://deno.land/std@0.203.0/datetime/format.ts";
-export {parse as dateParse} from "https://deno.land/std@0.203.0/datetime/parse.ts";
+export {format as dateFormat} from "https://deno.land/std@0.216.0/datetime/format.ts";
+export {parse as dateParse} from "https://deno.land/std@0.216.0/datetime/parse.ts";
 
 // encoding
-export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "https://deno.land/std@0.203.0/encoding/base64.ts";
-export {decodeHex as hexDecode, encodeHex as hexEncode} from "https://deno.land/std@0.203.0/encoding/hex.ts";
+export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "https://deno.land/std@0.216.0/encoding/base64.ts";
+export {decodeHex as hexDecode, encodeHex as hexEncode} from "https://deno.land/std@0.216.0/encoding/hex.ts";
 
 // fs
-export * as fs from "https://deno.land/std@0.203.0/fs/mod.ts";
+export * as fs from "https://deno.land/std@0.216.0/fs/mod.ts";
+
+// net
+export {getAvailablePort} from "https://deno.land/std@0.216.0/net/get_available_port.ts";
 
 // path
-export * as path from "https://deno.land/std@0.203.0/path/mod.ts";
+export * as path from "https://deno.land/std@0.216.0/path/mod.ts";
 
 // streams
-export {TextLineStream} from "https://deno.land/std@0.203.0/streams/text_line_stream.ts";
-export {toArrayBuffer} from "https://deno.land/std@0.203.0/streams/to_array_buffer.ts";
+export {TextLineStream} from "https://deno.land/std@0.216.0/streams/text_line_stream.ts";
+export {toArrayBuffer} from "https://deno.land/std@0.216.0/streams/to_array_buffer.ts";
+export {Buffer} from "https://deno.land/std@0.216.0/streams/buffer.ts";

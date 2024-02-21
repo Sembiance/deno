@@ -14,7 +14,7 @@ Deno.test("GAPI-OCR", async () =>
 	];
 	for(const [imageFilename, imageText] of imageTexts)
 	{
-		const ocrReq = { requests : [{image : { content : base64Encode(await Deno.readFile(path.join(xu.dirname(import.meta), imageFilename)))}, features : [{type : "TEXT_DETECTION", model : "builtin/latest"}]}] };
+		const ocrReq = { requests : [{image : { content : base64Encode(await Deno.readFile(path.join(import.meta.dirname, imageFilename)))}, features : [{type : "TEXT_DETECTION", model : "builtin/latest"}]}] };
 		const annotations = await ocrAPI.callJSONAPI("https://vision.googleapis.com/v1/images:annotate", ocrReq);
 		assertStrictEquals(annotations.responses[0].fullTextAnnotation.text, imageText);
 	}

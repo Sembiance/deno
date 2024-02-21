@@ -24,7 +24,7 @@ Deno.test("sendReceiveLineUnix", async () =>
 {
 	const unixSockPath = await fileUtil.genTempPath(undefined, ".sock");
 	const {close} = await sockUtil.listen({transport : "unix", path : unixSockPath}, {linecb : async (line, conn) => await new Blob([new TextEncoder().encode("World\n")]).stream().pipeTo(conn.writable, {preventClose : true})});
-	assertStrictEquals(await sockUtil.sendReceiveLine({transport : "unix", path : unixSockPath}, "Hello"), "World");
+	const r = await sockUtil.sendReceiveLine({transport : "unix", path : unixSockPath}, "Hello");
 	await close();
-	console.log("This will fail due to some deno bug when piping through TextDecoderStream");
+	assertStrictEquals(r, "World");
 });

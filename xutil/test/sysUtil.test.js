@@ -1,4 +1,4 @@
-import {memInfo, getAvailablePorts, getAvailablePort, pidMemInfo} from "../sysUtil.js";
+import {memInfo, pidMemInfo} from "../sysUtil.js";
 import {assert} from "std";
 
 
@@ -14,15 +14,6 @@ Deno.test("memInfo", async () =>
 	assert(a.usedPercent>0);
 
 	assert(a.total>a.available);
-});
-
-Deno.test("getAvailablePorts", () =>
-{
-	assert((getAvailablePorts()).length===1);
-	const ports = getAvailablePorts(2222);
-	assert(ports.length===2222);
-	assert(ports.unique().length===2222);
-	assert(typeof getAvailablePort()==="number");
 });
 
 Deno.test("pidMemInfo", async () =>

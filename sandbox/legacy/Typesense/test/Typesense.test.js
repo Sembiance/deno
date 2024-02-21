@@ -124,7 +124,7 @@ Deno.test("import", async () =>
 	const t = newTypesense();
 	await t.collections.create(NAME, FIELDS);
 
-	const importResults = await t.documents.import(NAME, await Deno.readFile(path.join(xu.dirname(import.meta), "import.jsonl")));
+	const importResults = await t.documents.import(NAME, await Deno.readFile(path.join(import.meta.dirname, "import.jsonl")));
 	assertStrictEquals(importResults.length, 2);
 	for(const importResult of importResults)
 		assertStrictEquals(importResult.success, true);

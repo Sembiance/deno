@@ -4,7 +4,29 @@ import * as runUtil from "../runUtil.js";
 import * as fileUtil from "../fileUtil.js";
 import {XLog} from "xlog";
 
-await runUtil.run("prlimit", ["--pid", Deno.pid, `--core=0`]);
+Deno.test("status", async () =>
+{
+	let {status} = await runUtil.run("uname");
+	assertStrictEquals(status.success, true);
+	assertStrictEquals(status.code, 0);
+	assertStrictEquals(status.signal, null);
+
+	({status} = await runUtil.run("ls", ["/non/existant/file"]));
+	assertStrictEquals(status.success, false);
+	assertStrictEquals(status.code, 2);
+	assertStrictEquals(status.signal, null);
+
+	({status} = await runUtil.run("bash", ["-c", "exit 47"]));
+	assertStrictEquals(status.success, false);
+	assertStrictEquals(status.code, 47);
+	assertStrictEquals(status.signal, null);
+});
+
+Deno.test("stdoutBasic", async () =>
+{
+	const {stdout} = await runUtil.run("uname");
+	assertStrictEquals(stdout, "Linux\n");
+});
 
 Deno.test("cwd", async () =>
 {
@@ -17,7 +39,7 @@ Deno.test("cwd", async () =>
 	assertStrictEquals(stdout.includes("localhost"), true);
 });
 
-Deno.test("cwd", async () =>
+Deno.test("env", async () =>
 {
 	const {stdout} = await runUtil.run("printenv", [], {env : {RUNUTIL_ENV_TEST : 47}});
 	assertStrictEquals(stdout.includes("RUNUTIL_ENV_TEST=47"), true);
@@ -32,19 +54,13 @@ Deno.test("liveOutput", async () =>
 	assertStrictEquals(status.code, 0);
 });
 
-Deno.test("stdoutBasic", async () =>
-{
-	const {stdout} = await runUtil.run("uname");
-	assertStrictEquals(stdout, "Linux\n");
-});
-
 Deno.test("stdout-encoding", async () =>
 {
 	// unlzx not always installed
-	//let {stdout} = await runUtil.run("unlzx", ["-v", path.join(xu.dirname(import.meta), "files", "test.lzx")], {stdoutEncoding : "latin1"});
+	//let {stdout} = await runUtil.run("unlzx", ["-v", path.join(import.meta.dirname, "files", "test.lzx")], {stdoutEncoding : "latin1"});
 	//assert(stdout.includes("mod._¡TSA!_Aiguanaguoman_v1.43"));
 
-	const {stdout} = await runUtil.run("unzip", ["-qz", path.join(xu.dirname(import.meta), "files", "p205.zip")], {stdoutEncoding : "CP437"});
+	const {stdout} = await runUtil.run("unzip", ["-qz", path.join(import.meta.dirname, "files", "p205.zip")], {stdoutEncoding : "CP437"});
 	assert(stdout.includes("│ ▄▄▄   ▄▄     ▄▄▄   ─────────────────────────            Winston-Salem, NC │"));
 });
 
@@ -65,13 +81,13 @@ Deno.test("stdoutUnbuffered", async () =>
 		return;
 	}
 
-	let {stdout} = await runUtil.run("zxtune123", ["--file", path.join(xu.dirname(import.meta), "files", "m-fuyu.ssf"), "--null", "--quiet"], {timeout : xu.SECOND*2});
+	let {stdout} = await runUtil.run("zxtune123", ["--file", path.join(import.meta.dirname, "files", "m-fuyu.ssf"), "--null", "--quiet"], {timeout : xu.SECOND*2});
 	assertStrictEquals(stdout?.length, 0);
-	({stdout} = await runUtil.run("zxtune123", ["--file", path.join(xu.dirname(import.meta), "files", "m-fuyu.ssf"), "--null", "--quiet"], {timeout : xu.SECOND*2, stdoutUnbuffer : true}));
+	({stdout} = await runUtil.run("zxtune123", ["--file", path.join(import.meta.dirname, "files", "m-fuyu.ssf"), "--null", "--quiet"], {timeout : xu.SECOND*2, stdoutUnbuffer : true}));
 	assertStrictEquals(stdout.includes("Romance of the Three Kingdoms"), true);
 });
 
-Deno.test("stdoutcb", async () =>
+Deno.test("stdoutcb1", async () =>
 {
 	let foundPS = false;
 	let lineCount = 0;
@@ -101,13 +117,13 @@ Deno.test("stdoutcb2", async () =>
 			seenLastLine = true;
 	};
 
-	await runUtil.run("gunzip", ["-c", path.join(xu.dirname(import.meta), "files", "468.jsonl.gz")], {stdoutcb});
+	await runUtil.run("gunzip", ["-c", path.join(import.meta.dirname, "files", "468.jsonl.gz")], {stdoutcb});
 
 	assertStrictEquals(lineCount, 11);
 	assertStrictEquals(seenLastLine, true);
 });
 
-Deno.test("stderr", async () =>
+Deno.test("stderrBasic", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
 	assertStrictEquals(stdout.length, 0);
@@ -125,7 +141,7 @@ Deno.test("stdoutFilePath", async () =>
 
 	// view64pnm not always installed
 	//outFilePath = await fileUtil.genTempPath(undefined, ".pnm");
-	//await runUtil.run("view64pnm", [path.join(xu.dirname(import.meta), "files", "Alid.ism")], {stdoutFilePath : outFilePath});
+	//await runUtil.run("view64pnm", [path.join(import.meta.dirname, "files", "Alid.ism")], {stdoutFilePath : outFilePath});
 	//assertStrictEquals((await Deno.stat(outFilePath)).size, 192_015);
 	//await fileUtil.unlink(outFilePath);
 });
@@ -138,7 +154,7 @@ Deno.test("stderrFilePath", async () =>
 	await fileUtil.unlink(outFilePath);
 });
 
-Deno.test("manyInstances", async () =>
+Deno.test("manyInstances-normal", async () =>
 {
 	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("time", ["sleep", Math.randomInt(1, 3)])))).map(o => o.stderr);
 	assertStrictEquals(results.filter(result => result.includes("elapsed")).length, 1000);
@@ -146,8 +162,8 @@ Deno.test("manyInstances", async () =>
 
 Deno.test("manyInstances-virtualX", async () =>
 {
-	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
-	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
+	const results = (await Promise.all([].pushSequence(1, 32).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
+	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 32);	// TODO raise this back to 1000 and 32 above once this is fixed: https://github.com/denoland/deno/issues/22504
 });
 
 Deno.test("stdinFullBuffer", async () =>
@@ -160,12 +176,12 @@ Deno.test("stdinFullBuffer", async () =>
 Deno.test("stdinFilePath", async () =>
 {
 	const outFilePath = await fileUtil.genTempPath();
-	await runUtil.run("zlib-flate", ["-uncompress"], {stdoutFilePath : outFilePath, stdinFilePath : path.join(xu.dirname(import.meta), "files", "test.zlib")});
+	await runUtil.run("zlib-flate", ["-uncompress"], {stdoutFilePath : outFilePath, stdinFilePath : path.join(import.meta.dirname, "files", "test.zlib")});
 	assertStrictEquals(Deno.statSync(outFilePath).size, 15302);
 	await fileUtil.unlink(outFilePath);
 });
 
-Deno.test("stdinData", async () =>
+Deno.test("stdinData-normal", async () =>
 {
 	const msg = "this is just a hello world test";
 	const {stdout} = await runUtil.run("deno", [], {stdinData : `console.log("${msg}")`});
@@ -178,16 +194,16 @@ Deno.test("stdinData-with-stdoutBlock", async () =>
 	// This only happens on chatsubo, not on my local machine. I'm not sure why.
 	// So I had to make sure that runUtil.run started reading stdout and stderr BEFORE it sent stdin data, which is probably how I should have been doing it all along anyways
 	// This test just verifies this is working, but again it only fails on chatsubo, not on my local machine
-	const {stdout} = await runUtil.run("petcat", ["-nh", "-text"], {stdinData : await Deno.readFile(path.join(xu.dirname(import.meta), "files", "g>wellen"))});
+	const {stdout} = await runUtil.run("petcat", ["-nh", "-text"], {stdinData : await Deno.readFile(path.join(import.meta.dirname, "files", "g>wellen"))});
 	assertStrictEquals(stdout.length, 37552);
 });
 
-Deno.test("timeout", async () =>
+Deno.test("timeout-normal", async () =>
 {
 	const beforeTime = performance.now();
 	const {status, timedOut} = await runUtil.run("sleep", [30], {timeout : xu.SECOND*2});
 	assertStrictEquals(timedOut, true);
-	assertStrictEquals(status.signal, 15);
+	assertStrictEquals(status.signal, "SIGTERM");
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 });
 
@@ -196,7 +212,7 @@ Deno.test("timeout-detached", async () =>
 	const beforeTime = performance.now();
 	const {cb} = await runUtil.run("sleep", [30], {detached : true, timeout : xu.SECOND*2});
 	const {status} = await cb();
-	assertStrictEquals(status.signal, 15);
+	assertStrictEquals(status.signal, "SIGTERM");
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
 });
 
@@ -232,7 +248,7 @@ Deno.test("detached-output", async () =>
 {
 	const {cb} = await runUtil.run("time", ["sleep", 1], {detached : true});
 	const {status, stdout, stderr} = await cb();
-	assertEquals(status, {success : true, code : 0});
+	assertEquals(status, {success : true, signal : null, code : 0});
 	assertStrictEquals(stdout, "");
 	assert(stderr.includes("elapsed"));
 });
@@ -264,7 +280,7 @@ Deno.test("customHomeENV", async () =>
 Deno.test("killChildrenBuiltin", async () =>
 {
 	const pids = [];
-	await runUtil.run(path.join(xu.dirname(import.meta), "files", "makeKids.sh"), [], {timeout : xu.SECOND*2, killChildren : true, stdoutcb : line => pids.push(line.trim())});
+	await runUtil.run(path.join(import.meta.dirname, "files", "makeKids.sh"), [], {timeout : xu.SECOND*2, killChildren : true, stdoutcb : line => pids.push(line.trim())});
 
 	for(const pid of pids)
 	{
@@ -276,7 +292,7 @@ Deno.test("killChildrenBuiltin", async () =>
 Deno.test("killChildrenWithRunUtilKill", async () =>
 {
 	const pids = [];
-	const {p} = await runUtil.run(path.join(xu.dirname(import.meta), "files", "makeKids.sh"), [], {detached : true, stdoutcb : line => pids.push(line.trim())});
+	const {p} = await runUtil.run(path.join(import.meta.dirname, "files", "makeKids.sh"), [], {detached : true, stdoutcb : line => pids.push(line.trim())});
 	await xu.waitUntil(() => pids.length===2);
 
 	await delay(xu.SECOND);
@@ -301,4 +317,10 @@ Deno.test("killChildrenWithRunUtilKill", async () =>
 		const {stdout} = await runUtil.run("ps", ["--no-headers", "-p", pid, "-o", "pid"]);
 		assert(!stdout.trim().length);
 	}
+});
+
+Deno.test("getXVFBNum", async () =>
+{
+	const xvfbNum = await runUtil.getXVFBNum();
+	assert(xvfbNum>10);
 });
