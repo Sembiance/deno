@@ -28,6 +28,14 @@ Deno.test("stdoutBasic", async () =>
 	assertStrictEquals(stdout, "Linux\n");
 });
 
+Deno.test("stdoutNull", async () =>
+{
+	const {status} = await runUtil.run("ls", ["/non/existant/file"], {stdoutNull : true, stderrNull : true});
+	assertStrictEquals(status.success, false);
+	assertStrictEquals(status.code, 2);
+	assertStrictEquals(status.signal, null);
+});
+
 Deno.test("cwd", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("cat", ["hosts"], {cwd : "/etc"});

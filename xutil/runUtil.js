@@ -192,9 +192,9 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	}
 	else if(stdoutFilePath)
 	{
-		stdoutPromise = p.stdout.pipeTo((await Deno.open(stdoutFilePath.startsWith("/") ? stdoutFilePath : path.join(runArgs.cwd || Deno.cwd(), stdoutFilePath), {write : true, createNew : true})).writable);
+		stdoutPromise = p.stdout.pipeTo((await Deno.open(stdoutFilePath.startsWith("/") ? stdoutFilePath : path.join(runOpts.cwd || Deno.cwd(), stdoutFilePath), {write : true, createNew : true})).writable);
 	}
-	else if(!liveOutput)
+	else if(!liveOutput && !stdoutNull)
 	{
 		stdoutBuffer = new Buffer();
 		stdoutPromise = p.stdout.pipeTo(stdoutBuffer.writable);
@@ -213,9 +213,9 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	}
 	else if(stderrFilePath)
 	{
-		stderrPromise = p.stderr.pipeTo((await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runArgs.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true})).writable);
+		stderrPromise = p.stderr.pipeTo((await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runOpts.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true})).writable);
 	}
-	else if(!liveOutput)
+	else if(!liveOutput && !stderrNull)
 	{
 		stderrBuffer = new Buffer();
 		stderrPromise = p.stderr.pipeTo(stderrBuffer.writable);
