@@ -48,6 +48,16 @@ Deno.test("clone", () =>
 	assertStrictEquals(sub, b.clone({shallow : true}).at(-1));
 });
 
+Deno.test("filterAsync", async () =>
+{
+	const a = [1, 2, 3, 4, 5];
+	const b = [1, 2, 3, 4, 5];
+	const r = [3, 4, 5];
+	assertEquals(a, b);
+	assertEquals(await a.filterAsync(async v => { await delay(10); return v>=3; }), b.filter(v => v>=3));
+	assertEquals(await a.filterAsync(async v => { await delay(10); return v>=3; }), r);
+});
+
 Deno.test("filterInPlace", () =>
 {
 	const a = [1, 2, 3, 4, 5];
@@ -107,8 +117,12 @@ Deno.test("max", () =>
 
 Deno.test("median", () =>
 {
-	const a = [1, 3, 4, 4, 5];
-	const r = 4;
+	let a = [1, 3, 4, 4, 5];
+	let r = 4;
+	assertStrictEquals(r, a.median());
+	
+	a = [1, 2, 3, 4];
+	r = 2.5;
 	assertStrictEquals(r, a.median());
 });
 
@@ -153,6 +167,7 @@ Deno.test("pickRandom", () =>
 	assertNotEquals(r, a.pickRandom(1000));	// In theory this could shuffle all 10,000 elements the same, but highly unlikely.
 	assertEquals(r, a);
 	a = [1, 2, 3, 4, 5];
+	assertEquals(a.pickRandom(a.length).sortMulti(), a);
 	assertStrictEquals(typeof a.pickRandom()[0], "number");
 	assertStrictEquals(a.includes(a.pickRandom()[0]), true);
 	assertStrictEquals(typeof a.pickRandom(1)[0], "number");
@@ -259,6 +274,9 @@ Deno.test("sortMulti", () =>
 	r = [{name : "d", value : 999}, {name : "b", value : 10}, {name : "a", value : 9}, {name : "a", value : 7}];
 	assertEquals(r, a.sortMulti([v => v.name, v => v.value], true));
 	assertEquals(r, a);
+	a = [5, 2, 1, 3, 4];
+	r = [1, 2, 3, 4, 5];
+	assertEquals(r, a.sortMulti());
 });
 
 Deno.test("standardDeviation", () =>
@@ -300,6 +318,8 @@ Deno.test("subtractOnce", () =>
 
 Deno.test("sum", () =>
 {
+	assertStrictEquals(0, [].sum());
+
 	const a = [1, 2, 3, 4, 5];
 	const r = 15;
 	assertStrictEquals(r, a.sum());

@@ -1,4 +1,5 @@
 import {} from "../object.js";
+import {diffUtil} from "xutil";
 import {assertEquals, assertNotStrictEquals, assertStrictEquals} from "std";
 
 Deno.test("clear", () =>
@@ -30,7 +31,10 @@ Deno.test("clone", () =>
 Deno.test("equals", () =>
 {
 	const a = {abc : 123, sub : {num : 47}};
+	assertStrictEquals(Object.equals(a, {}), false);
+	assertStrictEquals(Object.equals(a, a), true);
 	assertStrictEquals(Object.equals(a, {sub : {num : 47}, abc : 123}), true);
+	assertStrictEquals(Object.equals(a, {sub : {num : 1}, abc : 123}), false);
 	assertStrictEquals(Object.equals(a, {abc : 123, sub : {num : 47}, newKey : "other"}), false);
 });
 
@@ -39,6 +43,7 @@ Deno.test("filterInPlace", () =>
 	const a = {abc : 123, hello : "world", green : true};
 	const b = Object.clone(a);
 	const r = {hello : "world"};
+	assertStrictEquals(a, Object.filterInPlace(a));
 	assertStrictEquals(Object.equals(r, Object.filterInPlace(a, (k, v) => typeof v==="string")), true);
 	assertStrictEquals(Object.equals(r, a), true);
 	assertStrictEquals(!Object.equals(a, b), true);
@@ -65,6 +70,7 @@ Deno.test("map", () =>
 	const a = {hello : "world", jon : "super kitty"};
 	const r = {"super kitty" : "jon", world : "hello"};
 	const r2 = {hello : 5, jon : 11};
+	assertStrictEquals(Object.map(a), a);
 	assertStrictEquals(Object.equals(r, Object.map(a, (k, v) => [v, k])), true);
 	assertStrictEquals(Object.equals(r, a), false);
 	assertStrictEquals(Object.equals(r2, Object.map(a, (k, v) => v.length)), true);
@@ -84,4 +90,7 @@ Deno.test("mapInPlace", () =>
 	a = {hello : "world", jon : "super kitty"};
 	assertStrictEquals(Object.equals(r2, Object.mapInPlace(a, (k, v) => v.length)), true);
 	assertStrictEquals(Object.equals(r2, a), true);
+
+	const r3 = {hello : [5], jon : [3]};
+	assertEquals(JSON.stringify(Object.mapInPlace(a, k => ([k.length]))), JSON.stringify(r3));
 });
