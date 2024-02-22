@@ -170,8 +170,8 @@ Deno.test("manyInstances-normal", async () =>
 
 Deno.test("manyInstances-virtualX", async () =>
 {
-	const results = (await Promise.all([].pushSequence(1, 32).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
-	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 32);	// TODO raise this back to 1000 and 32 above once this is fixed: https://github.com/denoland/deno/issues/22504
+	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
+	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
 });
 
 Deno.test("stdinFullBuffer", async () =>
