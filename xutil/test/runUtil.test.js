@@ -140,7 +140,7 @@ Deno.test("stderrBasic", async () =>
 	assertStrictEquals(status.code, 1);
 });
 
-Deno.test("stdoutFilePath", async () =>
+Deno.test("stdoutFilePathBasic", async () =>
 {
 	const outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("uname", [], {stdoutFilePath : outFilePath});
@@ -152,6 +152,16 @@ Deno.test("stdoutFilePath", async () =>
 	//await runUtil.run("view64pnm", [path.join(import.meta.dirname, "files", "Alid.ism")], {stdoutFilePath : outFilePath});
 	//assertStrictEquals((await Deno.stat(outFilePath)).size, 192_015);
 	//await fileUtil.unlink(outFilePath);
+});
+
+Deno.test("stdoutFilePathRelative", async () =>
+{
+	const outDirPath = await fileUtil.genTempPath();
+	await Deno.mkdir(outDirPath, {recursive : true});
+	const outFilePath = await fileUtil.genTempPath(outDirPath);
+	await runUtil.run("uname", [], {stdoutFilePath : path.basename(outFilePath), cwd : outDirPath});
+	assertStrictEquals(await fileUtil.readTextFile(outFilePath), "Linux\n");
+	await fileUtil.unlink(outDirPath, {recursive : true});
 });
 
 Deno.test("stderrFilePath", async () =>

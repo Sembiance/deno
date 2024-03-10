@@ -74,6 +74,31 @@ Deno.test("gunzip", async () =>
 	assertStrictEquals(new TextDecoder().decode(await fileUtil.gunzip(path.join(FILES_DIR, "gzipped.gz"))), "prefix\nabc\n123\nxyz");
 });
 
+Deno.test("lock", async () =>
+{
+	const counterFilePath = await fileUtil.genTempPath(undefined, ".counter");
+	await fileUtil.writeTextFile(counterFilePath, "0");
+
+	const lockFilePath = await fileUtil.genTempPath(undefined, ".lock");
+	async function increaseCounter()
+	{
+		const lockFile = await fileUtil.lock(lockFilePath);
+		const counter = +(await fileUtil.readTextFile(counterFilePath));
+		await fileUtil.writeTextFile(counterFilePath, (counter+1).toString());
+		await fileUtil.unlock(lockFile);
+		return counter;
+	}
+
+	const MAX_COUNTER = 1000;
+	const r = [];
+	for(let i=0;i<MAX_COUNTER;i++)
+		r.push(increaseCounter());
+	assertEquals((await Promise.all(r)).sortMulti(), [].pushSequence(0, MAX_COUNTER-1));
+
+	await fileUtil.unlink(counterFilePath);
+	await fileUtil.unlink(lockFilePath);
+});
+
 Deno.test("monitor", async () =>
 {
 	const dirFilePath = await fileUtil.genTempPath();

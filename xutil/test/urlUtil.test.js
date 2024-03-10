@@ -1,4 +1,4 @@
-import {queryObjectToSearchString, urlSearchParamsToQueryObject} from "../urlUtil.js";
+import {queryObjectToSearchString, urlSearchParamsToQueryObject, modifyQuery} from "../urlUtil.js";
 import {assertEquals, assertStrictEquals} from "std";
 
 const SEARCH_STRING = "q=&qfields=content&qfields=filename&qfields=ext&qfields=title&labelMatchType=any&label=&sizeMin=&sizeMax=&imgWidthMin=&imgHeightMin=&imgWidthMax=&imgHeightMax=&tsMin=&tsMax=&nsfw=0&sortBy=relevance&limit=100";
@@ -46,4 +46,17 @@ Deno.test("urlSearchParamsToQueryObject", () =>
 		sortBy         : "relevance",
 		limit          : "100"
 	});
+});
+
+Deno.test("modifyQuery", () =>
+{
+	assertStrictEquals(modifyQuery(`http://test.com/some/path.txt`, {q : "hello"}), `http://test.com/some/path.txt?q=hello`);
+	assertStrictEquals(modifyQuery(`http://test.com/some/path.txt?a=b`, {c : "d"}), `http://test.com/some/path.txt?a=b&c=d`);
+	assertStrictEquals(modifyQuery(`http://test.com/some/path.txt?a=b&c=d`, {q : "hello world!OMG#Embedded"}), `http://test.com/some/path.txt?a=b&c=d&q=hello%20world!OMG%23Embedded`);
+	assertStrictEquals(modifyQuery(`http://test.com/some/path.txt?a=b&c=d`, {a : "somethingElse"}), `http://test.com/some/path.txt?a=somethingElse&c=d`);
+	assertStrictEquals(modifyQuery(`http://test.com/some/path.txt?a=b`, {c : true}), `http://test.com/some/path.txt?a=b&c=true`);
+	assertStrictEquals(modifyQuery(`/some/path.txt`, {q : "hello"}), `/some/path.txt?q=hello`);
+	assertStrictEquals(modifyQuery(`/some/path.txt?a=b`, {c : "d"}), `/some/path.txt?a=b&c=d`);
+	assertStrictEquals(modifyQuery(`some/path.txt`, {q : "hello"}), `some/path.txt?q=hello`);
+	assertStrictEquals(modifyQuery(`../some/path.txt`, {q : "hello"}), `../some/path.txt?q=hello`);
 });

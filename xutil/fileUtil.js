@@ -83,6 +83,27 @@ export async function gunzip(filePath)
 	return await toArrayBuffer(await (await Deno.open(filePath)).readable.pipeThrough(new DecompressionStream("gzip")));
 }
 
+// The 'lockCount' thing is only needed as a workaround for a bug in deno that restricts number of pending locks to 32: https://github.com/denoland/deno/issues/22504
+let lockCount = 0;
+export async function lock(file)
+{
+	file = typeof file==="string" ? await Deno.open(file, {append : true, create : true}) : file;
+	if(lockCount>20)
+		await xu.waitUntil(() => lockCount<20);
+	lockCount++;
+	await file.lock(true);
+	lockCount--;
+	return file;
+}
+
+export async function unlock(file)
+{
+	if(!file.unlock)
+		throw new Error("Requires a Deno.FsFile passed in");
+	await file.unlock();
+	file.close();
+}
+
 export async function monitor(dirPath, cb)
 {
 	const linecb = async line =>
@@ -188,10 +209,10 @@ export async function readFileBytes(filePath, byteCount, offset=null)
 {
 	const f = await Deno.open(filePath);
 	if(offset!==null)
-		await Deno.seek(f.rid, offset, offset<0 ? 2 : 0);
+		await f.seek(offset, offset<0 ? 2 : 0);
 	const buf = new Uint8Array(byteCount);
-	await Deno.read(f.rid, buf);
-	Deno.close(f.rid);
+	await f.read(buf);
+	f.close();
 	return buf;
 }
 

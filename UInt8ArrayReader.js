@@ -26,6 +26,7 @@ export class UInt8ArrayReader
 	remaining() { return this.arr.length-this.pos; }
 	eof() { return this.pos>=this.arr.length; }
 	skip(v) { this.pos+=v; }
+	rewind(v) { this.pos-=v; }
 	setPOS(v) { this.pos = v; }
 	debug(len=(this.arr.length-1)-this.pos)
 	{
@@ -35,6 +36,8 @@ export class UInt8ArrayReader
 	// Writes out len bytes to disk at filePath
 	async writeToDisk(len, filePath) { await Deno.writeFile(filePath, Uint8Array.from(this.arr.subarray(this.pos, this.post(len)))); }
 
+	raw(len, copy) { return Uint8Array.from(this.arr.subarray(this.pos, copy ? this.pos+len : this.post(len))); }
+	
 	// Returns a new UInt8ArrayReader that is made up of a subsection of the current buf
 	sub(len, copy) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(this.pos, copy ? this.pos+len : this.post(len))), {endianness : this.endianness}); }
 	subAt(pos, len, copy) { return new UInt8ArrayReader(Uint8Array.from(this.arr.subarray(pos, copy ? pos+len : this.post(len))), {endianness : this.endianness}); }

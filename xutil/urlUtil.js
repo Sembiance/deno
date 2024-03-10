@@ -41,3 +41,11 @@ export function urlToQueryObject(url)
 {
 	return urlSearchParamsToQueryObject((typeof url==="string" ? (new URL(url)) : url).searchParams);
 }
+
+export function modifyQuery(url, queryObject)
+{
+	const isFragment = typeof url==="string" && !url.startsWith("http");
+	const u = typeof url==="string" ? new URL(isFragment ? `http://a.com${url.startsWith("/") ? "" : "/"}${url}` : url) : url;
+	u.search = queryObjectToSearchString({...urlSearchParamsToQueryObject(u.searchParams), ...queryObject});
+	return typeof url==="string" ? (isFragment ? `${url.substring(0, !url.includes("?") ? undefined : url.indexOf("?"))}${u.search}` : u.toString()) : u;
+}

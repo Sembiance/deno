@@ -3,7 +3,7 @@ import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import * as printUtil from "./printUtil.js";
-import {path, TextLineStream, delay, Buffer, getAvailablePort} from "std";
+import {path, TextLineStream, Buffer, getAvailablePort} from "std";
 
 const XVFB_NUM_MIN = 10;
 const XVFB_NUM_MAX = 59999;	// in theory since we call runUtil with -nolisten tcp, we just have unix sockets, so no real upper limit on number (billions) but 59,999 - 10 should be plenty
@@ -375,22 +375,12 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 	return r;
 }
 
-let xvfbLockCount = 0;
 export async function getXVFBNum()
 {
 	const xvfbNumLockFilePath = "/mnt/ram/tmp/xvfbNum.lock";
 	const xvfbNumCounterFilePath = "/mnt/ram/tmp/xvfbNum.counter";
 
-	// todo TEMPORARY DUE TO BUG: https://github.com/denoland/deno/issues/22504
-	//await delay(Math.randomInt(250, 1000));
-
-	const lockFile = await Deno.open(xvfbNumLockFilePath, {append : true, create : true});
-	
-	if(xvfbLockCount>20)
-		await xu.waitUntil(() => xvfbLockCount<20);	// this is a workaround for a bug in deno that restricts number of locks to 32: https://github.com/denoland/deno/issues/22504
-	xvfbLockCount++;
-	await lockFile.lock(true);
-	xvfbLockCount--;
+	const lockFile = await fileUtil.lock(xvfbNumLockFilePath);
 
 	let xvfbCounter = +(await xu.tryFallbackAsync(async () => await fileUtil.readTextFile(xvfbNumCounterFilePath), XVFB_NUM_MIN));
 
@@ -409,8 +399,7 @@ export async function getXVFBNum()
 	} while(true);
 
 	await fileUtil.writeTextFile(xvfbNumCounterFilePath, xvfbCounter.toString());
-	await lockFile.unlock();
-	lockFile.close();
+	await fileUtil.unlock(lockFile);
 
 	return xvfbNum;
 }
