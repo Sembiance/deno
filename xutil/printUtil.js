@@ -55,7 +55,7 @@ export function columnizeObjects(objects, options={})
 {
 	const rows = xu.clone(objects);
 	const colNames = options.colNames || rows.flatMap(object => Object.keys(object).filter(k => !k.startsWith("_"))).unique();
-	const colNameMap = Object.assign(Object.fromEntries(colNames.map(colName => ([colName, colName.replace( /([A-Z])/g, " $1" ).toProperCase()]))), options.colNameMap || {});	// eslint-disable-line prefer-named-capture-group
+	const colNameMap = Object.assign(Object.fromEntries(colNames.map(colName => ([colName, colName.replace( /([A-Z])/g, " $1" ).toProperCase()]))), options.colNameMap || {});
 	
 	const alignmentDefault = options.alignmentDefault || "l";
 	const colTypes = colNames.map(colName => (typeof rows[0][colName]));
@@ -312,14 +312,14 @@ class Progress
 		this.set(this.lastValue+amount);
 	}
 
-	increment()
+	increment(status)
 	{
-		this.set(++this.lastValue);
+		this.set(++this.lastValue, status);
 	}
 
-	tick()
+	tick(status)
 	{
-		this.increment();
+		this.increment(status);
 	}
 
 	incrementMax()

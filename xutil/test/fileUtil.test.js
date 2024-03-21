@@ -113,10 +113,23 @@ Deno.test("monitor", async () =>
 	const bFilePath = path.join(subDirPath, "b.txt");
 	await fileUtil.writeTextFile(bFilePath, "Hello, World!");
 
+	const tmpOtherFilePath = await fileUtil.genTempPath(undefined, ".txt");
+	await fileUtil.writeTextFile(tmpOtherFilePath, "Some crazy file from ANOTHER WORLD");
+
 	let ready = false;
 	let done = false;
 	const events = [];
-	const expectedEvents = ["ready", "create c.txt", "modify c.txt", "modify c.txt", "delete c.txt", "create d.txt", "modify d.txt", "delete d.txt", "create c.txt", "delete c.txt", "create subdir/d.txt", "delete subdir/b.txt", "delete subdir/d.txt", "delete subdir"];
+	const expectedEvents = [
+		"ready", "create c.txt", "modify c.txt",
+		"modify c.txt",
+		"delete c.txt",
+		"create d.txt", "modify d.txt",
+		"delete d.txt",
+		"create c.txt",
+		"delete c.txt", "create subdir/d.txt",
+		"delete subdir/b.txt", "delete subdir/d.txt", "delete subdir",
+		"create c.txt", "modify c.txt"
+	];
 	const monitorcb = async ({type, filePath}) =>		// eslint-disable-line require-await
 	{
 		if(type==="ready")
@@ -147,9 +160,17 @@ Deno.test("monitor", async () =>
 	await fileUtil.move(cFilePath, dFilePath);
 	await fileUtil.unlink(subDirPath, {recursive : true});
 
+	await Deno.copyFile(aFilePath, path.join(dirFilePath, "c.txt"));
+
+	// my monitor thing doesn't currently handle rsync move replace in place that rsync does (unless --inplace is set)
+	// I did make a queued version that does support that in sandbox/legacy/
+	//await runUtil.run("rsync", ["-aH", tmpOtherFilePath, path.join(dirFilePath, "c.txt")], {liveOutput : true});
+
 	await xu.waitUntil(() => done, {timeout : xu.SECOND*10});
 
 	await stop();
+
+	await fileUtil.unlink(tmpOtherFilePath);
 
 	assertEquals(events, expectedEvents);
 });

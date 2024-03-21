@@ -4,10 +4,11 @@ import {runUtil} from "xutil";
 
 export class HTML
 {
-	constructor(_baseDirPath, {devMode}={})
+	constructor(_baseDirPath, {devMode, argOpts}={})
 	{
 		this.baseDirPath = _baseDirPath;
 		this.devMode = devMode;
+		this.argOpts = argOpts || {};
 	}
 
 	async render(subPath, data={})
@@ -15,6 +16,7 @@ export class HTML
 		const self=this;
 		const {default : renderer} = await import(path.join(this.baseDirPath, `${subPath}.js${this.devMode ? `#${xu.randStr()}` :""}`));
 		const htmlRaw = await renderer(data, {
+			...this.argOpts,
 			html : this.html.bind(this),
 			compileStylus : this.compileStylus.bind(this),
 			async include(includeSubPath, includeData=data) { return await self.render(includeSubPath, includeData, {skipMinify : true}); } });

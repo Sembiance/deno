@@ -1,4 +1,4 @@
-export default function headOpen(data, {html})
+export default function headOpen(data, {html, abc})
 {
-	return html`<head><title>${data.title}</title>`;
+	return html`<head><title>${data.title} ${abc}</title>`;
 }

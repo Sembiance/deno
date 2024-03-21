@@ -1,4 +1,4 @@
-/* eslint-disable indent, key-spacing, quotes, brace-style, func-names, prefer-template, no-mixed-operators, prefer-arrow-callback, space-before-function-paren, curly, init-declarations, no-param-reassign, unicorn/prefer-switch, yoda, no-multiple-empty-lines, unicorn/no-hex-escape, unicorn/escape-case, prefer-named-capture-group, unicorn/prefer-at, unicorn/consistent-destructuring, no-labels, unicorn/better-regex, no-unused-vars */
+/* eslint-disable @stylistic/indent, @stylistic/key-spacing, @stylistic/quotes, @stylistic/brace-style, @stylistic/no-multiple-empty-lines, logical-assignment-operators, func-names, prefer-template, @stylistic/no-mixed-operators, prefer-arrow-callback, @stylistic/space-before-function-paren, curly, init-declarations, no-param-reassign, unicorn/prefer-switch, yoda, unicorn/no-hex-escape, unicorn/escape-case, unicorn/prefer-at, unicorn/consistent-destructuring, no-labels, unicorn/better-regex, no-unused-vars */
 const defaults = {
     fg: '#FFF',
     bg: '#000',
