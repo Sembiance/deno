@@ -55,37 +55,71 @@ Deno.test("scale", () =>
 
 Deno.test("secondsAsHumanReadable", () =>
 {
-	const a = Number(136);
-	const ra = "2 minutes, 16 seconds";
-	assertStrictEquals(a.secondsAsHumanReadable(), ra);
+	let a = Number(136);
+	let r = "2 minutes, 16 seconds";
+	assertStrictEquals(a.secondsAsHumanReadable(), r);
 
-	const b = Number(44);
-	const rb = "44 seconds";
-	assertStrictEquals(b.secondsAsHumanReadable(), rb);
+	a = Number(44);
+	r = "44 seconds";
+	assertStrictEquals(a.secondsAsHumanReadable(), r);
 
-	const c = Number(1_700_355);
-	let rc = "19d16h19m15s";
-	assertStrictEquals(c.secondsAsHumanReadable({short : true}), rc);
-	rc = "19d16h";
-	assertStrictEquals(c.secondsAsHumanReadable({short : true, maxParts : 2}), rc);
+	a = Number(1_700_355);
+	r = "19d16h19m15s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true}), r);
+	r = "19d16h";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true, maxParts : 2}), r);
 
-	const d = Number(0.5);
-	const rd = "0.50s";
-	assertStrictEquals(d.secondsAsHumanReadable({short : true}), rd);
+	a = Number(0.5);
+	r = "0.50s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true}), r);
 
-	const e = Number(1_209_601);
-	const re = "14d1s";
-	assertStrictEquals(e.secondsAsHumanReadable({short : true}), re);
+	a = Number(1_209_601);
+	r = "14d1s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true}), r);
+	
+	r = "14d01s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true, pad : true}), r);
 
-	const f = Number(48_923_789_432.25);
-	let rf = "1,550 years, 3 months, 18 days, 18 hours, 32 seconds";
-	assertStrictEquals(f.secondsAsHumanReadable(), rf);
-	rf = "1,550y3mo18d18h32s";
-	assertStrictEquals(f.secondsAsHumanReadable({short : true}), rf);
+	a = Number(607_667);
+	r = "7d47m47s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true, pad : true}), r);
 
-	const g = Number(0.232);
-	const rg = "0.23s";
-	assertStrictEquals(g.secondsAsHumanReadable({short : true}), rg);
+	a = Number(605_227);
+	r = "7d7m7s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true}), r);
+	
+	r = "7d07m07s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true, pad : true}), r);
+	r = " 7d07m07s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true, pad : 2}), r);
+
+	a = Number(48_923_789_432.25);
+	r = "1,550 years, 3 months, 18 days, 18 hours, 32 seconds";
+	assertStrictEquals(a.secondsAsHumanReadable(), r);
+	r = "1,550y3mo18d18h32s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true}), r);
+
+	a = Number(0.232);
+	r = "0.23s";
+	assertStrictEquals(a.secondsAsHumanReadable({short : true}), r);
+});
+
+Deno.test("msAsHumanReadable", () =>
+{
+	let a = Number(420_000);
+	let r = "7m";
+	assertStrictEquals(a.msAsHumanReadable({short : true}), r);
+
+	r = "7m00s";
+	assertStrictEquals(a.msAsHumanReadable({short : true, pad : true}), r);
+	r = " 7m00s";
+	assertStrictEquals(a.msAsHumanReadable({short : true, pad : 2}), r);
+
+	a = Number(25_200_000);
+	r = "7h00s";
+	assertStrictEquals(a.msAsHumanReadable({short : true, pad : true}), r);
+	r = " 7h00s";
+	assertStrictEquals(a.msAsHumanReadable({short : true, pad : 2}), r);
 });
 
 Deno.test("setBit", () =>

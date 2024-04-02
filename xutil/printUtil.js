@@ -253,7 +253,7 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration, dontAutoFinish}={})
+	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration, includePer, perSampleCount=20, dontAutoFinish}={})
 	{
 		this.min = min;
 		this.max = max;
@@ -261,17 +261,37 @@ class Progress
 		this.status = status;
 		this.includeCount = includeCount;
 		this.includeDuration = includeDuration;
+		this.includePer = includePer;
 		this.maxLength = this.max.toLocaleString().length;
 		this.lastValue = min;
+		this.lastPerValue = this.lastValue;
 		this.startedAt = performance.now();
+		this.lastPerTime = this.startedAt;
+		this.perText = this.includePer ? "     ?/s" : null;
+		this.perTextValues = [];
+		this.perSampleCount = perSampleCount;
 		this.dontAutoFinish = dontAutoFinish;
 
 		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
 		this.set(min);
 	}
 
-	set(v, status)
+	set(v, status=this.status)
 	{
+		if(this.includePer)
+		{
+			const now = performance.now();
+			const timeDiff = now-this.lastPerTime;
+			if(timeDiff>=250)
+			{
+				this.perTextValues.push(Math.floor((v-this.lastPerValue)/(timeDiff/xu.SECOND)));
+				this.perTextValues = this.perTextValues.slice(-this.perSampleCount);
+				this.perText = `${Math.floor(this.perTextValues.average()).toLocaleString().padStart(6, " ")}/s`;
+				this.lastPerValue = v;
+				this.lastPerTime = now;
+			}
+		}
+
 		v = Math.max(Math.min(v, this.max), this.min);
 		this.lastValue = v;
 		const pos = Math.floor(v.scale(this.min, this.max, 0, this.barWidth));
@@ -290,9 +310,15 @@ class Progress
 
 		if(this.includeDuration)
 		{
-			const durationText = (performance.now()-this.startedAt).msAsHumanReadable({short : true, maxParts : 2}).padEnd(7);
+			const durationText = (performance.now()-this.startedAt).msAsHumanReadable({short : true, maxParts : 2, pad : false}).padStart(7);
 			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white} ${durationText} `);
 			curPos += durationText.length+2;
+		}
+
+		if(this.perText)
+		{
+			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${this.perText} `);
+			curPos += this.perText.length+1;
 		}
 
 		stdoutWrite(`\x1B[${curPos}G${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);

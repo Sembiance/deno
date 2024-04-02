@@ -193,3 +193,14 @@ export function unicodeToAscii(text, additionalSymbols)
 
 	return result;
 }
+
+// PETSCII and MACINTOSHJP are not support when encoding
+export async function encode(data, toEncoding, {iconvPath="iconv"}={})
+{
+	if(!run)
+		({run} = await import(path.join(import.meta.dirname, "runUtil.js")));
+
+	const cmdArgs = [iconvPath, ["-c", "-f", "UTF-8", "-t", toEncoding]];
+	const {stdout} = await run(cmdArgs[0], cmdArgs[1], {stdoutEncoding : "binary", stdinData : data});
+	return stdout;
+}

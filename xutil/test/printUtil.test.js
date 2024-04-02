@@ -43,7 +43,7 @@ const PROGRESS_STATUS_MESSAGES =
 ];
 const PROGRESS_DELAYS = [...Array(150).fill(100), ...Array(25).fill(250), 1000, 1000, 1500];
 
-Deno.test("progress", async () =>
+Deno.test("progressSimple", async () =>
 {
 	const progress = printUtil.progress({barWidth : 30, max : 555});
 	for(let i=0;i<=555;i++)
@@ -54,6 +54,20 @@ Deno.test("progress", async () =>
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)
 			await delay(PROGRESS_DELAYS.pickRandom()[0]);
+	}
+});
+
+Deno.test("progressDurationPer", async () =>
+{
+	const progress = printUtil.progress({barWidth : 30, max : 5555, includeDuration : true, includePer : true});
+	for(let i=0;i<=5555;i++)
+	{
+		if(Math.randomInt(1, 4)===1)
+			i++;
+
+		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
+		if(Math.randomInt(1, 3)===1)
+			await delay(Math.randomInt(5, 20));
 	}
 });
 
