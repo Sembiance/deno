@@ -46,6 +46,19 @@ export async function calcMaxProcs(idealCount=navigator.hardwareConcurrency*0.90
 	return Math.floor(Math.min((sysMemInfo.available*availableFactor)/(totalExpectedMemoryUsage*memoryUsageFactor), idealCount));
 }
 
+export async function getDiskUsage(mountPoints)
+{
+	const usages = {};
+	const {stdout} = await runUtil.run("df", ["--sync", "--output=used,avail,target", ...mountPoints]);
+	for(const line of stdout.trim().split("\n").slice(1))
+	{
+		const {used, avail, target} = (/^\s*(?<used>\d+)\s+(?<avail>\d+)\s+(?<target>.*)$/).exec(line)?.groups || {};
+		usages[target] = {used : +used, available : +avail, target};
+	}
+
+	return usages;
+}
+
 export async function getCPUIdleUsage()
 {
 	const {stdout : mpstatRaw} = await run("mpstat", ["-o", "JSON", "1", "1"]);

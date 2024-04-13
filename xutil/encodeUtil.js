@@ -3,9 +3,13 @@ import {path} from "std";
 
 let run = null;
 
+// The script in deno/bin/convert2unicode.tcl is supposed to be able to convert between various encodings, but a quick test with macJapan didn't work for me
+// It supports many formats, but most are also supported by iconv. Still, here are a list of the unique ones that TCL supports that iconv does not appear to support:
+//const TCL_ENCODINGS = new Set("cns11643", "dingbats", "gb12345", "identity", "jis0201", "jis0208", "jis0212", "ksc5601", "macCentEuro", "macCroatian", "macCyrillic", "macDingbats", "macGreek", "macIceland", "macJapan", "macRoman", "macRomania", "macThai", "macTurkish", "macUkraine", "symbol");
+
 // uses iconv to decode the data with encoding fromEncoding and converts to UTF-8
 // for a list of valid encodings, run: iconv --list
-// NOTE: Custom dexvert patch was added to add RISCOS and ATARI-ST support
+// NOTE: Custom dexvert patch was added to add NEXTStep, RISCOS and ATARI-ST support
 // Detect encoding of a file visually: https://base64.guru/tools/character-encoding
 export async function decode(data, fromEncoding, {iconvPath="iconv"}={})
 {
@@ -16,10 +20,12 @@ export async function decode(data, fromEncoding, {iconvPath="iconv"}={})
 
 	if(!run)
 		({run} = await import(path.join(import.meta.dirname, "runUtil.js")));
-
+	
 	let cmdArgs = [iconvPath, ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
 	if(fromEncoding==="PETSCII")
 		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
+	//else if(TCL_ENCODINGS.has(fromEncoding))	// Could uncomment this to try and support the TCL conversion script again, but I had trouble getting it to work
+	//	cmdArgs = ["tclsh", [path.join(import.meta.dirname, "..", "bin", "convert2unicode.tcl"), "-encoding", fromEncoding]];
 
 	const {stdout} = await run(cmdArgs[0], cmdArgs[1], {stdinData : data});
 	return stdout;

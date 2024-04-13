@@ -50,6 +50,21 @@ export class UInt8ArrayReader
 		return r;
 	}
 
+	strPascal(encoding="ascii")
+	{
+		const r = this.arr.getPascalString(this.pos, encoding);
+		this.skip(r.length+1);
+		return r;
+	}
+
+	strNullTerminated(encoding="ascii")
+	{
+		const start = this.pos;
+		while(this.uint8(this.pos)!==0)
+			;
+		return this.arr.getString(start, (this.pos-1)-start, encoding);
+	}
+
 	// Reads a signed or unsigned byte
 	int8() { return this.arr.getInt8(this.pre(1)); }
 	uint8() { return this.arr.getUInt8(this.pre(1)); }
