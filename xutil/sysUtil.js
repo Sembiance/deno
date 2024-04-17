@@ -49,11 +49,11 @@ export async function calcMaxProcs(idealCount=navigator.hardwareConcurrency*0.90
 export async function getDiskUsage(mountPoints)
 {
 	const usages = {};
-	const {stdout} = await runUtil.run("df", ["--sync", "--output=used,avail,target", ...mountPoints]);
+	const {stdout} = await runUtil.run("df", ["--sync", "--block-size=1", "--output=used,avail,target", ...mountPoints]);
 	for(const line of stdout.trim().split("\n").slice(1))
 	{
 		const {used, avail, target} = (/^\s*(?<used>\d+)\s+(?<avail>\d+)\s+(?<target>.*)$/).exec(line)?.groups || {};
-		usages[target] = {used : +used, available : +avail, target};
+		usages[target] = {used : +used, available : +avail, target, percentageUsed : (+used/+avail)*100};
 	}
 
 	return usages;
