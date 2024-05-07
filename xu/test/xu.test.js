@@ -135,11 +135,17 @@ Deno.test("waitUntil", async () =>
 
 Deno.test("waitUntilStopEarly", async () =>
 {
+	// stopper
 	const stopper = {};
 	const startedAt = performance.now();
 	setTimeout(() => { stopper.stop = true; }, xu.SECOND*2);
 	await xu.waitUntil(() => false, {stopper});
 	assertStrictEquals(Math.round((performance.now()-startedAt)/xu.SECOND), 2);
+
+	// stopAfter
+	let count=0;
+	await xu.waitUntil(() => { count++; return false; }, {stopAfter : 10});
+	assertStrictEquals(count, 10);
 });
 
 /////////////////////////////////////////////////////

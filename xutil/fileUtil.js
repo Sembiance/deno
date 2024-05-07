@@ -236,6 +236,7 @@ export async function readTextFile(filePath, encoding="utf-8")
  *  glob    	If set, the relative path from the root must match this glob to be included
  * 	nodir		Set to true to omit directories from the results
  *  nofile		Set to true to omit files from the results
+ *  nosymlink   Set to true to omit symlinks from the results
  *  regex		If set, the relative path from the root must match this regex to be included
  *  relative	If set the returning files will be relative to root rather than absolute
  *  sort		Sort the results by depth, then alphabetically
@@ -244,7 +245,7 @@ export async function readTextFile(filePath, encoding="utf-8")
  * Likewise, fs.walk() suffers from issues such as throwing exceptions whenever it encounters non-standard files, such as sockets
  * Deno.readDir() doesn't suffer from these problems, so I've rolled my own simplified blog with a simple regex match
  */
-export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=false, nofile=false, regex, relative, sort, _originalRoot=root}={})
+export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=false, nofile=false, nosymlink=false, regex, relative, sort, _originalRoot=root}={})
 {
 	if(depth===0 || !(await exists(root)))
 		return [];
@@ -267,12 +268,12 @@ export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=fal
 		for await(const entry of Deno.readDir(root))	// if root dir is removed while traversing, this will throw an exception
 		{
 			const entryPath = path.join(root, entry.name);
-			if((!regex || regex.test(path.relative(_originalRoot, entryPath))) && ((entry.isDirectory && !nodir) || (!entry.isDirectory && !nofile)))
+			if((!regex || regex.test(path.relative(_originalRoot, entryPath))) && ((entry.isDirectory && !nodir) || (!entry.isDirectory && !nofile)) && (!entry.isSymlink || !nosymlink))
 				r.push(entryPath);
 
 			if(entry.isDirectory)
 			{
-				const subEntries = await tree(entryPath, {nodir, nofile, regex, _originalRoot, depth : depth-1});
+				const subEntries = await tree(entryPath, {nodir, nofile, nosymlink, regex, _originalRoot, depth : depth-1});
 
 				// I used to just do r.push(...subEntries) but if subEntries is huge like 100,000+ files, we get a maximum call stack error. So we do it this way instead
 				for(const subEntry of subEntries)

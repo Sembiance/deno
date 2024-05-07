@@ -1,4 +1,5 @@
 export * as cmdUtil from "./cmdUtil.js";
+export * as csvUtil from "./csvUtil.js";
 export * as diffUtil from "./diffUtil.js";
 export * as encodeUtil from "./encodeUtil.js";
 export * as fileUtil from "./fileUtil.js";

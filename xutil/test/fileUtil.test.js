@@ -355,6 +355,12 @@ Deno.test("tree", async () =>
 	r = await fileUtil.tree(path.join(tmpDirPath, "hugeDirTree"), {nodir : true});
 	await fileUtil.unlink(tmpDirPath, {recursive : true});
 	assertStrictEquals(r.length, 130_282);
+
+	r = await fileUtil.tree(path.join(FILES_DIR, "globTestSymlink"), {nosymlink : true, nodir : true, relative : true, sort : true});
+	assertEquals(r, [
+		path.join("A_dir_with[brackets]_and?(parenthesis)/file1.txt"),
+		path.join("A_dir_with[brackets]_and?(parenthesis)/subdir/file3.txt")
+	]);
 });
 
 Deno.test("unlink", async () =>
