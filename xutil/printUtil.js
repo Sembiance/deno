@@ -348,9 +348,9 @@ class Progress
 		this.increment(status);
 	}
 
-	incrementMax()
+	incrementMax(increaseBy=1)
 	{
-		this.setMax(++this.max);
+		this.setMax(this.max+increaseBy);
 	}
 
 	setMax(max)
