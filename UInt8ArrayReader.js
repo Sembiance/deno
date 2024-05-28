@@ -25,7 +25,17 @@ export class UInt8ArrayReader
 	length() { return this.arr.length; }
 	remaining() { return this.arr.length-this.pos; }
 	eof() { return this.pos>=this.arr.length; }
+	
 	skip(v) { this.pos+=v; }
+	skipUntil(m)
+	{
+		const index = this.sub(this.remaining(), true).arr.indexOfX(m);
+		if(index===-1)
+			return false;
+
+		return this.sub(index+m.length);
+	}
+
 	rewind(v) { this.pos-=v; }
 	setPOS(v) { this.pos = v; }
 	debug(len=(this.arr.length-1)-this.pos)
