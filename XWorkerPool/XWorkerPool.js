@@ -151,7 +151,21 @@ export class XWorkerPool
 		const size = Math.min(xWorkOptions.size || navigator.hardwareConcurrency, arr.length);
 		let empty = false;
 		const results = [];
-		const pool = new XWorkerPool({crashcb : (workerid, status, v) => console.error(`worker ${workerid} crash with status ${status} and value ${v}`), workercb : (workerid, result) => results.push(result), emptycb : () => { empty = true; }, xlog : xWorkOptions.xlog});
+
+		const poolOptions = {
+			crashcb  : (workerid, status, v) => console.error(`worker ${workerid} crash with status ${status} and value ${v}`),
+			workercb : (workerid, result) =>
+			{
+				results.push(result);
+				if(xWorkOptions.workercb)
+					xWorkOptions.workercb(workerid, result);
+			},
+			emptycb      : () => { empty = true; },
+			xlog         : xWorkOptions.xlog,
+			crashRecover : true
+		};
+
+		const pool = new XWorkerPool(poolOptions);
 		await pool.start(fun, {...xWorkOptions, size});
 		pool.process(arr);
 		await xu.waitUntil(() => empty===true);
