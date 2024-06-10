@@ -192,7 +192,7 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 
 	if(filePath.toLowerCase().endsWith(".gz"))
 	{
-		await runUtil.run("pigz", ["-dc", filePath], {stdoutcb : async line =>	await cb(dontParse ? line : xu.parseJSON(line), line)});
+		await runUtil.run("pigz", ["-dc", filePath], {stdoutcb : async line => await cb(dontParse ? line : xu.parseJSON(line), line)});
 	}
 	else
 	{
