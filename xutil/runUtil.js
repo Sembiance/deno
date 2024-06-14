@@ -139,7 +139,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			if(virtualXVNCPort===true)
 				virtualXVNCPort = getAvailablePort();
 
-			x11vncProc = new Deno.Command("x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
+			x11vncProc = new Deno.Command("x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`, "-nomodtweak"], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 		}
 	}
 
