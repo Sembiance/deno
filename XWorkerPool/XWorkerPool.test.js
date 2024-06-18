@@ -109,6 +109,27 @@ Deno.test("bigPool", async () =>
 	await pool.stop();
 });
 
+Deno.test("processPriority", async () =>
+{
+	const results = [];
+	let emptyCount = false;
+	const pool = new XWorkerPool({workercb : (workerid, r) => results.push(r), emptycb : () => { emptyCount = true; }});
+	await pool.start(async () => await xwork.recv(async msg => { await delay(100); await xwork.send(msg); }), {imports : {std : ["delay"]}, size : 2});	// eslint-disable-line no-undef
+	pool.process([].pushSequence(1, 10));
+	await delay(330);
+	assertEquals(results.sortMulti(), [].pushSequence(1, 4));
+	
+	pool.processPriority([].pushSequence(11, 15));
+	pool.process([].pushSequence(16, 20));
+	await delay(330);
+	assertEquals(results.sortMulti(), [...[].pushSequence(1, 6), ...[].pushSequence(11, 14)]);
+	
+	assert(await xu.waitUntil(() => results.length===20 && emptyCount===true, {interval : xu.SECOND, timeout : xu.SECOND*20}));
+	assertEquals(results.sortMulti(), [].pushSequence(1, 20));
+	
+	await pool.stop();
+});
+
 Deno.test("quickProcess", async () =>
 {
 	const NUM_VALS = 5000;

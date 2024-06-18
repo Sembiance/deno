@@ -49,7 +49,13 @@ xwork.recv = async function recv(cb)
 	}
 };
 xwork.recvAbort = function recvAbort() { recvAborted = true; };		// called by a worker when the recv is stuck and needs to be aborted
-xwork.send = async function send(msg) { await new Blob([textEncoder.encode(`${JSON.stringify({op : "msg", msg})}\n`)]).stream().pipeTo(workerConnection.writable, {preventClose : true}); };
+
+xwork.send = async function send(msg)
+{
+	if(workerConnection.writable.locked)
+		await xu.waitUntil(() => !workerConnection.writable.locked);
+	await (new Blob([textEncoder.encode(`${JSON.stringify({op : "msg", msg})}\n`)]).stream()).pipeTo(workerConnection.writable, {preventClose : true});
+};
 
 /** WHAT IS BELOW CAN BE CALLED BY THE PARENT */
 // this will execute the given fun on a seperate deno instance entirely because Worker support in deno is prone to crashing and all sorts of nasty things
@@ -80,7 +86,7 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 
 		// this is sent by a worker 'file' when they want to get their args
 		if(op==="arg")
-			await new Blob([textEncoder.encode(`${JSON.stringify(arg)}\n`)]).stream().pipeTo(conn.writable, {preventClose : true});
+			await (new Blob([textEncoder.encode(`${JSON.stringify(arg)}\n`)]).stream()).pipeTo(conn.writable, {preventClose : true});
 		
 		// this is sent by a worker (via xwork.send()) to send a message to the parent
 		if(op==="msg" && recvcb)
@@ -208,8 +214,10 @@ xwork.run = async function run(fun, arg, {timeout, detached, imports={}, recvcb,
 		{
 			if(!workerMsgConn)
 				throw new Error("Worker not ready to receive messages");
-			
-			await new Blob([textEncoder.encode(`${JSON.stringify(msg)}\n`)]).stream().pipeTo(workerMsgConn.writable, {preventClose : true});
+
+			if(workerMsgConn.writable.locked)
+				await xu.waitUntil(() => !workerMsgConn.writable.locked);
+			await (new Blob([textEncoder.encode(`${JSON.stringify(msg)}\n`)]).stream()).pipeTo(workerMsgConn.writable, {preventClose : true});
 		}
 	};
 };

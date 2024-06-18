@@ -139,6 +139,11 @@ export class XWorkerPool
 		this.queue = Array.force(vals).reverse().concat(this.queue);	// use use concat instead of ...arr to avoid call stack overflow
 	}
 
+	processPriority(vals)
+	{
+		this.queue = this.queue.concat(Array.force(vals).reverse());	// use use concat instead of ...arr to avoid call stack overflow
+	}
+
 	// send a message to all workers
 	async broadcast(msg)
 	{
