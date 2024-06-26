@@ -1,46 +1,46 @@
 // ALERT! MAKE SURE you are running the LATEST `deno` version BEFORE updating the 'std' versions below. This is important, been bitten by this first hand.
-// Visit here to find latest version: https://deno.land/std
-// Can see changelog here: https://github.com/denoland/deno_std/releases
-// Sadly, because 'export' is a magic statement, I can't use a template string and have a single global "0.114.0" var
-// So you need to search/replace to update version
+// Links to each of the modules below can be found here: https://jsr.io/@std
+// Most of them can be found in the 'default' object which means not specifying the /subPath but that also pulls in more code then needed? So we target in most cases just what we care about
+// For each one, open in a new tab, and update the version number below as needed
+// Can see changelog here for 'all std modules' here: https://github.com/denoland/deno_std/releases
 // Update denoLandX.js versions now too, before running any tests!
 // Then go run the dtest in deno/xu to pull down the new std code, but also to test that nothing broke
 
 // assert
-export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertRejects} from "https://deno.land/std@0.224.0/assert/mod.ts";
+export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertRejects} from "jsr:@std/assert@0.226.0";
 
 // async
-export {delay} from "https://deno.land/std@0.224.0/async/delay.ts";
-export {deadline} from "https://deno.land/std@0.224.0/async/deadline.ts";
+export {deadline} from "jsr:@std/async@0.224.2/deadline";
+export {delay} from "jsr:@std/async@0.224.2/delay";
 
 // csv
-export {parse as csvParse} from "https://deno.land/std@0.224.0/csv/parse.ts";
+export {parse as csvParse} from "jsr:@std/csv@0.224.3/parse";
 
 // crypto
-export {crypto} from "https://deno.land/std@0.224.0/crypto/crypto.ts";
+export {crypto} from "jsr:@std/crypto@0.224.0/crypto";
 
 // datetime
-export {format as dateFormat} from "https://deno.land/std@0.224.0/datetime/format.ts";
-export {parse as dateParse} from "https://deno.land/std@0.224.0/datetime/parse.ts";
+export {format as dateFormat} from "jsr:@std/datetime@0.224.1/format";
+export {parse as dateParse} from "jsr:@std/datetime@0.224.1/parse";
 
 // encoding
-export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "https://deno.land/std@0.224.0/encoding/base64.ts";
-export {decodeHex as hexDecode, encodeHex as hexEncode} from "https://deno.land/std@0.224.0/encoding/hex.ts";
+export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "jsr:@std/encoding@0.224.3/base64";
+export {decodeHex as hexDecode, encodeHex as hexEncode} from "jsr:@std/encoding@0.224.3/hex";
 
 // fs
-export * as fs from "https://deno.land/std@0.224.0/fs/mod.ts";
+export * as fs from "jsr:@std/fs@0.229.3";
 
 // io
-export {readAll} from "https://deno.land/std@0.224.0/io/read_all.ts";
-export {writeAll} from "https://deno.land/std@0.224.0/io/write_all.ts";
+export {readAll} from "jsr:@std/io@0.224.2/read-all";
+export {writeAll} from "jsr:@std/io@0.224.2/write-all";
 
 // net
-export {getAvailablePort} from "https://deno.land/std@0.224.0/net/get_available_port.ts";
+export {getAvailablePort} from "jsr:@std/net@0.224.0";
 
 // path
-export * as path from "https://deno.land/std@0.224.0/path/mod.ts";
+export * as path from "jsr:@std/path@0.225.2";
 
 // streams
-export {TextLineStream} from "https://deno.land/std@0.224.0/streams/text_line_stream.ts";
-export {toArrayBuffer} from "https://deno.land/std@0.224.0/streams/to_array_buffer.ts";
-export {Buffer} from "https://deno.land/std@0.224.0/streams/buffer.ts";
+export {Buffer} from "jsr:@std/streams@0.224.5/buffer";
+export {TextLineStream} from "jsr:@std/streams@0.224.5/text-line-stream";
+export {toArrayBuffer} from "jsr:@std/streams@0.224.5/to-array-buffer";

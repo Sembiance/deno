@@ -78,3 +78,14 @@ Deno.test("unicodeToAscii", () =>
 	assertStrictEquals(encodeUtil.unicodeToAscii("ÀÆÇD"), "AAECD");
 });
 
+Deno.test("encodeMacintosh", async () =>
+{
+	let encodedData = await encodeUtil.encodeMacintosh({str : "My Test File", region : "roman"});
+	assertStrictEquals(await encodeUtil.decodeMacintosh({data : encodedData, region : "roman"}), "My Test File");
+
+	encodedData = await encodeUtil.encodeMacintosh({str : "Bill Gates Does Windows ƒ", region : "roman"});
+	assertStrictEquals(await encodeUtil.decodeMacintosh({data : encodedData, region : "roman"}), "Bill Gates Does Windows ƒ");
+
+	encodedData = await encodeUtil.encodeMacintosh({str : "アップル関連ソフト", region : "japan"});
+	assertStrictEquals(await encodeUtil.decodeMacintosh({data : encodedData, region : "japan"}), "アップル関連ソフト");
+});

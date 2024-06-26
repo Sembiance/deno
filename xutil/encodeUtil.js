@@ -101,6 +101,21 @@ export async function decodeMacintosh({data, processors=[], region="roman", pres
 	return r.join("");
 }
 
+export async function encodeMacintosh({str, region="roman"})
+{
+	if(!MACINTOSH)
+		({default : MACINTOSH} = await import(path.join(import.meta.dirname, "encodeData", "macintosh.js")));
+
+	const regionData = Object.fromEntries(Object.entries(MACINTOSH[region]).map(([k, v]) => [v, k]));
+	regionData[" "] = 0x20;
+
+	const bytes = [];
+	for(const c of str.split(""))
+		bytes.push(...(!regionData[c] ? [c.charCodeAt(0)] : (regionData[c]>255 ? [Math.floor(regionData[c]/256), regionData[c]%256] : [regionData[c]])));
+
+	return new Uint8Array(bytes);
+}
+
 // ENSURE that all regexes match at the START of the string!
 export const macintoshProcessors =
 {

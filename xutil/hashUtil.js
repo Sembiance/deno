@@ -1,14 +1,37 @@
+/* eslint-disable no-bitwise */
 import {xu} from "xu";
 import {crypto} from "std";
 import {runUtil, fileUtil} from "xutil";
 
 const MAX_INLINE_FILE_SIZE = xu.GB*2;
 
-// For list of supported algos: https://deno.land/std/crypto/mod.ts
+function crc16XModem(data)
+{
+	let crc = 0x0000;
+	for(const byte of data)
+	{
+		crc ^= byte << 8;
+		for(let i=0;i<8;i++)
+		{
+			if(crc & 0x8000)
+				crc = (crc << 1) ^ 0x1021;
+			else
+				crc <<= 1;
+		}
 
+		crc &= 0xFFFF;
+	}
+	return crc;
+}
+
+// For list of supported algos: https://jsr.io/@std/crypto/0.224.0/crypto.ts
 export async function hashData(algorithm, dataRaw)
 {
 	const data = typeof dataRaw==="string" ? new TextEncoder().encode(dataRaw) : dataRaw;
+
+	if(algorithm==="CRC-16/XMODEM")
+		return crc16XModem(dataRaw);
+
 	return (new Uint8Array(await crypto.subtle.digest(algorithm, data))).asHex();
 }
 

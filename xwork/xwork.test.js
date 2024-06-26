@@ -172,7 +172,7 @@ Deno.test("timeout", async () =>
 	start = performance.now();
 	r = await xwork.run(f, undefined, {imports : {std : ["delay"]}});
 	const elapsed = performance.now()-start;
-	assert([4, 5].includes(Math.round(elapsed/xu.SECOND)), `elapsed time was ${elapsed}`);
+	assert([3, 4].includes(Math.floor(elapsed/xu.SECOND)), `elapsed time was ${elapsed}`);
 	assertStrictEquals(r, 14);
 
 	await delay(250);

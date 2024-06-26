@@ -300,7 +300,7 @@ export async function kill(p, signal="SIGTERM", {killChildren}={})
 	try { await p.status; } catch {}	// allows the process to gracefully close before I close the handle
 }
 
-// returns args needed to call a sub deno script
+// returns args needed to call a sub deno script		// ALERT! If I update this, also update /mnt/compendium/sys/bash/bash_aliases
 export function denoArgs(...args)
 {
 	return ["run",
@@ -309,11 +309,11 @@ export function denoArgs(...args)
 		"--no-check", "--no-config", "--no-npm", "--no-lock", "--unstable-ffi", "--unstable-fs", "--unstable-net", "--unstable-temporal", "--allow-all", ...args];
 }
 
-// returns env needed to properly run deno scripts
+// returns env needed to properly run deno scripts		// ALERT! If I update this, also update /mnt/compendium/sys/bash/bash_aliases  and  /mnt/compendium/sys/etc/env.d/99deno
 export function denoEnv()
 {
 	return {
-		DENO_DIR : "/mnt/compendium/.deno",
+		DENO_DIR : "/var/cache/deno",
 		DENO_NO_UPDATE_CHECK : "1",
 		DENO_NO_PACKAGE_JSON : "1"
 	};
