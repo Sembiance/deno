@@ -90,7 +90,7 @@ Deno.test("tryFallbackAsync", async () =>
 	assertStrictEquals(await xu.tryFallbackAsync(asyncThrowsException, 47), 47);
 });
 
-Deno.test("waitUntil", async () =>
+Deno.test("waitUntilSimple", async () =>
 {
 	// default conditions
 	let test = null;
@@ -131,6 +131,10 @@ Deno.test("waitUntil", async () =>
 	setTimeout(() => { test = true; }, xu.SECOND*2);
 	await xu.waitUntil(() => !!test);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
+
+	// timeout
+	const finishedCorrectly = await xu.waitUntil(() => test===47, {timeout : xu.SECOND});
+	assertStrictEquals(finishedCorrectly, false);
 });
 
 Deno.test("waitUntilStopEarly", async () =>
