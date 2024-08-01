@@ -42,6 +42,17 @@ Deno.test("detachedSimple", async () =>
 	await delay(250);
 });
 
+Deno.test("undefinedVals", async () =>
+{
+	const msgs = [];
+	const xlog = new XLog();
+	const {ready, send, done} = await xwork.run("testWorker-detached.js", undefined, {imports : {std : ["delay"]}, detached : true, recvcb : msg => msgs.push(msg)});
+	await ready();
+	await send({nums : [7, 14, 21], str : "Hello, from Parent!", bool : true, undefinedObjectProp : undefined, undefinedArray : [1, 2, undefined, 3, 4]});
+	await done();
+	await delay(250);
+});
+
 Deno.test("detachedCrash", async () =>
 {
 	let msgCount = 0;

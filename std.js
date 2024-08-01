@@ -26,6 +26,7 @@ export {parse as dateParse} from "jsr:@std/datetime@0.224.1/parse";
 // encoding
 export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "jsr:@std/encoding@0.224.3/base64";
 export {decodeHex as hexDecode, encodeHex as hexEncode} from "jsr:@std/encoding@0.224.3/hex";
+export {decodeAscii85 as ascii85Decode} from "jsr:@std/encoding@0.224.3/ascii85";
 
 // fs
 export * as fs from "jsr:@std/fs@0.229.3";
@@ -33,6 +34,14 @@ export * as fs from "jsr:@std/fs@0.229.3";
 // io
 export {readAll} from "jsr:@std/io@0.224.2/read-all";
 export {writeAll} from "jsr:@std/io@0.224.2/write-all";
+
+// json
+export {JsonParseStream} from "jsr:@std/json@1.0.0/parse-stream";
+export {JsonStringifyStream} from "jsr:@std/json@1.0.0/stringify-stream";
+
+// msgpack
+export {encode as msgpackEncode} from "jsr:@std/msgpack@1.0.0/encode";
+export {decode as msgpackDecode} from "jsr:@std/msgpack@1.0.0/decode";
 
 // net
 export {getAvailablePort} from "jsr:@std/net@0.224.0";

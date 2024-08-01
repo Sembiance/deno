@@ -98,7 +98,7 @@ Deno.test("includesAny", () =>
 	assertStrictEquals(a.includesAny(x), false);
 });
 
-Deno.test("mapInPlace", () =>
+Deno.test("mapInPlaceSimple", () =>
 {
 	const a = [1, 2, 3, 4, 5];
 	const b = [1, 2, 3, 4, 5];
@@ -108,10 +108,22 @@ Deno.test("mapInPlace", () =>
 	assertEquals(b, r);
 });
 
+Deno.test("mapInPlaceHuge", () =>
+{
+	const a = [].pushSequence(0, 1_000_000);
+	const r = [].pushSequence(1, 1_000_001);
+	a.mapInPlace(v => v+1);
+	assertEquals(a, r);
+});
+
 Deno.test("max", () =>
 {
-	const a = [4, 2, 5, 3, 1];
-	const r = 5;
+	let a = [4, 2, 5, 3, 1];
+	let r = 5;
+	assertStrictEquals(r, a.max());
+
+	a = [].pushSequence(0, 1_000_000);
+	r = 1_000_000;
 	assertStrictEquals(r, a.max());
 });
 
@@ -133,6 +145,10 @@ Deno.test("min", () =>
 	assertStrictEquals(r, a.min());
 	a = [0.456, 0.197];
 	r = 0.197;
+	assertStrictEquals(r, a.min());
+
+	a = [].pushSequence(0, 1_000_000);
+	r = 0;
 	assertStrictEquals(r, a.min());
 });
 
