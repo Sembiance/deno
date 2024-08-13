@@ -55,8 +55,8 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   stdinFilePath		If set, the data in the file path specified will be piped to the process stdin
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
- *   stdoutcb			If set, this function will be called for every 'line' read from stdout
- *   stderrcb			If set, this function will be called for every 'line' read from stderr
+ *   stdoutcb			If set, this function will be called for every 'line' read from stdout (the current 'p' will be passed as the second arg)
+ *   stderrcb			If set, this function will be called for every 'line' read from stderr (the current 'p' will be passed as the second arg)
  *   stdoutNull			If set, stdout will be set to "null" thus preventing any output from being buffered.
  *   stderrNull			If set, stderr will be set to "null" thus preventing any output from being buffered.
  *   stdoutUnbuffer     If set, stdout will be unbuffered with `stdbuf -o0`
@@ -188,7 +188,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let stdoutBuffer = null;
 	if(stdoutcb || xlog)
 	{
-		stdoutPromise = lineReader(p.stdout, stdoutcb || (line => xlog.info`${line}`));
+		stdoutPromise = lineReader(p.stdout, (stdoutcb ? line => stdoutcb(line, p) : (line => xlog.info`${line}`)));
 	}
 	else if(stdoutFilePath)
 	{
@@ -209,7 +209,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let stderrBuffer = null;
 	if(stderrcb || xlog)
 	{
-		stderrPromise = lineReader(p.stderr, stderrcb || (line => xlog.warn`${line}`));
+		stderrPromise = lineReader(p.stderr, (stderrcb ? line => stderrcb(line, p) : (line => xlog.warn`${line}`)));
 	}
 	else if(stderrFilePath)
 	{
@@ -324,7 +324,7 @@ export function denoRunOpts(o={})
 	return {...o, env : { ...denoEnv(), ...(o.env)}};
 }
 
-export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, filter, fast, port, verbose, dereferenceSymlinks, progress, noOwnership, identityFilePath, inPlace}={})
+export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, dereferenceSymlinks, exclude, identityFilePath, include, inPlace, fast, filter, noOwnership, port, pretend, progress, stats, verbose}={})
 {
 	const r = [];
 
@@ -338,6 +338,9 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 	
 	if(progress)
 		r.push("--progress");
+
+	if(stats)
+		r.push("--stats");
 
 	r.push("--hard-links", dereferenceSymlinks ? "--copy-links" : "--links");
 	
@@ -358,6 +361,12 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, pretend, f
 
 	if(noOwnership)
 		r.push("--no-o", "--no-g");
+
+	if(include)
+		r.push("--include", include);
+
+	if(exclude)
+		r.push("--exclude", exclude);
 	
 	if((srcHost || destHost) && (fast || identityFilePath))
 	{

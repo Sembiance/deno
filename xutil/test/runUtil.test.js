@@ -118,8 +118,9 @@ Deno.test("stdoutcb2", async () =>
 {
 	let lineCount = 0;
 	let seenLastLine = false;
-	const stdoutcb = async line =>	// eslint-disable-line require-await
+	const stdoutcb = async (line, p) =>	// eslint-disable-line require-await
 	{
+		assert(p!==undefined);
 		lineCount++;
 		if(xu.parseJSON(line).rel==="Strip Poker de Luxe_artwork_thumb.jpg")
 			seenLastLine = true;
