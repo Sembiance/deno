@@ -1,29 +1,21 @@
 import {xu} from "xu";
 import {printUtil} from "xutil";
+import {XLog} from "xlog";
 
 // serveOptions: {hostname, port, xlog}
-export function serve(serveOptions, handler)
+export function serve(serveOptions, handler, {xlog=new XLog("warn")}={})
 {
 	const ac = new AbortController();
 	const r = {};
 	r.stop = () =>
 	{
-		if(serveOptions.xlog)
-			serveOptions.xlog.info`Stopping web server...`;
+		xlog.info`Stopping web server...`;
 		ac.abort();
 	};
-	const onListen = ({hostname, port}) =>
-	{
-		if(serveOptions.xlog)
-			serveOptions.xlog.info`Listening on ${hostname}:${port}`;
-	};
+	const onListen = ({hostname, port}) => xlog.info`Listening on ${hostname}:${port}`;
 	const onError = err =>
 	{
-		if(serveOptions.xlog)
-			serveOptions.xlog.error`Error: ${err}`;
-		else
-			console.error(err);
-
+		xlog.error`Error: ${err}`;
 		return new Response(`Error: ${err?.toString()}`, {status : 500});
 	};
 	r.server = Deno.serve({onListen, onError, signal : ac.signal, ...serveOptions}, handler);

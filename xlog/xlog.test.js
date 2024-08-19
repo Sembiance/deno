@@ -128,3 +128,9 @@ Deno.test("xlog", () =>
 	if(xlog.atLeast("debug"))
 		console.log(`${fg.red("should NOT see")}`);
 });
+
+Deno.test("dateTime", () =>
+{
+	const xlog = new XLog("info", {includeDateTime : true});
+	xlog.info`info message, WITH DATETIME`;
+});

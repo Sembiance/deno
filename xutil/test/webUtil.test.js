@@ -5,11 +5,11 @@ import {assert, assertStrictEquals, delay} from "std";
 import {XLog} from "xlog";
 
 const xlog = new XLog("warn");
-const serveOpts = {hostname : "127.0.0.1", port : 37291, xlog};
+const serveOpts = {hostname : "127.0.0.1", port : 37291};
 
 Deno.test("serveBasic", async () =>
 {
-	const server = webUtil.serve(serveOpts, req => new Response(`Hello, World! ${req.url}`));
+	const server = webUtil.serve(serveOpts, req => new Response(`Hello, World! ${req.url}`), {xlog});
 
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 200);
@@ -28,7 +28,7 @@ Deno.test("serveAsync", async () =>
 		await delay(xu.SECOND);
 		r.push(req.url);
 		return new Response(r.join(" "));
-	});
+	}, {xlog});
 
 	const before = performance.now();
 	let a = await fetch("http://127.0.0.1:37291/test");
@@ -42,7 +42,7 @@ Deno.test("serveAsync", async () =>
 
 Deno.test("serveException", async () =>
 {
-	const server = webUtil.serve(serveOpts, () => { throw new Error("THIS ERROR IS EXPECTED"); });
+	const server = webUtil.serve(serveOpts, () => { throw new Error("THIS ERROR IS EXPECTED"); }, {xlog});
 
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 500);
@@ -53,7 +53,7 @@ Deno.test("serveException", async () =>
 
 Deno.test("serveExceptionAsync", async () =>
 {
-	const server = webUtil.serve(serveOpts, async () => { await delay(xu.SECOND); throw new Error("THIS ERROR IS EXPECTED"); });
+	const server = webUtil.serve(serveOpts, async () => { await delay(xu.SECOND); throw new Error("THIS ERROR IS EXPECTED"); }, {xlog});
 
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 500);
@@ -64,7 +64,7 @@ Deno.test("serveExceptionAsync", async () =>
 
 Deno.test("route404", async () =>
 {
-	const server = webUtil.serve(serveOpts, await webUtil.route({}));
+	const server = webUtil.serve(serveOpts, await webUtil.route({}), {xlog});
 
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 404);
@@ -84,7 +84,7 @@ Deno.test("routeBasic", async () =>
 	}));
 	routes.set(/^\/test\/subPath/, req => new Response(`subPath ${(new URL(req.url)).pathname}`));
 
-	const server = webUtil.serve(serveOpts, await webUtil.route(routes, {xlog, customArg : "Hello,"}));
+	const server = webUtil.serve(serveOpts, await webUtil.route(routes, {xlog, customArg : "Hello,"}), {xlog});
 
 	let a = await fetch("http://127.0.0.1:37291/noResponse");
 	assertStrictEquals(a.status, 500);
@@ -141,7 +141,7 @@ Deno.test("routeExternal", async () =>
 	const port = Math.randomInt(30010, 39990);
 	const routes = new Map();
 	routes.set(/^\/view/, () => (new Response("You browsed")));
-	const server = webUtil.serve({...serveOpts, port}, await webUtil.route(routes));
+	const server = webUtil.serve({...serveOpts, port}, await webUtil.route(routes), {xlog});
 
 	await [].pushSequence(1, 1000).parallelMap(async () =>
 	{
@@ -159,7 +159,7 @@ Deno.test("devMode", async () =>
 	await fileUtil.writeTextFile(handlerFilePath, `export default async function testHandler() { return new Response("Dev Mode 1"); }\n`);
 
 	const port = Math.randomInt(30010, 39990);
-	const server = webUtil.serve({...serveOpts, port}, await webUtil.route({"/test" : handlerFilePath}, undefined, true));
+	const server = webUtil.serve({...serveOpts, port}, await webUtil.route({"/test" : handlerFilePath}, undefined, true), {xlog});
 
 	let a = await fetch(`http://127.0.0.1:${port}/test`);
 	assertStrictEquals(a.status, 200);

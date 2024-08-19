@@ -8,7 +8,7 @@ const NOLOG = new XLog("none");
 
 const webServer = new WebServer("127.0.0.1", PORT_NUM, {xlog : NOLOG});
 await webServer.start();
-webServer.add("/test", async () => new Response("Hello, World!"));	 // eslint-disable-line require-await
+webServer.add("/test", async () => new Response(JSON.stringify({something : "Hello, World!", now : new Date()})));	 // eslint-disable-line require-await
 webServer.add("/testDelay", async () =>
 {
 	await delay(Math.randomInt(0, 1500));

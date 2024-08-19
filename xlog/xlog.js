@@ -1,5 +1,5 @@
 import {xu, fg} from "xu";
-import {path} from "std";
+import {path, dateFormat} from "std";
 import {fileUtil, printUtil} from "xutil";
 
 const LEVELS = ["none", "fatal", "error", "warn", "info", "debug", "trace"];
@@ -10,7 +10,7 @@ export class XLog
 	logLines = [];
 
 	// noANSI does not need to be set if you have a logFilePath or logger set
-	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, inspectOptions={}}={})
+	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, includeDateTime, inspectOptions={}}={})
 	{
 		this.lastMessageAt = performance.now();
 		this.level = level;
@@ -21,6 +21,7 @@ export class XLog
 		this.alwaysEcho = alwaysEcho;
 		this.signalHandler = async () => await this.flush();
 		this.inspectOptions = inspectOptions;
+		this.includeDateTime = includeDateTime;
 
 		if(this.logFilePath)
 			Deno.addSignalListener("SIGUSR2", this.signalHandler);
@@ -36,11 +37,13 @@ export class XLog
 					return;
 
 				const r = [];
+				if(this.includeDateTime)
+					r.push(`${fg.brown(dateFormat(new Date(), "yyyy-MM-dd HH:mm:ss"))} `);
 				if(this.atLeast("trace"))
 				{
 					const sinceLast = performance.now()-this.lastMessageAt;
 					this.lastMessageAt = performance.now();
-					r.push(`${fg.peach(`${sinceLast.toFixed(2)}ms`.padStart(8, " "))} `);
+					r.push(`${fg.peach(`${sinceLast.toFixed(2)}ms`.padStart(10, " "))} `);
 				}
 
 				if(this.atLeast("debug"))

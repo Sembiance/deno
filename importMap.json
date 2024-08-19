@@ -1,6 +1,7 @@
 {
 	"imports" :
 	{
+		"AgentPool"        : "/mnt/compendium/DevLab/deno/AgentPool/AgentPool.js",
 		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
 		"denoLandX"        : "/mnt/compendium/DevLab/deno/denoLandX.js",
 		"GAPI"             : "/mnt/compendium/DevLab/deno/GAPI/GAPI.js",
