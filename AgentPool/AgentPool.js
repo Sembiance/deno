@@ -3,19 +3,20 @@ import {path, delay} from "std";
 import {webUtil, runUtil, fileUtil} from "xutil";
 import {XLog} from "xlog";
 
-// TODO: Could replace web communication with a lower level, unix sock based, new binary ipcUtil communication (pascal style TextEncoder JSON stringify messages)
+// NOTE: Could replace web communication with a lower level, unix sock based, new binary ipcUtil communication (pascal style TextEncoder JSON stringify messages). While this may be faster/lighter, it's unlikely to provide any real benefit in this context
 export class AgentPool
 {
-	constructor(agentFilePath, {onSuccess, onEmpty, onFail, xlog=new XLog("warn")}={})
+	constructor(agentFilePath, {onSuccess, onFail, errFilePath, xlog=new XLog("warn")}={})
 	{
 		this.queue = [];
 		this.agents = [];
 		this.stopping = false;
+		this.textDecoder = new TextDecoder();
 
 		this.agentFilePath = agentFilePath;
 		this.onSuccess = onSuccess;
-		this.onEmpty = onEmpty;
 		this.onFail = onFail;
+		this.errFilePath = errFilePath;
 		this.xlog = xlog;
 
 		this.logPrefix = `${xu.bracket(`${fg.white("AgentPool")}${fg.cyan("-")}${fg.peach(path.basename(this.agentFilePath, path.extname(this.agentFilePath)))}`)}`;
@@ -67,6 +68,7 @@ export class AgentPool
 			agent.startedAt = performance.now();
 
 			const r = await xu.fetch(agent.opURL, {json : msg, asJSON : true, silent : true});
+			// NOTE: Could add a timeout to the fetch above as an option
 			// TODO should this fetch have an option for timeout? If so I'd need to handle that timeout somehow
 			// TODO could add a 'stopper' support to xu.fetch so that if AgentPool.stop is called it can 'abort' the fetch (would need to modify xu.fetch so that AbortController is also used if stopper is passed in)
 
@@ -82,6 +84,15 @@ export class AgentPool
 			{
 				if(this.onSuccess)
 					this.onSuccess(r, {duration : agent.lastDuration});
+			}
+
+			const errSize = (await Deno.stat(agent.errFilePath)).size;
+			if(errSize>agent.lastErrSize)
+			{
+				if(this.errFilePath)
+					await fileUtil.writeTextFile(this.errFilePath, `msg: ${JSON.stringify(msg)}\nerror: ${this.textDecoder.decode(await fileUtil.readFileBytes(agent.errFilePath, errSize-agent.lastErrSize, agent.lastErrSize)).trim()}\n\n`, {create : true, append : true});
+
+				agent.lastErrSize = errSize;
 			}
 
 			delete agent.startedAt;
@@ -113,6 +124,8 @@ export class AgentPool
 				if(await fileUtil.exists(logfilePath))
 					await Deno.rename(logfilePath, await fileUtil.genTempPath(agent.cwd, path.basename(logfilePath)));
 			}
+
+			agent.lastErrSize = 0;
 
 			const runOpts = runUtil.denoRunOpts();
 			runOpts.cwd = agent.cwd;
@@ -163,9 +176,6 @@ export class AgentPool
 
 				if(this.queue.length)
 					continue;
-
-				if(this.onEmpty && !this.agents.some(w => w.startedAt))
-					this.onEmpty();
 			}
 
 			await xu.waitUntil(() => this.stopping || this.queue.length);
@@ -209,6 +219,11 @@ export class AgentPool
 		}
 		
 		return r;
+	}
+
+	empty()
+	{
+		return this.queue.length===0 && !this.agents.some(agent => agent.startedAt);
 	}
 
 	process(vals)

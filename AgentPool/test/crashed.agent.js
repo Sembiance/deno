@@ -1,8 +1,9 @@
 import {xu} from "xu";
-import {path} from "std";
+import {path, delay} from "std";
 import {fileUtil} from "xutil";
 import {agentInit} from "AgentPool";
 
+await delay(xu.SECOND*5);
 await agentInit(async ({v}) =>
 {
 	const seenOnceFile = path.join(Deno.env.get("AGENT_CWD"), "seenOnce");

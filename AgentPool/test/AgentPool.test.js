@@ -75,6 +75,31 @@ Deno.test("processSimple", async () =>
 	}
 });
 
+Deno.test("errFilePath", async () =>
+{
+	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0})).shuffle();
+	const errFilePath = await fileUtil.genTempPath(undefined, "AgentPoolTest-errFilePath");
+	const pool = new AgentPool(path.join(import.meta.dirname, "error.agent.js"), {errFilePath});
+	await pool.init();
+	await pool.start({qty : 3});
+	pool.process(vals);
+	assert(await xu.waitUntil(() => pool.empty(), {timeout : xu.SECOND*30}));
+	await pool.stop({keepCWD : true});
+
+	const errFileContents = (await fileUtil.readTextFile(errFilePath)).split("\n\n").filter(Boolean);
+	assertStrictEquals(errFileContents.length, vals.length);
+	for(const val of vals)
+	{
+		const logLine = `msg: ${JSON.stringify(val)}\nerror: error for id ${val.id}`;
+		assert(errFileContents.includes(logLine));
+		errFileContents.removeOnce(logLine);
+	}
+	assertStrictEquals(errFileContents.length, 0);
+
+	await fileUtil.unlink(pool.cwd, {recursive : true});
+	await fileUtil.unlink(errFilePath);
+});
+
 Deno.test("processDurations", async () =>
 {
 	const durations = [];
@@ -150,14 +175,14 @@ Deno.test("processPriority", async () =>
 	await pool.init();
 	await pool.start({qty : 2});
 	pool.process({id : 1, nums : [1, 2, 3], str : xu.randStr(), bool : false});
-	pool.process({id : 2, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*2});
-	pool.process({id : 3, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*2});
-	pool.process({id : 4, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*2});
-	pool.process({id : 5, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*2});
+	pool.process({id : 2, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
+	pool.process({id : 3, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
+	pool.process({id : 4, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
+	pool.process({id : 5, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
 	await delay(100);
 	pool.processPriority({id : 6, nums : [1, 2, 3], str : xu.randStr(), bool : false});
 	pool.processPriority({id : 7, nums : [1, 2, 3], str : xu.randStr(), bool : false});
-	assert(await xu.waitUntil(() => results.length===7, {timeout : xu.SECOND*10}));
+	assert(await xu.waitUntil(() => results.length===7, {timeout : xu.SECOND*15}));
 	await pool.stop();
 
 	assert(results[0].id<=3);
@@ -169,24 +194,25 @@ Deno.test("processPriority", async () =>
 	assert([4, 5].includes(results[6].id));
 });
 
-Deno.test("onEmpty", async () =>
+Deno.test("empty", async () =>
 {
 	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
 
 	const results = [];
-	let emptyCount = 0;
-	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {onSuccess : r => results.push(r), onEmpty : () => emptyCount++});
+	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {onSuccess : r => results.push(r)});
 	await pool.init();
 	await pool.start({qty : 3});
 	pool.process(vals.slice(0, vals.length/2));
-	await delay(500);
-
-	assert(await xu.waitUntil(() => emptyCount===1, {timeout : xu.SECOND*5}));
+	assert(await xu.waitUntil(() => pool.empty(), {timeout : xu.SECOND*10}));
+	assertStrictEquals(pool.empty(), true);
 	assertStrictEquals(pool.queue.length, 0);
+
+	await delay(500);
 	pool.process(vals.slice(vals.length/2));
 	assert(pool.queue.length>0);
-	assert(await xu.waitUntil(() => results.length===vals.length, {timeout : xu.SECOND*10}));
-	assertStrictEquals(emptyCount, 2);
+	assert(await xu.waitUntil(() => pool.empty(), {timeout : xu.SECOND*10}));
+	assertStrictEquals(results.length, vals.length);
+	assertStrictEquals(pool.empty(), true);
 	assertStrictEquals(pool.queue.length, 0);
 	await pool.stop();
 
@@ -209,6 +235,7 @@ Deno.test("crashRecover", async () =>
 	const successes = [];
 	const onSuccess = r =>
 	{
+		//xlog.info`onSuccess: ${r}`;
 		assertStrictEquals(r.recovered, true);
 		assert(Object.hasOwn(r, "v"));
 		successes.push(r);
@@ -217,6 +244,7 @@ Deno.test("crashRecover", async () =>
 	const fails = [];
 	const onFail = msg =>
 	{
+		//xlog.info`onFail: ${msg}`;
 		assertStrictEquals(msg.isMsg, true);
 		assert(Object.hasOwn(msg, "v"));
 		pool.processPriority(msg);
@@ -227,7 +255,7 @@ Deno.test("crashRecover", async () =>
 	await pool.init();
 	await pool.start({qty : 2});
 	pool.process([].pushSequence(1, 5).map(v => ({isMsg : true, v})));
-	assert(await xu.waitUntil(() => successes.length===5, {timeout : xu.SECOND*10}));
+	assert(await xu.waitUntil(() => successes.length===5, {timeout : xu.SECOND*20}));
 	assert(fails.length>0);
 	assert(fails.some(o => o.v===1));
 	assertStrictEquals(debugLog.length, 2);	// a warning for each crash
