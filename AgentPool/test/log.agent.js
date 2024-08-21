@@ -10,6 +10,9 @@ await agentInit(async msg =>
 	if(msg.delay)
 		await delay(msg.delay);
 
+	if(msg.id%5===0)
+		console.log(`stdout for id ${msg.id}`);
+
 	if(msg.id%7===0)
 	{
 		console.error(`error #1 for id ${msg.id}`);

@@ -4,8 +4,8 @@ import {webUtil, runUtil, fileUtil} from "xutil";
 import {XLog} from "xlog";
 
 // NOTE: Could replace web communication with a lower level, unix sock based, new binary ipcUtil communication (pascal style TextEncoder JSON stringify messages). While this may be faster/lighter, it's unlikely to provide any real benefit in this context
-// onSuccess(responseData, {msg, duration, errLog})
-// onFail({reason, error}, {msg, duration, errLog})
+// onSuccess(responseData, {msg, duration, log})
+// onFail({reason, error}, {msg, duration, log})
 export class AgentPool
 {
 	constructor(agentFilePath, {onSuccess, onFail, xlog=new XLog("warn")}={})
@@ -35,7 +35,7 @@ export class AgentPool
 
 		while(qty)
 		{
-			const agent = {agentid : this.agents.length, running : false};
+			const agent = {agentid : this.agents.length, running : false, log : []};
 			this.agents.push(agent);
 			this.startAgent(agent, {runEnv});	// we don't wait for this to finish, it runs in the background
 
@@ -56,14 +56,12 @@ export class AgentPool
 	{
 		agent.cwd = await fileUtil.genTempPath(this.cwd);
 		await Deno.mkdir(agent.cwd, {recursive : true});
-
 		agent.portFilePath = path.join(agent.cwd, "port");
-		agent.outFilePath = path.join(agent.cwd, "out");
-		agent.errFilePath = path.join(agent.cwd, "err");
 		agent.logPrefix = `${this.logPrefix}${fg.cyan("#")}${fg.white(agent.agentid)}`;
 
 		agent.send = async msg =>
 		{
+			agent.log.clear();
 			agent.startedAt = performance.now();
 
 			let sendResult = null;
@@ -80,14 +78,8 @@ export class AgentPool
 			}
 			agent.lastDuration = performance.now()-agent.startedAt;
 
-			// check to see if our err file size has changed, if so our previous msg produced errors
-			const sendResultMeta = {msg, duration : agent.lastDuration};
-			const errSize = (await Deno.stat(agent.errFilePath)).size;
-			if(errSize>agent.lastErrSize)
-			{
-				sendResultMeta.errLog = this.textDecoder.decode(await fileUtil.readFileBytes(agent.errFilePath, errSize-agent.lastErrSize, agent.lastErrSize)).trim();
-				agent.lastErrSize = errSize;
-			}
+			const sendResultMeta = {msg, duration : agent.lastDuration, log : Array.from(agent.log)};
+			agent.log.clear();
 
 			if(this[sendResult.cb])
 				this[sendResult.cb](sendResult.r, sendResultMeta);
@@ -104,7 +96,7 @@ export class AgentPool
 			await fileUtil.unlink(agent.portFilePath);
 
 			if(!agent.startedOnce)
-				return this.xlog.error`${agent.logPrefix} agent crashed on first start attempt:\n${await fileUtil.exists(agent.errFilePath) ? await fileUtil.readTextFile(agent.errFilePath) : ""}`;
+				return this.xlog.error`${agent.logPrefix} agent crashed on first start attempt:\n${agent.log.join("\n")}`;
 
 			if(agent.stopping)
 				return;
@@ -116,7 +108,7 @@ export class AgentPool
 		{
 			this.xlog.info`${agent.logPrefix} Starting...`;
 
-			agent.lastErrSize = 0;
+			agent.log.clear();
 
 			const runOpts = runUtil.denoRunOpts();
 			runOpts.cwd = agent.cwd;
@@ -125,14 +117,8 @@ export class AgentPool
 			if(runEnv)
 				Object.assign(runOpts.env, runEnv);
 
-			for(const logfilePath of [agent.outFilePath, agent.errFilePath])
-			{
-				if(await fileUtil.exists(logfilePath))
-					await Deno.rename(logfilePath, await fileUtil.genTempPath(agent.cwd, path.basename(logfilePath)));
-			}
-
-			runOpts.stdoutFilePath = agent.outFilePath;
-			runOpts.stderrFilePath = agent.errFilePath;
+			runOpts.stdoutcb = line => agent.log.push(line);
+			runOpts.stderrcb = line => agent.log.push(line);
 
 			runOpts.exitcb = agent.exitHandler;
 			agent.runner = await runUtil.run("deno", runUtil.denoArgs(this.agentFilePath), runOpts);
@@ -209,7 +195,7 @@ export class AgentPool
 		for(const agent of this.agents)
 		{
 			const agentStatus = {};
-			for(const key of ["agentid", "cwd", "port", "outFilePath", "errFilePath", "running", "lastDuration"])
+			for(const key of ["agentid", "cwd", "port", "running", "lastDuration"])
 			{
 				if(Object.hasOwn(agent, key))
 					agentStatus[key] = agent[key];

@@ -31,26 +31,6 @@ Deno.test("status", async () =>
 	await pool.stop();
 });
 
-Deno.test("stdoutStderr", async () =>
-{
-	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
-	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"));
-	await pool.init();
-	await pool.start({qty : 3});
-	const poolStatus = pool.status();
-	pool.process(vals.slice(0, vals.length/2));
-	await delay(500);
-	await pool.broadcast({broadcast : true, msg : "test broadcast"});
-	await pool.stop({keepCWD : true});
-
-	for(const agent of poolStatus.agents)
-	{
-		assertStrictEquals(await fileUtil.readTextFile(agent.outFilePath), `stdout from agent\ngot broadcast message:  { broadcast: true, msg: "test broadcast" }\n`);
-		assertStrictEquals(await fileUtil.readTextFile(agent.errFilePath), `stderr from agent\n`);
-	}
-	await fileUtil.unlink(pool.cwd, {recursive : true});
-});
-
 Deno.test("processSimple", async () =>
 {
 	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
@@ -89,11 +69,11 @@ Deno.test("runEnv", async () =>
 		assertStrictEquals(result.envVar, "Hello, World!");
 });
 
-Deno.test("errLog", async () =>
+Deno.test("log", async () =>
 {
 	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0})).shuffle();
 	const metas = [];
-	const pool = new AgentPool(path.join(import.meta.dirname, "error.agent.js"), {onSuccess : (msg, meta) => metas.push({id : msg.id, ...meta})});
+	const pool = new AgentPool(path.join(import.meta.dirname, "log.agent.js"), {onSuccess : (msg, meta) => metas.push({id : msg.id, ...meta})});
 	await pool.init();
 	await pool.start({qty : 3});
 	pool.process(vals);
@@ -102,10 +82,20 @@ Deno.test("errLog", async () =>
 
 	for(const val of vals)
 	{
+		const log = metas.find(meta => meta.id===val.id).log;
+		if(val.id%5===0)
+			assertStrictEquals(log[0], `stdout for id ${val.id}`);
+
 		if(val.id%7===0)
-			assertStrictEquals(metas.filter(meta => meta.errLog===`error #1 for id ${val.id}\nerror #2 for id ${val.id}`).length, 1);
-		else
-			assert(!Object.hasOwn(metas.find(meta => meta.id===val.id), "errLog"));
+		{
+			const offset = val.id%5===0 ? 1 : 0;
+			assertStrictEquals(log[0+offset], `error #1 for id ${val.id}`);
+			assertStrictEquals(log[1+offset], `error #2 for id ${val.id}`);
+			assertStrictEquals(log.length, 2+offset);
+		}
+
+		if(val.id%5!==0 && val.id%7!==0)
+			assertStrictEquals(log.length, 0);
 	}
 });
 
