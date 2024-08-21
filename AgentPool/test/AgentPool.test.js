@@ -175,23 +175,27 @@ Deno.test("processPriority", async () =>
 	await pool.init();
 	await pool.start({qty : 2});
 	pool.process({id : 1, nums : [1, 2, 3], str : xu.randStr(), bool : false});
-	pool.process({id : 2, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
+	pool.process({id : 2, nums : [1, 2, 3], str : xu.randStr(), bool : false});
 	pool.process({id : 3, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
 	pool.process({id : 4, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
 	pool.process({id : 5, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
-	await delay(100);
-	pool.processPriority({id : 6, nums : [1, 2, 3], str : xu.randStr(), bool : false});
-	pool.processPriority({id : 7, nums : [1, 2, 3], str : xu.randStr(), bool : false});
-	assert(await xu.waitUntil(() => results.length===7, {timeout : xu.SECOND*15}));
+	pool.process({id : 6, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : xu.SECOND*3});
+	await delay(xu.SECOND);
+	pool.processPriority({id : 7, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : 500});
+	pool.processPriority({id : 8, nums : [1, 2, 3], str : xu.randStr(), bool : false, delay : 500});
+	assert(await xu.waitUntil(() => results.length===8, {timeout : xu.SECOND*15}));
 	await pool.stop();
 
-	assert(results[0].id<=3);
-	assert(results[1].id<=3);
-	assert(results[2].id<=3);
-	assert([6, 7].includes(results[3].id));
-	assert([6, 7].includes(results[4].id));
-	assert([4, 5].includes(results[5].id));
-	assert([4, 5].includes(results[6].id));
+	assert([1, 2].includes(results[0].id));
+	assert([1, 2].includes(results[1].id));
+	assert([3, 4].includes(results[2].id));
+	assert([3, 4].includes(results[3].id));
+
+	assert([7, 8].includes(results[4].id));
+	assert([7, 8].includes(results[5].id));
+
+	assert([5, 6].includes(results[6].id));
+	assert([5, 6].includes(results[7].id));
 });
 
 Deno.test("empty", async () =>
@@ -235,16 +239,15 @@ Deno.test("crashRecover", async () =>
 	const successes = [];
 	const onSuccess = r =>
 	{
-		//xlog.info`onSuccess: ${r}`;
 		assertStrictEquals(r.recovered, true);
 		assert(Object.hasOwn(r, "v"));
 		successes.push(r);
 	};
 
 	const fails = [];
-	const onFail = msg =>
+	const onFail = ({msg, reason}) =>
 	{
-		//xlog.info`onFail: ${msg}`;
+		assert(["crashed", "fetch failed"].includes(reason));
 		assertStrictEquals(msg.isMsg, true);
 		assert(Object.hasOwn(msg, "v"));
 		pool.processPriority(msg);
@@ -254,11 +257,46 @@ Deno.test("crashRecover", async () =>
 	pool = new AgentPool(path.join(import.meta.dirname, "crashed.agent.js"), {onSuccess, onFail, xlog});
 	await pool.init();
 	await pool.start({qty : 2});
-	pool.process([].pushSequence(1, 5).map(v => ({isMsg : true, v})));
-	assert(await xu.waitUntil(() => successes.length===5, {timeout : xu.SECOND*20}));
+	pool.process([].pushSequence(1, 10).map(v => ({isMsg : true, v})));
+	assert(await xu.waitUntil(() => successes.length===10, {timeout : xu.SECOND*20}));
 	assert(fails.length>0);
 	assert(fails.some(o => o.v===1));
 	assertStrictEquals(debugLog.length, 2);	// a warning for each crash
 
-	await pool.stop();
+	await pool.stop({keepCWD : true});
+});
+
+Deno.test("exception", async () =>
+{
+	const xlog = new XLog("warn");
+
+	let pool = null;
+	const successes = [];
+	const onSuccess = r =>
+	{
+		assertStrictEquals(r.good, true);
+		assert(Object.hasOwn(r, "v"));
+		successes.push(r);
+	};
+
+	const fails = [];
+	const onFail = ({msg, reason, error}) =>
+	{
+		assertStrictEquals(reason, "exception");
+		assert(error.includes("EXPECTED EXCEPTION DUE TO #7"));
+		assert(error.includes("exception.agent.js:10:9"));
+		assertStrictEquals(msg.isMsg, true);
+		assertStrictEquals(msg.v, 7);
+		fails.push(msg);
+	};
+
+	pool = new AgentPool(path.join(import.meta.dirname, "exception.agent.js"), {onSuccess, onFail, xlog});
+	await pool.init();
+	await pool.start({qty : 2});
+	pool.process([].pushSequence(1, 10).map(v => ({isMsg : true, v})));
+	assert(await xu.waitUntil(() => successes.length===9, {timeout : xu.SECOND*20}));
+	assert(fails.length===1);
+	assert(fails[0].v===7);
+
+	await pool.stop({keepCWD : true});
 });

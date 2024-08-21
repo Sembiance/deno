@@ -67,25 +67,33 @@ export class AgentPool
 
 			agent.startedAt = performance.now();
 
-			const r = await xu.fetch(agent.opURL, {json : msg, asJSON : true, silent : true});
-			// NOTE: Could add a timeout to the fetch above as an option
-			// TODO should this fetch have an option for timeout? If so I'd need to handle that timeout somehow
-			// TODO could add a 'stopper' support to xu.fetch so that if AgentPool.stop is called it can 'abort' the fetch (would need to modify xu.fetch so that AbortController is also used if stopper is passed in)
+			// NOTE: Could add an AbortController below that is triggered if the agent crashes or if an optional 'timeout' is specified
+			const fetchOpts = {method : "POST", headers : {"content-type" : "application/json"}, body : JSON.stringify(msg)};
+			try
+			{
+				// we don't use xu.fetch() because we care about the HTTP response headers
+				const fetchResult = await fetch(agent.opURL, fetchOpts);
+				const r = await fetchResult.text();
+				if(fetchResult.status===500)
+				{
+					if(this.onFail)
+						this.onFail({msg, reason : "exception", error : r});
+				}
+				else
+				{
+					if(this.onSuccess)
+						this.onSuccess(xu.parseJSON(r), {duration : agent.lastDuration});
+				}
+			}
+			catch(err)
+			{
+				if(this.onFail)
+					this.onFail({msg, reason : agent.running ? "fetch failed" : "crashed", error : err.stack});
+			}
 
 			agent.lastDuration = performance.now()-agent.startedAt;
 
-			// the agentInit handler part below ensures that any response from the agent is truthy, so if we get a falsy value here we know the fetch failed
-			if(!r)
-			{
-				if(this.onFail)
-					this.onFail(msg);
-			}
-			else
-			{
-				if(this.onSuccess)
-					this.onSuccess(r, {duration : agent.lastDuration});
-			}
-
+			// check to see if our err file size has changed and if we have an errFilePath to write to, then write our current msg and error to that file
 			const errSize = (await Deno.stat(agent.errFilePath)).size;
 			if(errSize>agent.lastErrSize)
 			{
@@ -251,6 +259,21 @@ export async function agentInit(handler, {xlog=new XLog("warn")}={})
 	if(!(await fileUtil.exists(agentCWD)))
 		throw new Error(`AGENT_CWD env points to non-existent path: ${agentCWD}`);
 
-	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request => new Response(JSON.stringify((await handler(await request.json())) || {})), {xlog});
+	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request =>
+	{
+		let r = null;
+
+		try
+		{
+			r = new Response(JSON.stringify((await handler(await request.json())) || {}));
+		}
+		catch(err)
+		{
+			r = new Response(err.stack, {status : 500});
+		}
+
+		return r;
+	});
+		
 	await fileUtil.writeTextFile(path.join(agentCWD, "port"), webServer.server.addr.port.toString());
 }
