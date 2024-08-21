@@ -75,29 +75,38 @@ Deno.test("processSimple", async () =>
 	}
 });
 
-Deno.test("errFilePath", async () =>
+Deno.test("runEnv", async () =>
+{
+	const results = [];
+	const pool = new AgentPool(path.join(import.meta.dirname, "runEnv.agent.js"), {onSuccess : r => results.push(r)});
+	await pool.init();
+	await pool.start({qty : 3, runEnv : {AGENT_TEST_ENV_VAR : "Hello, World!"}});
+	pool.process([].pushSequence(1, 10).map(id => ({id})));
+	assert(await xu.waitUntil(() => pool.empty(), {timeout : xu.SECOND*5}));
+	await pool.stop();
+
+	for(const result of results)
+		assertStrictEquals(result.envVar, "Hello, World!");
+});
+
+Deno.test("errLog", async () =>
 {
 	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0})).shuffle();
-	const errFilePath = await fileUtil.genTempPath(undefined, "AgentPoolTest-errFilePath");
-	const pool = new AgentPool(path.join(import.meta.dirname, "error.agent.js"), {errFilePath});
+	const metas = [];
+	const pool = new AgentPool(path.join(import.meta.dirname, "error.agent.js"), {onSuccess : (msg, meta) => metas.push({id : msg.id, ...meta})});
 	await pool.init();
 	await pool.start({qty : 3});
 	pool.process(vals);
 	assert(await xu.waitUntil(() => pool.empty(), {timeout : xu.SECOND*30}));
-	await pool.stop({keepCWD : true});
+	await pool.stop();
 
-	const errFileContents = (await fileUtil.readTextFile(errFilePath)).split("\n\n").filter(Boolean);
-	assertStrictEquals(errFileContents.length, vals.length);
 	for(const val of vals)
 	{
-		const logLine = `msg: ${JSON.stringify(val)}\nerror: error for id ${val.id}`;
-		assert(errFileContents.includes(logLine));
-		errFileContents.removeOnce(logLine);
+		if(val.id%7===0)
+			assertStrictEquals(metas.filter(meta => meta.errLog===`error #1 for id ${val.id}\nerror #2 for id ${val.id}`).length, 1);
+		else
+			assert(!Object.hasOwn(metas.find(meta => meta.id===val.id), "errLog"));
 	}
-	assertStrictEquals(errFileContents.length, 0);
-
-	await fileUtil.unlink(pool.cwd, {recursive : true});
-	await fileUtil.unlink(errFilePath);
 });
 
 Deno.test("processDurations", async () =>
@@ -124,7 +133,7 @@ Deno.test("memoryLeak", async () =>
 	const perBatch = 4000;
 	const batches = [];
 	for(let i=0;i<40;i++)
-		batches.push([].pushSequence(0, perBatch-1).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0})));
+		batches.push([].pushSequence(0, perBatch-1).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0, memoryLeakTest : true})));
 
 	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {onSuccess : () => successCount++});
 	await pool.init();
@@ -245,7 +254,7 @@ Deno.test("crashRecover", async () =>
 	};
 
 	const fails = [];
-	const onFail = ({msg, reason}) =>
+	const onFail = ({reason}, {msg}) =>
 	{
 		assert(["crashed", "fetch failed"].includes(reason));
 		assertStrictEquals(msg.isMsg, true);
@@ -280,7 +289,7 @@ Deno.test("exception", async () =>
 	};
 
 	const fails = [];
-	const onFail = ({msg, reason, error}) =>
+	const onFail = ({reason, error}, {msg}) =>
 	{
 		assertStrictEquals(reason, "exception");
 		assert(error.includes("EXPECTED EXCEPTION DUE TO #7"));

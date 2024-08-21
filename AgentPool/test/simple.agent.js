@@ -12,5 +12,8 @@ await agentInit(async msg =>
 	if(msg.delay)
 		await delay(msg.delay);
 
+	if(msg.memoryLeakTest)
+		console.error(`invisible error for id #${msg.id}`);
+
 	return {id : msg.id, nums : msg.nums.map(v => v*2), str : msg.str.reverse(), bool : !msg.bool};
 });

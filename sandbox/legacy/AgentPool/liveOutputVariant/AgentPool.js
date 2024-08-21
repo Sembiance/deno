@@ -4,11 +4,9 @@ import {webUtil, runUtil, fileUtil} from "xutil";
 import {XLog} from "xlog";
 
 // NOTE: Could replace web communication with a lower level, unix sock based, new binary ipcUtil communication (pascal style TextEncoder JSON stringify messages). While this may be faster/lighter, it's unlikely to provide any real benefit in this context
-// onSuccess(responseData, {msg, duration, errLog})
-// onFail({reason, error}, {msg, duration, errLog})
 export class AgentPool
 {
-	constructor(agentFilePath, {onSuccess, onFail, xlog=new XLog("warn")}={})
+	constructor(agentFilePath, {onSuccess, onFail, errFilePath, xlog=new XLog("warn")}={})
 	{
 		this.queue = [];
 		this.agents = [];
@@ -18,6 +16,7 @@ export class AgentPool
 		this.agentFilePath = agentFilePath;
 		this.onSuccess = onSuccess;
 		this.onFail = onFail;
+		this.errFilePath = errFilePath;
 		this.xlog = xlog;
 
 		this.logPrefix = `${xu.bracket(`${fg.white("AgentPool")}${fg.cyan("-")}${fg.peach(path.basename(this.agentFilePath, path.extname(this.agentFilePath)))}`)}`;
@@ -29,7 +28,7 @@ export class AgentPool
 		await Deno.mkdir(this.cwd, {recursive : true});
 	}
 
-	async start({qty=navigator.hardwareConcurrency, runEnv, sequential, interval}={})
+	async start({qty=navigator.hardwareConcurrency, runEnv, liveOutput, sequential, interval}={})
 	{
 		this.xlog.info`${this.logPrefix} Starting ${qty} agents...`;
 
@@ -37,7 +36,7 @@ export class AgentPool
 		{
 			const agent = {agentid : this.agents.length, running : false};
 			this.agents.push(agent);
-			this.startAgent(agent, {runEnv});	// we don't wait for this to finish, it runs in the background
+			this.startAgent(agent, {runEnv, liveOutput});	// we don't wait for this to finish, it runs in the background
 
 			if(sequential)
 				await xu.waitUntil(() => agent.running);
@@ -52,45 +51,63 @@ export class AgentPool
 		this.xlog.info`${this.logPrefix} Started.`;
 	}
 
-	async startAgent(agent, {runEnv}={})
+	async startAgent(agent, {runEnv, liveOutput}={})
 	{
 		agent.cwd = await fileUtil.genTempPath(this.cwd);
 		await Deno.mkdir(agent.cwd, {recursive : true});
 
 		agent.portFilePath = path.join(agent.cwd, "port");
-		agent.outFilePath = path.join(agent.cwd, "out");
-		agent.errFilePath = path.join(agent.cwd, "err");
+		if(!liveOutput)
+		{
+			agent.outFilePath = path.join(agent.cwd, "out");
+			agent.errFilePath = path.join(agent.cwd, "err");
+		}
 		agent.logPrefix = `${this.logPrefix}${fg.cyan("#")}${fg.white(agent.agentid)}`;
 
 		agent.send = async msg =>
 		{
+			this.xlog.debug`${agent.logPrefix} Sending msg: ${msg}`;
+
 			agent.startedAt = performance.now();
 
-			let sendResult = null;
+			// NOTE: Could add an AbortController below that is triggered if the agent crashes or if an optional 'timeout' is specified
+			const fetchOpts = {method : "POST", headers : {"content-type" : "application/json"}, body : JSON.stringify(msg)};
 			try
 			{
-				// NOTE: Could add an AbortController to fetch that is triggered if the agent crashes or if an optional 'timeout' is specified (see how it's done in xu.fetch)
-				const fetchResult = await fetch(agent.opURL, {method : "POST", headers : {"content-type" : "application/json"}, body : JSON.stringify(msg)});
-				const fetchText = await fetchResult.text();
-				sendResult = fetchResult.status===200 ? {cb : "onSuccess", r : xu.parseJSON(fetchText)} : {cb : "onFail", r : {reason : "exception", error : fetchText}};
+				// we don't use xu.fetch() because we care about the HTTP response headers
+				const fetchResult = await fetch(agent.opURL, fetchOpts);
+				const r = await fetchResult.text();
+				if(fetchResult.status===500)
+				{
+					if(this.onFail)
+						this.onFail({msg, reason : "exception", error : r});
+				}
+				else
+				{
+					if(this.onSuccess)
+						this.onSuccess(xu.parseJSON(r), {duration : agent.lastDuration});
+				}
 			}
 			catch(err)
 			{
-				sendResult = {cb : "onFail", r : {reason : agent.running ? "fetch failed" : "crashed", error : err.stack}};
+				if(this.onFail)
+					this.onFail({msg, reason : agent.running ? "fetch failed" : "crashed", error : err.stack});
 			}
+
 			agent.lastDuration = performance.now()-agent.startedAt;
 
-			// check to see if our err file size has changed, if so our previous msg produced errors
-			const sendResultMeta = {msg, duration : agent.lastDuration};
-			const errSize = (await Deno.stat(agent.errFilePath)).size;
-			if(errSize>agent.lastErrSize)
+			if(!liveOutput)
 			{
-				sendResultMeta.errLog = this.textDecoder.decode(await fileUtil.readFileBytes(agent.errFilePath, errSize-agent.lastErrSize, agent.lastErrSize)).trim();
-				agent.lastErrSize = errSize;
-			}
+				// check to see if our err file size has changed and if we have an errFilePath to write to, then write our current msg and error to that file
+				const errSize = (await Deno.stat(agent.errFilePath)).size;
+				if(errSize>agent.lastErrSize)
+				{
+					if(this.errFilePath)
+						await fileUtil.writeTextFile(this.errFilePath, `msg: ${JSON.stringify(msg)}\nerror: ${this.textDecoder.decode(await fileUtil.readFileBytes(agent.errFilePath, errSize-agent.lastErrSize, agent.lastErrSize)).trim()}\n\n`, {create : true, append : true});
 
-			if(this[sendResult.cb])
-				this[sendResult.cb](sendResult.r, sendResultMeta);
+					agent.lastErrSize = errSize;
+				}
+			}
 
 			delete agent.startedAt;
 		};
@@ -104,7 +121,7 @@ export class AgentPool
 			await fileUtil.unlink(agent.portFilePath);
 
 			if(!agent.startedOnce)
-				return this.xlog.error`${agent.logPrefix} agent crashed on first start attempt:\n${await fileUtil.exists(agent.errFilePath) ? await fileUtil.readTextFile(agent.errFilePath) : ""}`;
+				return this.xlog.error`${agent.logPrefix} agent crashed on first start attempt:\n${liveOutput ? "" : (await fileUtil.exists(agent.errFilePath) ? await fileUtil.readTextFile(agent.errFilePath) : "")}`;
 
 			if(agent.stopping)
 				return;
@@ -124,16 +141,21 @@ export class AgentPool
 			runOpts.env = {AGENT_CWD : agent.cwd};
 			if(runEnv)
 				Object.assign(runOpts.env, runEnv);
-
-			for(const logfilePath of [agent.outFilePath, agent.errFilePath])
+			if(liveOutput)
 			{
-				if(await fileUtil.exists(logfilePath))
-					await Deno.rename(logfilePath, await fileUtil.genTempPath(agent.cwd, path.basename(logfilePath)));
+				runOpts.liveOutput = true;
 			}
+			else
+			{
+				for(const logfilePath of [agent.outFilePath, agent.errFilePath])
+				{
+					if(await fileUtil.exists(logfilePath))
+						await Deno.rename(logfilePath, await fileUtil.genTempPath(agent.cwd, path.basename(logfilePath)));
+				}
 
-			runOpts.stdoutFilePath = agent.outFilePath;
-			runOpts.stderrFilePath = agent.errFilePath;
-
+				runOpts.stdoutFilePath = agent.outFilePath;
+				runOpts.stderrFilePath = agent.errFilePath;
+			}
 			runOpts.exitcb = agent.exitHandler;
 			agent.runner = await runUtil.run("deno", runUtil.denoArgs(this.agentFilePath), runOpts);
 
