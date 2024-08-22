@@ -99,6 +99,16 @@ Deno.test("log", async () =>
 	}
 });
 
+Deno.test("liveOutput", async () =>
+{
+	const pool = new AgentPool(path.join(import.meta.dirname, "liveOutput.agent.js"));
+	await pool.init();
+	await pool.start({qty : 3});
+	pool.process([].pushSequence(1, 50).map(id => ({id, liveOutput : id%7===0})));
+	assert(await xu.waitUntil(() => pool.empty(), {timeout : xu.SECOND*5}));
+	await pool.stop();
+});
+
 Deno.test("processDurations", async () =>
 {
 	const durations = [];
@@ -232,7 +242,7 @@ Deno.test("empty", async () =>
 Deno.test("crashRecover", async () =>
 {
 	const debugLog = [];
-	const xlog = new XLog("warn", {logger : v => debugLog.push(v)});
+	const xlog = new XLog("warn", {logger : v => debugLog.push(v.decolor())});
 
 	let pool = null;
 	const successes = [];

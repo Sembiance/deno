@@ -62,6 +62,7 @@ export class AgentPool
 		agent.send = async msg =>
 		{
 			agent.log.clear();
+			agent.liveOutput = !!msg.liveOutput;	// 'magic' key that tells the agent to output logs live, don't like that it has to be 'magic' but it's the least complicated
 			agent.startedAt = performance.now();
 
 			let sendResult = null;
@@ -87,10 +88,18 @@ export class AgentPool
 			delete agent.startedAt;
 		};
 
+		agent.logHandler = (type, line) =>
+		{
+			if(agent.liveOutput)
+				console[type==="err" ? "error" : "log"](line);
+			else
+				agent.log.push(line);
+		};
+
 		agent.exitHandler = async () =>
 		{
 			this.xlog[agent.stopping ? "info" : "warn"]`${agent.logPrefix} ${agent.stopping ? "Exited" : "Crashed"}...`;
-			if(!agent.stopping)
+			if(!agent.stopping && agent.log.length)
 				this.xlog.warn`${agent.logPrefix} ${agent.log.join("\n")}`;
 
 			agent.running = false;
@@ -119,8 +128,8 @@ export class AgentPool
 			if(runEnv)
 				Object.assign(runOpts.env, runEnv);
 
-			runOpts.stdoutcb = line => agent.log.push(line);
-			runOpts.stderrcb = line => agent.log.push(line);
+			runOpts.stdoutcb = line => agent.logHandler("out", line);
+			runOpts.stderrcb = line => agent.logHandler("err", line);
 
 			runOpts.exitcb = agent.exitHandler;
 			agent.runner = await runUtil.run("deno", runUtil.denoArgs(this.agentFilePath), runOpts);
