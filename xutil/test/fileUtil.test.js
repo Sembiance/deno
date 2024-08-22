@@ -99,6 +99,23 @@ Deno.test("lock", async () =>
 	await fileUtil.unlink(lockFilePath);
 });
 
+Deno.test("longPaths", async () =>
+{
+	const tmpDirPath = await fileUtil.genTempPath();
+	await Deno.mkdir(tmpDirPath);
+	await Deno.copyFile(path.join(FILES_DIR, "longPath.tar"), path.join(tmpDirPath, "longPath.tar"));
+	await runUtil.run("tar", ["-xf", "longPath.tar"], {cwd : tmpDirPath});
+
+	const srcFilePath = path.join(tmpDirPath, "wip/file/elarch-201205-Avtomatika.iso§/AdbeRdr1010_ru_RU.exe§/ARCHIVE_7Z/131§/Data1.cab§/AcroRd32.dll§/ASWF/10003§/images/69_com.adobe.portfolio.skins.BestExperienceAlertSkin__embed_mxml_____________assets_AX_Port_UpgradeReader_XL_N_png_10874260….adobe.portfolio.skins.BestExperienceAlertSkin__embed_mxml_____________assets_AX_Port_UpgradeReader_XL_N_png_1087426077/portfolio.managers.ThumbnailManager_videoImage_com.adobe.portfolio.mana/Details_Styles__embed_css_assets_CalendarIcon_pn/data.txt");
+	assertStrictEquals(await fileUtil.readTextFile(srcFilePath), "Hello, World!\n");
+	
+	const destFilePath = path.join(path.dirname(srcFilePath), "dataOut.txt");
+	await fileUtil.writeTextFile(destFilePath, "Hello, World 2!\n");
+	assertStrictEquals(await fileUtil.readTextFile(destFilePath), "Hello, World 2!\n");
+
+	await fileUtil.unlink(tmpDirPath, {recursive : true});
+});
+
 Deno.test("monitor", async () =>
 {
 	const dirFilePath = await fileUtil.genTempPath();

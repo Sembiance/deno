@@ -158,8 +158,9 @@ Deno.test("devMode", async () =>
 	const handlerFilePath = await fileUtil.genTempPath(undefined, "-webUtil-test-handler.js");
 	await fileUtil.writeTextFile(handlerFilePath, `export default async function testHandler() { return new Response("Dev Mode 1"); }\n`);
 
+	let routesMonitorStopper = null;
 	const port = Math.randomInt(30010, 39990);
-	const server = webUtil.serve({...serveOpts, port}, await webUtil.route({"/test" : handlerFilePath}, undefined, true), {xlog});
+	const server = webUtil.serve({...serveOpts, port}, await webUtil.route({"/test" : handlerFilePath}, undefined, {devMode : true, getStopper : cb => { routesMonitorStopper = cb; }}), {xlog});
 
 	let a = await fetch(`http://127.0.0.1:${port}/test`);
 	assertStrictEquals(a.status, 200);
@@ -170,11 +171,14 @@ Deno.test("devMode", async () =>
 	assertStrictEquals(await a.text(), "Dev Mode 1");
 
 	await fileUtil.writeTextFile(handlerFilePath, `export default async function testHandler() { return new Response("Dev Mode 2"); }\n`);
+	await delay(xu.SECOND);	// allow time for the fileMonitor to see the change and reload the handler
 
 	a = await fetch(`http://127.0.0.1:${port}/test`);
 	assertStrictEquals(a.status, 200);
 	assertStrictEquals(await a.text(), "Dev Mode 2");
 
 	server.stop();
+	await routesMonitorStopper();
 	await fileUtil.unlink(handlerFilePath);
+	await delay(xu.SECOND);	// give stopper time to stop the fileMonitor
 });
