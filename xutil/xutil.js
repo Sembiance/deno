@@ -9,7 +9,6 @@ export * as imageUtil from "./imageUtil.js";
 export * as printUtil from "./printUtil.js";
 export * as runUtil from "./runUtil.js";
 export * as sysUtil from "./sysUtil.js";
-export * as sockUtil from "./sockUtil.js";
 export * as urlUtil from "./urlUtil.js";
 export * as videoUtil from "./videoUtil.js";
 export * as webUtil from "./webUtil.js";

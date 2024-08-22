@@ -90,6 +90,8 @@ export class AgentPool
 		agent.exitHandler = async () =>
 		{
 			this.xlog[agent.stopping ? "info" : "warn"]`${agent.logPrefix} ${agent.stopping ? "Exited" : "Crashed"}...`;
+			if(!agent.stopping)
+				this.xlog.warn`${agent.logPrefix} ${agent.log.join("\n")}`;
 
 			agent.running = false;
 			delete agent.runner;
