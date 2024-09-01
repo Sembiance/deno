@@ -50,8 +50,9 @@ export async function route(routesRaw, args, {devMode, getStopper}={})
 			if(type!=="create" && type!=="modify")
 				return;
 
-			const routeEntry = routesEntries.find(([, {originalHandler}]) => originalHandler===filePath)[1];
-			routeEntry.handler = (await import(`${routeEntry.originalHandler}#${xu.randStr()}`)).default;
+			const routeEntry = routesEntries.find(([, {originalHandler}]) => originalHandler===filePath)?.[1];
+			if(routeEntry)
+				routeEntry.handler = (await import(`${routeEntry.originalHandler}#${xu.randStr()}`)).default;
 		});
 
 		if(getStopper)

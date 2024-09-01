@@ -324,7 +324,7 @@ export function denoRunOpts(o={})
 	return {...o, env : { ...denoEnv(), ...(o.env)}};
 }
 
-export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, dereferenceSymlinks, exclude, identityFilePath, include, inPlace, fast, filter, noOwnership, port, pretend, progress, stats, verbose}={})
+export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, dereferenceSymlinks, exclude, identityFilePath, include, inPlace, fast, filter, noOwnership, port, pretend, progress, stats, verbose}={})
 {
 	const r = [];
 
@@ -355,6 +355,9 @@ export function rsyncArgs(src, dest, {srcHost, destHost, deleteExtra, dereferenc
 
 	if(fast)
 		r.push("--no-compress");
+
+	if(bwlimit)
+		r.push(`--bwlimit=${bwlimit}`);
 
 	if(inPlace)
 		r.push("--inplace");

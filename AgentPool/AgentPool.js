@@ -124,7 +124,7 @@ export class AgentPool
 			const runOpts = runUtil.denoRunOpts();
 			runOpts.cwd = agent.cwd;
 			runOpts.detached = true;
-			runOpts.env = {AGENT_CWD : agent.cwd};
+			runOpts.env.AGENT_CWD = agent.cwd;
 			if(runEnv)
 				Object.assign(runOpts.env, runEnv);
 

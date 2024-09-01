@@ -185,6 +185,14 @@ Deno.test("manyInstances-virtualX", async () =>
 	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
 });
 
+Deno.test("virtualXGLX", async () =>
+{
+	const lines = (await runUtil.run("glxinfo", [], {virtualX : true, virtualXGLX : true}))?.stdout?.split("\n") || [];
+	assert(lines.includes("direct rendering: Yes"));
+	assert(lines.some(line => line.startsWith("OpenGL version string:")));
+	assert(lines.some(line => line.startsWith("OpenGL renderer string:")));
+});
+
 Deno.test("stdinFullBuffer", async () =>
 {
 	// ensure the full buffer of search.lst is sent to iconv, otherwise the result is truncated
