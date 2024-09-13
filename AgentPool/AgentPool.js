@@ -200,7 +200,7 @@ export class AgentPool
 		this.xlog.info`${this.logPrefix} Stopped.`;
 	}
 
-	status()
+	status({simpleLog}={})
 	{
 		const r = {cwd : this.cwd, queue : Array.from(this.queue), agents : []};
 		for(const agent of this.agents)
@@ -212,7 +212,12 @@ export class AgentPool
 					agentStatus[key] = agent[key];
 			}
 			if(agent.startedAt)
+			{
+				agentStatus.log = Array.from(agent.log || []);
+				if(simpleLog)
+					agentStatus.log = agentStatus.log.join("\n").decolor();
 				agentStatus.duration = performance.now()-agent.startedAt;
+			}
 			r.agents.push(agentStatus);
 		}
 		

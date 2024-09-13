@@ -315,7 +315,7 @@ export async function writeJSONLFile(filePath, lines)
 	file.close();
 
 	if(gz)
-		await runUtil.run("gzip", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
+		await runUtil.run("pigz", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
 }
 
 /** writes the data as text to filePath. We wrap Deno.writeTextFile() because we needed to do it for readTextFile() and this keeps clear that we always use fileUtil.* for these two ops */
