@@ -8,6 +8,7 @@ export * as hashUtil from "./hashUtil.js";
 export * as imageUtil from "./imageUtil.js";
 export * as printUtil from "./printUtil.js";
 export * as runUtil from "./runUtil.js";
+export * as sqliteUtil from "./sqliteUtil.js";
 export * as sysUtil from "./sysUtil.js";
 export * as urlUtil from "./urlUtil.js";
 export * as videoUtil from "./videoUtil.js";

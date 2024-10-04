@@ -51,6 +51,7 @@ Deno.test("exists", async () =>
 {
 	assertStrictEquals(await fileUtil.exists(path.join(FILES_DIR, "input.png")), true);
 	assertStrictEquals(await fileUtil.exists(path.join(FILES_DIR, "noSuchFileHereMuHahaha")), false);
+	assertStrictEquals(await fileUtil.exists(path.join(FILES_DIR, "input.png", "subFileDoesNotExist")), false);
 });
 
 Deno.test("genTempPath", async () =>
@@ -114,6 +115,26 @@ Deno.test("longPaths", async () =>
 	assertStrictEquals(await fileUtil.readTextFile(destFilePath), "Hello, World 2!\n");
 
 	await fileUtil.unlink(tmpDirPath, {recursive : true});
+});
+
+Deno.test("mkdir", async () =>
+{
+	const baseTempDirPath = await fileUtil.genTempPath();
+	let tempDirPath = baseTempDirPath;
+	await fileUtil.mkdir(tempDirPath);
+	assert((await Deno.stat(tempDirPath)).isDirectory);
+
+	tempDirPath = path.join(tempDirPath, "a", "b", "c");
+	await fileUtil.mkdir(tempDirPath, {recursive : true});
+	assert((await Deno.stat(tempDirPath)).isDirectory);
+
+	tempDirPath = path.join(tempDirPath, "file");
+	await fileUtil.writeTextFile(tempDirPath, "Hello, World!");
+	tempDirPath = path.join(tempDirPath, "nope");
+	await fileUtil.mkdir(tempDirPath, {recursive : true, force : true});
+	assert((await Deno.stat(tempDirPath)).isDirectory);
+
+	await fileUtil.unlink(baseTempDirPath, {recursive : true});
 });
 
 Deno.test("monitor", async () =>

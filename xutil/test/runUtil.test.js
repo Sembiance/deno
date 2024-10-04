@@ -53,6 +53,13 @@ Deno.test("env", async () =>
 	assertStrictEquals(stdout.includes("RUNUTIL_ENV_TEST=47"), true);
 });
 
+Deno.test("inheritEnvNoUndefined", async () =>
+{
+	const {stdout} = await runUtil.run("printenv", [], {inheritEnv : ["NOSUCHVAR", "USER"]});
+	assertStrictEquals(stdout.includes(`USER=${(await runUtil.run("whoami")).stdout.trim()}`), true);
+	assert(!stdout.includes("NOSUCHVAR"));
+});
+
 Deno.test("liveOutput", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("echo", ["\nLive Output Test. Normal to see this message.\n"], {liveOutput : true});

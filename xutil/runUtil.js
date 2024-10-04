@@ -110,6 +110,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		Object.assign(runOpts.env, Object.fromEntries(Object.entries(env).map(([k, v]) => ([k, v.toString()]))));
 	}
 
+	// ensure none of the env vars are undefined
+	if(runOpts.env && Object.isObject(runOpts.env))
+		runOpts.env = Object.fromEntries(Object.entries(runOpts.env).filter(([, v]) => v!==undefined));
+
 	if(cwd)
 		runOpts.cwd = cwd;
 
@@ -324,7 +328,7 @@ export function denoRunOpts(o={})
 	return {...o, env : { ...denoEnv(), ...(o.env)}};
 }
 
-export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, dereferenceSymlinks, exclude, identityFilePath, include, inPlace, fast, filter, noOwnership, port, pretend, progress, stats, verbose}={})
+export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, dereferenceSymlinks, exclude, identityFilePath, include, inPlace, fast, filter, noOwnership, port, quiet, pretend, progress, stats, verbose}={})
 {
 	const r = [];
 
@@ -349,6 +353,9 @@ export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, d
 
 	if(deleteExtra)
 		r.push("--delete");
+
+	if(quiet)
+		r.push("--quiet");
 
 	if(filter)
 		r.push("-f", `merge ${filter}`);

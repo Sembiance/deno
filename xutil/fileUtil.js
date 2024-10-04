@@ -45,6 +45,10 @@ export async function exists(v)
 		// If we get a NotFound error, then we simply return false
 		if(err instanceof Deno.errors.NotFound)
 			return false;
+
+		// If any part of the checked path that is marked as a directory is actually a file, an error is thrown, so we check for that and then clearly return false as the subFile doesn't exist within a file
+		if(err?.message?.startsWith("Not a directory"))
+			return false;
 		
 		// Otherwise we probably got a permission denied or some other error, so throw that
 		throw err;
@@ -102,6 +106,30 @@ export async function unlock(file)
 		throw new Error("Requires a Deno.FsFile passed in");
 	await file.unlock();
 	file.close();
+}
+
+export async function mkdir(dirPath, {force, recursive}={})
+{
+	try
+	{
+		await Deno.mkdir(dirPath, {recursive : !!recursive});
+	}
+	catch
+	{
+		if(!force)
+			return;
+		
+		let parentDirPath = dirPath;
+		while(parentDirPath!=="/")
+		{
+			if((await xu.tryFallbackAsync(async () => await Deno.stat(parentDirPath)))?.isFile)	// eslint-disable-line no-loop-func
+				await Deno.remove(parentDirPath);
+
+			parentDirPath = path.dirname(parentDirPath);
+		}
+
+		await Deno.mkdir(dirPath, {recursive : !!recursive});
+	}
 }
 
 export async function monitor(dirPath, cb)
@@ -296,6 +324,9 @@ export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=fal
 export async function unlink(targetPath, o={})
 {
 	if(!(await exists(targetPath)))
+		return;
+
+	if(!o.recursive && (await Deno.stat(targetPath))?.isDirectory)
 		return;
 	
 	return await Deno.remove(targetPath, o);
