@@ -67,12 +67,17 @@ export class UInt8ArrayReader
 		return r;
 	}
 
-	strNullTerminated(encoding="ascii")
+	strTerminated(terminator=0x00, encoding="ascii")
 	{
 		const start = this.pos;
-		while(this.uint8(this.pos)!==0)
+		while(this.uint8(this.pos)!==terminator)
 			;
 		return this.arr.getString(start, (this.pos-1)-start, encoding);
+	}
+
+	strNullTerminated(encoding="ascii")
+	{
+		return this.strTerminated(0x00, encoding);
 	}
 
 	// Reads a signed or unsigned byte
