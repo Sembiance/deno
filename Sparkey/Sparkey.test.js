@@ -24,6 +24,24 @@ Deno.test("putGet", async () =>
 	db.unload();
 });
 
+Deno.test("putFile", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putFile");
+	const db = new Sparkey(dbFilePathPrefix);
+
+	const srcFilePath = path.join(import.meta.dirname, "test.png");
+	assertStrictEquals(await hashUtil.hashFile("blake3", srcFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
+	assertStrictEquals(await db.putFile("testFileData", srcFilePath));
+
+	const tmpFilePath = await fileUtil.genTempPath(undefined, "-Sparkey-test-binary.png");
+	await Deno.writeFile(tmpFilePath, db.get("testFileData"));
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
+	assertStrictEquals(await hashUtil.hashFile("blake3", tmpFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
+
+	await db.truncate();
+	db.unload();
+});
+
 Deno.test("putMany", async () =>
 {
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");

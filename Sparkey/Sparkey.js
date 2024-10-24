@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import {path} from "std";
-import {fileUtil} from "xutil";
+import {fileUtil, runUtil} from "xutil";
 
 export class Sparkey
 {
@@ -8,6 +8,7 @@ export class Sparkey
 	{
 		this.encoder = new TextEncoder();
 		this.decoder = new TextDecoder();
+		this.dbFilePathPrefix = dbFilePathPrefix;
 		this.dbFilePathPrefixBuffer = this.encoder.encode(dbFilePathPrefix);
 
 		this.sparkey = Deno.dlopen(path.join(import.meta.dirname, "sparkey.so"), {
@@ -41,6 +42,11 @@ export class Sparkey
 	{
 		const keyBuffer = this.encoder.encode(k);
 		return !!this.sparkey.symbols.put(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length, v, v.length);
+	}
+
+	async putFile(k, filePath)
+	{
+		await runUtil.run(path.join(import.meta.dirname, "sparkey_put", "sparkey_put"), [this.dbFilePathPrefix, k, filePath]);
 	}
 
 	putMany(keys, vals)
