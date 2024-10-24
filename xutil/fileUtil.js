@@ -33,11 +33,11 @@ export async function emptyDir(dirPath)
 }
 
 /** Returns true if the file/dir v exists, false otherwise */
-export async function exists(v)
+export async function exists(v, {lstat}={})
 {
 	try
 	{
-		await Deno.stat(v);
+		await Deno[lstat ? "lstat" : "stat"](v);
 		return true;
 	}
 	catch(err)
