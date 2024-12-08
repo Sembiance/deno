@@ -31,7 +31,7 @@ export class AgentPool
 
 	async start({qty=navigator.hardwareConcurrency, runEnv, sequential, interval}={})
 	{
-		this.xlog.info`${this.logPrefix} Starting ${qty} agents...`;
+		this.xlog.debug`${this.logPrefix} Starting ${qty} agents...`;
 
 		while(qty)
 		{
@@ -49,7 +49,7 @@ export class AgentPool
 
 		await xu.waitUntil(() => this.agents.every(agent => agent.running));
 
-		this.xlog.info`${this.logPrefix} Started.`;
+		this.xlog.debug`${this.logPrefix} Started.`;
 	}
 
 	async startAgent(agent, {runEnv}={})
@@ -98,7 +98,7 @@ export class AgentPool
 
 		agent.exitHandler = async () =>
 		{
-			this.xlog[agent.stopping ? "info" : "warn"]`${agent.logPrefix} ${agent.stopping ? "Exited" : "Crashed"}...`;
+			this.xlog[agent.stopping ? "debug" : "warn"]`${agent.logPrefix} ${agent.stopping ? "Exited" : "Crashed"}...`;
 			if(!agent.stopping && agent.log.length)
 				this.xlog.warn`${agent.logPrefix} ${agent.log.join("\n")}`;
 
@@ -117,7 +117,7 @@ export class AgentPool
 
 		agent.start = async () =>
 		{
-			this.xlog.info`${agent.logPrefix} Starting...`;
+			this.xlog.debug`${agent.logPrefix} Starting...`;
 
 			agent.log.clear();
 
@@ -140,7 +140,7 @@ export class AgentPool
 			agent.running = true;
 			agent.startedOnce = true;
 
-			this.xlog.info`${agent.logPrefix} Started on port ${agent.port}...`;
+			this.xlog.debug`${agent.logPrefix} Started on port ${agent.port}...`;
 		};
 
 		agent.stop = async () =>
@@ -188,7 +188,7 @@ export class AgentPool
 
 	async stop({keepCWD}={})
 	{
-		this.xlog.info`${this.logPrefix} Stopping ${this.agents.length} agents...`;
+		this.xlog.debug`${this.logPrefix} Stopping ${this.agents.length} agents...`;
 
 		this.stopping = true;
 		await this.agents.parallelMap(async agent => await agent.stop(), this.agents.length);
@@ -197,7 +197,7 @@ export class AgentPool
 		if(!keepCWD)
 			await fileUtil.unlink(this.cwd, {recursive : true});
 
-		this.xlog.info`${this.logPrefix} Stopped.`;
+		this.xlog.debug`${this.logPrefix} Stopped.`;
 	}
 
 	status({simpleLog}={})

@@ -7,7 +7,7 @@ import {AgentPool} from "AgentPool";
 Deno.test("startStop", async () =>
 {
 	const debugLog = [];
-	const xlog = new XLog("info", {logger : v => debugLog.push(v)});
+	const xlog = new XLog("debug", {logger : v => debugLog.push(v)});
 
 	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {xlog});
 	await pool.init();

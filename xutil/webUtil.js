@@ -52,7 +52,17 @@ export async function route(routesRaw, args, {devMode, getStopper}={})
 
 			const routeEntry = routesEntries.find(([, {originalHandler}]) => originalHandler===filePath)?.[1];
 			if(routeEntry)
-				routeEntry.handler = (await import(`${routeEntry.originalHandler}#${xu.randStr()}`)).default;
+			{
+				try
+				{
+					routeEntry.handler = (await import(`${routeEntry.originalHandler}#${xu.randStr()}`)).default;
+				}
+				catch(err)
+				{
+					if(args?.xlog)
+						args.xlog.error`Error loading handler: ${err}`;
+				}
+			}
 		});
 
 		if(getStopper)

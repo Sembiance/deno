@@ -130,7 +130,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		const xvfbArgs = [`:${xvfbPort}`, `${virtualXGLX ? "+" : "-"}extension`, "GLX", "-nolisten", "tcp", "-nocursor", "-ac"];
 		xvfbArgs.push("-xkbdir", "/usr/share/X11/xkb");	// Gentoo puts the xkb files here
 		xvfbArgs.push("-screen", "0", "1920x1080x24");
-		xvfbProc = new Deno.Command("Xvfb", {args : xvfbArgs, clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
+		xvfbProc = new Deno.Command("/usr/bin/Xvfb", {args : xvfbArgs, clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 	
 		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*20}))
 			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 20 seconds`);
@@ -143,7 +143,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			if(virtualXVNCPort===true)
 				virtualXVNCPort = getAvailablePort();
 
-			x11vncProc = new Deno.Command("x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`, "-nomodtweak"], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
+			x11vncProc = new Deno.Command("/usr/bin/x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-rfbport", `${virtualXVNCPort}`, "-nomodtweak"], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 		}
 	}
 

@@ -55,7 +55,7 @@ Deno.test("env", async () =>
 
 Deno.test("inheritEnvNoUndefined", async () =>
 {
-	const {stdout} = await runUtil.run("printenv", [], {inheritEnv : ["NOSUCHVAR", "USER"]});
+	const {stdout} = await runUtil.run("/usr/bin/printenv", [], {inheritEnv : ["NOSUCHVAR", "USER"]});
 	assertStrictEquals(stdout.includes(`USER=${(await runUtil.run("whoami")).stdout.trim()}`), true);
 	assert(!stdout.includes("NOSUCHVAR"));
 });
@@ -141,9 +141,9 @@ Deno.test("stdoutcb2", async () =>
 
 Deno.test("stderrBasic", async () =>
 {
-	const {stdout, stderr, status} = await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
+	const {stdout, stderr, status} = await runUtil.run("/bin/cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
 	assertStrictEquals(stdout.length, 0);
-	assertStrictEquals(stderr, `cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
+	assertStrictEquals(stderr, `/bin/cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
 	assertStrictEquals(status.success, false);
 	assertStrictEquals(status.code, 1);
 });
@@ -175,8 +175,8 @@ Deno.test("stdoutFilePathRelative", async () =>
 Deno.test("stderrFilePath", async () =>
 {
 	const outFilePath = await fileUtil.genTempPath();
-	await runUtil.run("cat", ["/tmp/ANonExistantFile_omg this isn't here"], {stderrFilePath : outFilePath});
-	assertStrictEquals(await fileUtil.readTextFile(outFilePath), `cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
+	await runUtil.run("/bin/cat", ["/tmp/ANonExistantFile_omg this isn't here"], {stderrFilePath : outFilePath});
+	assertStrictEquals(await fileUtil.readTextFile(outFilePath), `/bin/cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
 	await fileUtil.unlink(outFilePath);
 });
 
@@ -188,8 +188,8 @@ Deno.test("manyInstances-normal", async () =>
 
 Deno.test("manyInstances-virtualX", async () =>
 {
-	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
-	assertStrictEquals(results.filter(result => result.startsWith("Usage: xclock")).length, 1000);
+	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("/usr/bin/xclock", ["--help"], {virtualX : true})))).map(o => o.stderr);
+	assertStrictEquals(results.filter(result => result.startsWith("Usage: /usr/bin/xclock")).length, 1000);
 });
 
 Deno.test("virtualXGLX", async () =>
@@ -254,8 +254,8 @@ Deno.test("virtualX-single", async () =>
 {
 	let {stderr} = await runUtil.run("xclock", ["--help"], {timeout : xu.SECOND*2});
 	assertStrictEquals(stderr.includes("Can't open display"), true, stderr);
-	({stderr} = await runUtil.run("xclock", ["--help"], {virtualX : true}));
-	assertStrictEquals(stderr.startsWith("Usage: xclock"), true, stderr);
+	({stderr} = await runUtil.run("/usr/bin/xclock", ["--help"], {virtualX : true}));
+	assertStrictEquals(stderr.startsWith("Usage: /usr/bin/xclock"), true, stderr);
 });
 
 Deno.test("virtualX-timeout", async () =>
