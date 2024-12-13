@@ -5,7 +5,7 @@ import {path} from "std";
 /** Returns the [width, height] of the image at imageFilePath */
 export async function getWidthHeight(imageFilePath, {timeout=xu.MINUTE*5}={})
 {
-	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", "%wx%h", `./${path.basename(imageFilePath)}[0]`], {limitRAM : xu.GB*2, cwd : path.dirname(imageFilePath), timeout});
+	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", "%wx%h", `./${path.basename(imageFilePath)}[0]`], {cwd : path.dirname(imageFilePath), timeout});
 	
 	const parts = stdout.split("x");
 	if(!parts || parts.length!==2)
@@ -53,7 +53,7 @@ export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOn
 		opaque          : "%[opaque]"
 	};
 
-	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", Object.entries(PROPS).map(([k, v]) => `${k}:${v}`).join("\\n"), `./${path.basename(imageFilePath)}`], {timeout, limitRAM : xu.GB*2, cwd : path.dirname(imageFilePath)});
+	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", Object.entries(PROPS).map(([k, v]) => `${k}:${v}`).join("\\n"), `./${path.basename(imageFilePath)}`], {timeout, cwd : path.dirname(imageFilePath)});
 	if(stdout.length===0 || stdout.includes("corrupt image"))	// Old node check, may not need with deno:  || stdout.toLowerCase().startsWith("error: command failed")
 		return {...imageInfo, err : stderr};
 	

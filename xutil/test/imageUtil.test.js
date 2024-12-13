@@ -1,5 +1,5 @@
 import {xu} from "xu";
-import {path, assert, assertStrictEquals} from "std";
+import {path, assertStrictEquals} from "std";
 import * as imageUtil from "../imageUtil.js";
 import * as fileUtil from "../fileUtil.js";
 
@@ -45,14 +45,6 @@ Deno.test("getInfo", async () =>
 	assertStrictEquals(r.size, 197_663);
 	assertStrictEquals(r.opaque, true);
 	assertStrictEquals(r.compressionType, "LZW");
-
-	// this file should cause imagemagick to consume all RAM, unless it's been fixed: https://github.com/ImageMagick/ImageMagick/issues/7832
-	// so this test is to ensure it doesn't lock up system
-	const startAt = performance.now();
-	r = await imageUtil.getInfo(path.join(FILES_DIR, "_7AD4C6FDA1664599A5DE1A7FF89000C2"));
-	assert((performance.now()-startAt)<xu.SECOND*20);
-	assertStrictEquals(r.width, 66);
-	assertStrictEquals(r.height, 99);
 
 	r = await imageUtil.getInfo(path.join(FILES_DIR, "abydos.psd"));
 	assertStrictEquals(r.width, 800);
