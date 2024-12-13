@@ -60,6 +60,17 @@ Deno.test("inheritEnvNoUndefined", async () =>
 	assert(!stdout.includes("NOSUCHVAR"));
 });
 
+Deno.test("limitRAM", async () =>
+{
+	const {stdout, status} = await runUtil.run(path.join(import.meta.dirname, "consumeRAM.sh"), [], {limitRAM : xu.MB*250});
+	assertStrictEquals(status.success, false);
+	assertStrictEquals(status.code, 2);
+	const lastUsed = +stdout.trim().split("\n").at(-1);
+	assert(lastUsed>249_000);
+	assert(lastUsed<251_000);
+});
+
+
 Deno.test("liveOutput", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("echo", ["\nLive Output Test. Normal to see this message.\n"], {liveOutput : true});

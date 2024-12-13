@@ -47,6 +47,7 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   exitcb				A callback to be called when the process exits, useful in detached mode
  *   inheritEnv         Set to true to inherit ALL env from current user or an array of keys to inherit. Default (see below)
  *   killChildren		Kill children of the process as well on timeout
+ *   limitRAM           Limit RAM to the given number of bytes (or set to true for the default: 2GB)
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
  *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe
  *	 stdinData          If set, this will be sent to stdin
@@ -69,7 +70,7 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  *   xlog               If set, stdout/stderr will be redirected to the logger
  */
-export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, liveOutput, exitcb,
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, limitRAM, liveOutput, exitcb,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
 	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer,
@@ -95,6 +96,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		if(stderrUnbuffer)
 			runArgs.unshift("-e0");
 		runCmd = "stdbuf";
+	}
+
+	if(limitRAM)
+	{
+		runArgs.unshift(((limitRAM===true ? (xu.GB*2) : limitRAM)/xu.KB).toString(), runCmd);
+		runCmd = path.join(import.meta.dirname, "..", "bin", "runWithRAMLimit.sh");
 	}
 
 	if(inheritEnv!==true)
