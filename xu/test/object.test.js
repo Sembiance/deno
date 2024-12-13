@@ -1,5 +1,4 @@
 import {} from "../object.js";
-import {diffUtil} from "xutil";
 import {assertEquals, assertNotStrictEquals, assertStrictEquals} from "std";
 
 Deno.test("clear", () =>

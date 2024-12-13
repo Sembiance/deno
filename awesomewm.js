@@ -61,27 +61,9 @@ export async function runAndGetWindow(cmd, args, options={})
 	return {p, wid : pWID};
 }
 
-export async function cycleClients(screenNum, clockwise=false)
-{
-	await runAwesomeCode(`local awful = require("awful")
-
-		for s in screen do
-			if s.index == ${screenNum===null ? "mouse.screen.index" : screenNum} then
-				awful.client.cycle(${clockwise ? "true" : "false"}, s)
-			end
-		end`);
-}
-
-export async function fixTerminalWallpaper(screenNum=null)
-{
-	await cycleClients(screenNum, true);
-	await cycleClients(screenNum, false);
-}
-
 export async function runTerminal(cmd, options)
 {
 	const r = await runAndGetWindow("urxvt", []);
-	await fixTerminalWallpaper();
 	if(cmd || options?.tabName)
 	{
 		await delay(200);
@@ -100,7 +82,6 @@ export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0, ta
 
 	if(newTab)
 	{
-		await fixTerminalWallpaper();
 		await delay(50);
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Right"], {inheritEnv : true});
 		await delay(50);

@@ -1,5 +1,10 @@
 import {xu} from "xu";
 
+export function createTable(db, tableid, cols, props)
+{
+	return db.exec(`CREATE TABLE ${tableid} (${Object.entries(cols).map(([k, v]) => `${k} ${v}`).join(", ")}${props ? `, ${props}` : ""})`);
+}
+
 export function dropTable(db, tableid)
 {
 	return db.exec(`DROP TABLE IF EXISTS ${tableid}`);

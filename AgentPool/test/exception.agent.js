@@ -1,6 +1,5 @@
 import {xu} from "xu";
-import {path, delay} from "std";
-import {fileUtil} from "xutil";
+import {delay} from "std";
 import {agentInit} from "AgentPool";
 
 await delay(xu.SECOND);
