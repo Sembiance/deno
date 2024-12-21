@@ -28,9 +28,12 @@ export function prepare(db, statementRaw)
 				}
 				catch (err)
 				{
-					if(!err.toString().includes("database is locked"))
-						console.error(err, r, n, args);
-					return false;
+					if(err.toString().includes("database is locked"))
+						return false;
+
+					console.error(err, r, n, args);
+					stmtResult = err;
+					return true;
 				}
 
 				return true;

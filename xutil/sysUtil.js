@@ -72,10 +72,8 @@ export async function optimalParallelism(totalCount)
 	if(totalCount<5)
 		return 1;
 
-	let optimalCount = 1;
 	const idleUsage = await getCPUIdleUsage();
-	optimalCount = Math.max(1, Math.floor(idleUsage.scale(0, 100, 1, navigator.hardwareConcurrency*0.50)));
-	return optimalCount;
+	return Math.max(1, Math.floor(idleUsage.scale(0, 100, 1, navigator.hardwareConcurrency*0.50)));
 }
 
 export async function getAudioPlaybackDevices()

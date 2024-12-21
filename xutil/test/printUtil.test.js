@@ -18,7 +18,7 @@ Deno.test("multiLineBarChart", () => assertStrictEquals(base64Encode(printUtil.m
 const data = {"Caught In Providence":32290.374628999987,"Modern Vintage Gamer":113.513397,"EEVblog":714.487251,"Veritasium":352.376326,"CNBC":909.059292,"Jim Sterling":257.334544,"RetroGamerNation":126.720849,"Vox":223.839573,"Call of Duty":112.459649,"Fran Blanche":183.708694,"zefrank1":618.0456609999999,"Co-Optimus":1004.973411,"This Does Not Compute":228.332736,"Linus Tech Tips":113.831329,"ShortCircuit":114.89264,"Dan Wood":82.866959,"FilmCow":310.953356,"Tech Tangents":235.21229,"City Beautiful":60.568931,"The Dice Tower":475.626048,"SpaceX":20.56176};	// eslint-disable-line @stylistic/key-spacing, unicorn/numeric-separators-style, @stylistic/comma-spacing
 data[xu.cf.fg.violet("A Critical Hit! | \"Critical Kate\" Willært")] = 23.762_941;
 Deno.test("columnizeObject", () => assertStrictEquals(base64Encode(printUtil.columnizeObject(data, {
-	formatter : (kv) => { kv[1] = kv[1]<1000 ? `${Math.round(kv[1])}M` : `${Math.round(kv[1]/1000)}G`; return kv; },	// eslint-disable-line @stylistic/arrow-parens
+	formatter : kv => { kv[1] = kv[1]<1000 ? `${Math.round(kv[1])}M` : `${Math.round(kv[1]/1000)}G`; return kv; },
 	header    : ["Show Name", "Disk Usage"],
 	alignment : ["l", "r"],
 	sorter    : (a, b) => (b[1]-a[1])})), "ICAgICAgICAgICAgICAgIFNob3cgTmFtZSAgICAgICAgICAgICAgICAgICAgIERpc2sgVXNhZ2UgICAgIAobWzk2bS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tG1swbSAgICAgG1s5Nm0tLS0tLS0tLS0tG1swbSAgICAgCkNhdWdodCBJbiBQcm92aWRlbmNlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMzJHICAgICAKQ28tT3B0aW11cyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMUcgICAgIApDTkJDICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgOTA5TSAgICAgCkVFVmJsb2cgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA3MTRNICAgICAKemVmcmFuazEgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDYxOE0gICAgIApUaGUgRGljZSBUb3dlciAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgNDc2TSAgICAgClZlcml0YXNpdW0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAzNTJNICAgICAKRmlsbUNvdyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDMxMU0gICAgIApKaW0gU3RlcmxpbmcgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMjU3TSAgICAgClRlY2ggVGFuZ2VudHMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAyMzVNICAgICAKVGhpcyBEb2VzIE5vdCBDb21wdXRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDIyOE0gICAgIApWb3ggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMjI0TSAgICAgCkZyYW4gQmxhbmNoZSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAxODRNICAgICAKUmV0cm9HYW1lck5hdGlvbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDEyN00gICAgIApTaG9ydENpcmN1aXQgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMTE1TSAgICAgCkxpbnVzIFRlY2ggVGlwcyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAxMTRNICAgICAKTW9kZXJuIFZpbnRhZ2UgR2FtZXIgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDExNE0gICAgIApDYWxsIG9mIER1dHkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMTEyTSAgICAgCkRhbiBXb29kICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgODNNICAgICAKQ2l0eSBCZWF1dGlmdWwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA2MU0gICAgIAobWzM4OzU7OTNtQSBDcml0aWNhbCBIaXQhIHwgIkNyaXRpY2FsIEthdGUiIFdpbGzDpnJ0G1swbSAgICAgICAgICAgIDI0TSAgICAgClNwYWNlWCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMjFNICAgICAK"));
@@ -49,7 +49,7 @@ Deno.test("progressSimple", async () =>
 	for(let i=0;i<=555;i++)
 	{
 		if(Math.randomInt(1, 5)===1)
-			i++;
+			i++;	// eslint-disable-line sonarjs/updated-loop-counter
 
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)
@@ -63,7 +63,7 @@ Deno.test("progressDurationPer", async () =>
 	for(let i=0;i<=5555;i++)
 	{
 		if(Math.randomInt(1, 4)===1)
-			i++;
+			i++;	// eslint-disable-line sonarjs/updated-loop-counter
 
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 3)===1)
@@ -84,7 +84,7 @@ Deno.test("progressMaxChanges", async () =>
 		}
 
 		if(Math.randomInt(1, 5)===1)
-			i++;
+			i++;	// eslint-disable-line sonarjs/updated-loop-counter
 
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)
@@ -109,7 +109,7 @@ Deno.test("progressMaxStartZero", async () =>
 		}
 
 		if(Math.randomInt(1, 5)===1)
-			i++;
+			i++;	// eslint-disable-line sonarjs/updated-loop-counter
 
 		bar.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)

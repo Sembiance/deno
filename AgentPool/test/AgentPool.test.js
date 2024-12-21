@@ -279,7 +279,6 @@ Deno.test("exception", async () =>
 {
 	const xlog = new XLog("warn");
 
-	let pool = null;
 	const successes = [];
 	const onSuccess = r =>
 	{
@@ -299,7 +298,7 @@ Deno.test("exception", async () =>
 		fails.push(msg);
 	};
 
-	pool = new AgentPool(path.join(import.meta.dirname, "exception.agent.js"), {onSuccess, onFail, xlog});
+	const pool = new AgentPool(path.join(import.meta.dirname, "exception.agent.js"), {onSuccess, onFail, xlog});
 	await pool.init();
 	await pool.start({qty : 2});
 	pool.process([].pushSequence(1, 10).map(v => ({isMsg : true, v})));

@@ -1,1 +1,0 @@
-/mnt/compendium/DevLab/common/eslint/deno.eslintrc.js

@@ -413,7 +413,7 @@ export async function getXVFBNum()
 
 	let xvfbCounter = +(await xu.tryFallbackAsync(async () => await fileUtil.readTextFile(xvfbNumCounterFilePath), XVFB_NUM_MIN));
 
-	let xvfbNum = null;
+	let xvfbNum;
 	do
 	{
 		xvfbNum = xvfbCounter++;

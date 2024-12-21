@@ -66,7 +66,7 @@ export async function runTerminal(cmd, options)
 	const r = await runAndGetWindow("urxvt", []);
 	if(cmd || options?.tabName)
 	{
-		await delay(200);
+		await delay(150);
 		await runTerminalCommand(r.wid, cmd, options);
 	}
 	return r;
@@ -82,11 +82,11 @@ export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0, ta
 
 	if(newTab)
 	{
-		await delay(50);
+		await delay(40);
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Right"], {inheritEnv : true});
-		await delay(50);
+		await delay(40);
 		await runUtil.run("xdotool", ["key", "--window", wid, "shift+Left"], {inheritEnv : true});
-		await delay(50);
+		await delay(40);
 	}
 
 	if(tabName)
@@ -100,13 +100,11 @@ export async function runTerminalCommand(wid, cmd, {newTab=false, cmdDelay=0, ta
 
 export async function setTerminalTabName(wid, tabName)
 {
-	await delay(300);
 	await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "shift+Up"], {inheritEnv : true});
-	await delay(150);
+	await delay(125);
 	await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, `${tabName}`], {inheritEnv : true});
-	await delay(150);
+	await delay(125);
 	await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "Return"], {inheritEnv : true});
-	await delay(250);
 }
 
 // naughty.notify({ preset = naughty.config.presets.normal, title = "debug message", text = string.format("targetScreenNum %d  s.index %d", targetScreenNum, s.index) })

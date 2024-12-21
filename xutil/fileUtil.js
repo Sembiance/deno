@@ -66,8 +66,8 @@ export async function genTempPath(prefix, suffix=".tmp", {maxFilenameLength}={})
 		catch {	TMP_DIR_PATH = "/tmp"; }
 	}
 	
-	let r = null;
-	let randPart = null;
+	let r;
+	let randPart;
 	const fullPrefix = path.join(prefix?.startsWith("/") ? "" : TMP_DIR_PATH, prefix || "");
 
 	do

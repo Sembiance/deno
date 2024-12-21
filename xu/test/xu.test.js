@@ -152,9 +152,9 @@ Deno.test("waitUntilStopEarly", async () =>
 	assertStrictEquals(count, 10);
 });
 
-/////////////////////////////////////////////////////
-// At bottom because these tests output to console //
-/////////////////////////////////////////////////////
+/*
+  At bottom because these tests output to console
+*/
 Deno.test("color", () =>
 {
 	console.log(`color test: ${xu.cf.fg.magenta("magenta")} and regular here`);

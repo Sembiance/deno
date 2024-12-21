@@ -65,7 +65,7 @@ export class AgentPool
 			agent.liveOutput = !!msg.liveOutput;	// 'magic' key that tells the agent to output logs live, don't like that it has to be 'magic' but it's the least complicated
 			agent.startedAt = performance.now();
 
-			let sendResult = null;
+			let sendResult;
 			try
 			{
 				// NOTE: Could add an AbortController to fetch that is triggered if the agent crashes or if an optional 'timeout' is specified (see how it's done in xu.fetch)
@@ -256,7 +256,7 @@ export async function agentInit(handler, {xlog=new XLog("warn")}={})
 
 	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request =>
 	{
-		let r = null;
+		let r;
 
 		try
 		{
