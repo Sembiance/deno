@@ -3,36 +3,38 @@ import {XLog} from "./xlog.js";
 import {assertStrictEquals, delay, assert} from "std";
 import {fileUtil} from "xutil";
 
-Deno.test("logger", () =>
+Deno.test("clone", () =>
 {
-	const xlog = new XLog();
-	const debugLog = [];
-	xlog.logger = v => debugLog.push(v);
-	xlog.warn`\nxlog test message`;
-	xlog.level = "trace";
-	xlog.debug`xlog test message with string: ${"hello"}`;
-	xlog.trace`xlog test message with number: ${47}`;
-	xlog.level = "none";
-	xlog.fatal`nope, should not see`;
-	if(xlog.atLeast("trace"))
-		console.log("should NOT see");
-
-	const expectedLog = ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxlog.test.js: 13\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxlog.test.js: 14\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"];	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape
-	for(let i=0;i<debugLog.length;i++)
-		assert(debugLog[i].endsWith(expectedLog[i]));
+	const xlog = new XLog("info", {includeDateTime : true});
+	const xlogClone = xlog.clone();
+	assertStrictEquals(xlog.level, xlogClone.level);
+	assertStrictEquals(xlog.logFilePath, xlogClone.logFilePath);
+	assertStrictEquals(xlog.noANSI, xlogClone.noANSI);
+	assertStrictEquals(xlog.includeDateTime, xlogClone.includeDateTime);
+	assert(xlog!==xlogClone);
 });
 
-Deno.test("mapper", () =>
+Deno.test("dateTime", () =>
 {
-	const debugLog = [];
-	const logger = v => debugLog.push(v);
-	const mapper = v => `PREFIX ${v} SUFFIX`;
-	const xlog = new XLog("info", {logger, mapper});
-	xlog.info`hello world`;
-	xlog.fatal`omg`;
-	assertStrictEquals(debugLog.length, 2);
-	assertStrictEquals(debugLog[0], "PREFIX hello world SUFFIX");
-	assertStrictEquals(debugLog[1].decolor(), "FATAL: PREFIX omg SUFFIX");
+	const xlog = new XLog("info", {includeDateTime : true});
+	xlog.info`info message, WITH DATETIME`;
+});
+
+Deno.test("elapsed", async () =>
+{
+	const xlog = new XLog();
+	xlog.timeStart`This is a ${"test"} of the start ${47} time system`;
+	xlog.elapsed`Should be zero ${0} seconds elapsed`;
+	await delay(1000);
+	xlog.elapsed`Should be one ${1} second elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	await delay(Math.randomInt(200, 800));
+	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
 });
 
 Deno.test("flush", async () =>
@@ -90,21 +92,36 @@ Deno.test("flush-via-signal", async () =>
 	xlog.cleanup();
 });
 
-Deno.test("elapsed", async () =>
+Deno.test("logger", () =>
 {
 	const xlog = new XLog();
-	xlog.timeStart`This is a ${"test"} of the start ${47} time system`;
-	xlog.elapsed`Should be zero ${0} seconds elapsed`;
-	await delay(1000);
-	xlog.elapsed`Should be one ${1} second elapsed`;
-	await delay(Math.randomInt(200, 800));
-	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
-	await delay(Math.randomInt(200, 800));
-	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
-	await delay(Math.randomInt(200, 800));
-	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
-	await delay(Math.randomInt(200, 800));
-	xlog.elapsed`Should be between ${200} and ${800} ms elapsed`;
+	const debugLog = [];
+	xlog.logger = v => debugLog.push(v);
+	xlog.warn`\nxlog test message`;
+	xlog.level = "trace";
+	xlog.debug`xlog test message with string: ${"hello"}`;
+	xlog.trace`xlog test message with number: ${47}`;
+	xlog.level = "none";
+	xlog.fatal`nope, should not see`;
+	if(xlog.atLeast("trace"))
+		console.log("should NOT see");
+
+	const expectedLog = ["\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message", "\x1b[90mxlog.test.js: 13\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m", "\x1b[90mxlog.test.js: 14\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"];	// eslint-disable-line unicorn/escape-case, unicorn/no-hex-escape
+	for(let i=0;i<debugLog.length;i++)
+		assert(debugLog[i].endsWith(expectedLog[i]));
+});
+
+Deno.test("mapper", () =>
+{
+	const debugLog = [];
+	const logger = v => debugLog.push(v);
+	const mapper = v => `PREFIX ${v} SUFFIX`;
+	const xlog = new XLog("info", {logger, mapper});
+	xlog.info`hello world`;
+	xlog.fatal`omg`;
+	assertStrictEquals(debugLog.length, 2);
+	assertStrictEquals(debugLog[0], "PREFIX hello world SUFFIX");
+	assertStrictEquals(debugLog[1].decolor(), "FATAL: PREFIX omg SUFFIX");
 });
 
 Deno.test("noANSI", () =>
@@ -127,10 +144,4 @@ Deno.test("xlog", () =>
 		console.log(`${fg.green("should see")}`);
 	if(xlog.atLeast("debug"))
 		console.log(`${fg.red("should NOT see")}`);
-});
-
-Deno.test("dateTime", () =>
-{
-	const xlog = new XLog("info", {includeDateTime : true});
-	xlog.info`info message, WITH DATETIME`;
 });

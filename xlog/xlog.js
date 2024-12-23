@@ -138,6 +138,6 @@ export class XLog
 	/* returns a shallow copy, assigning a possible new log level but keeping the old logger function if present */
 	clone(newLogLevel)
 	{
-		return new XLog(newLogLevel || this.level, {logger : this.logger, mapper : this.mapper, logFilePath : this.logFilePath});
+		return new XLog(newLogLevel || this.level, {logger : this.logger, mapper : this.mapper, logFilePath : this.logFilePath, noANSI : this.noANSI, alwaysEcho : this.alwaysEcho, includeDateTime : this.includeDateTime, inspectOptions : this.inspectOptions});
 	}
 }

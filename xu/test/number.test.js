@@ -1,6 +1,14 @@
 import {xu} from "../xu.js";
 import {assertEquals, assertStrictEquals} from "std";
 
+Deno.test("bitsToNum", () =>
+{
+	const a = Number(47);
+	assertStrictEquals(a.bitsToNum(4, 0), 15);
+	assertStrictEquals(a.bitsToNum(4, 3), 5);
+	assertStrictEquals(a.bitsToNum(4, 4), 2);
+});
+
 Deno.test("bytesToSize", () =>
 {
 	let a = Number(128_939_123);
@@ -44,6 +52,19 @@ Deno.test("getBits", () =>
 	const a = Number(47);
 	const ra = [1, 1, 1, 1, 0, 1, 0, 0];
 	assertEquals(ra, a.getBits().slice(0, 8));
+});
+
+Deno.test("noExponents", () =>
+{
+	assertStrictEquals((123).noExponents(), "123");
+	assertStrictEquals((0.000_123).noExponents(), "0.000123");
+	assertStrictEquals((1.23e7).noExponents(), "12300000");
+	assertStrictEquals((1.2345e-5).noExponents(), "0.000012345");
+	assertStrictEquals((-2.345e-3).noExponents(), "-0.002345");
+	assertStrictEquals((1.23e-5).noExponents(), "0.0000123");
+	assertStrictEquals((-3.21e-2).noExponents(), "-0.0321");
+	assertStrictEquals((1.234e4).noExponents(), "12340");
+	assertStrictEquals((1.2345e1).noExponents(), "12.345");
 });
 
 Deno.test("scale", () =>

@@ -326,6 +326,19 @@ Deno.test("searchReplace", async () =>
 
 Deno.test("tree", async () =>
 {
+	let caughtError = null;
+	try { await fileUtil.tree(path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/file1.txt")); }
+	catch(err) { caughtError = err; }
+	assert(caughtError.toString().includes("file1.txt must be a directory"));
+
+	try { await fileUtil.tree(GLOB_DIR, {regex : /^hrm/, glob : "**/*"}); }
+	catch(err) { caughtError = err; }
+	assert(caughtError.toString().includes("glob and regex cannot both be set"));
+
+	try { await fileUtil.tree(GLOB_DIR, {regex : "NOT A REGEX"}); }
+	catch(err) { caughtError = err; }
+	assert(caughtError.toString().includes("regex must be an actual RegExp"));
+
 	let r = await fileUtil.tree(GLOB_DIR);
 	assertEquals(r.sort(), [
 		path.join(FILES_DIR, "globTest/A_dir_with[brackets]_and?(parenthesis)/emptyDir"),

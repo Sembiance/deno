@@ -1,5 +1,5 @@
 import {} from "../object.js";
-import {delay, assertEquals, assertNotEquals, assertStrictEquals} from "std";
+import {delay, assertEquals, assertNotEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("average", () =>
 {
@@ -37,15 +37,21 @@ Deno.test("clone", () =>
 {
 	const a = [1, 2, 3, 4, 5];
 	const r = [1, 2, 3, 4, 5];
-	const r2 = [1, 2, 3, 4, 5, 6];
-	const sub = {val : 47};
-	const b = [1, 2, 3, sub];
 	assertEquals(a, a.clone());
 	assertEquals(r, a.clone());
+
+	const r2 = [1, 2, 3, 4, 5, 6];
 	a.push(6);
 	assertEquals(a, r2);
+
+	const sub = {val : 47};
+	const b = [1, 2, 3, sub];
 	assertEquals(sub, b.clone().at(-1));
 	assertStrictEquals(sub, b.clone({shallow : true}).at(-1));
+
+	const c = [1, 2, [3, 4], 5, {hello : "world"}];
+	const r3 = [1, 2, [3, 4], 5, {hello : "world"}];
+	assertEquals(r3, c.clone());
 });
 
 Deno.test("filterAsync", async () =>
@@ -179,6 +185,7 @@ Deno.test("pickRandom", () =>
 	assertEquals(a, a.pickRandom(1));
 	assertEquals([1], a.pickRandom(1, {exclude : [7]}));
 	a = [].pushSequence(0, 1000);
+	assertThrows(() => a.pickRandom(1, {exclude : 1}));
 	let r = [].pushSequence(0, 1000);
 	assertNotEquals(r, a.pickRandom(1000));	// In theory this could shuffle all 10,000 elements the same, but highly unlikely.
 	assertEquals(r, a);
@@ -293,6 +300,8 @@ Deno.test("sortMulti", () =>
 	a = [5, 2, 1, 3, 4];
 	r = [1, 2, 3, 4, 5];
 	assertEquals(r, a.sortMulti());
+	r = [5, 4, 3, 2, 1];
+	assertEquals(r, a.sortMulti(undefined, true));
 });
 
 Deno.test("standardDeviation", () =>
@@ -336,7 +345,7 @@ Deno.test("sum", () =>
 {
 	assertStrictEquals(0, [].sum());
 
-	const a = [1, 2, 3, 4, 5];
+	const a = [0, 1, 2, 3, 4, 5];
 	const r = 15;
 	assertStrictEquals(r, a.sum());
 });

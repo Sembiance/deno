@@ -12,6 +12,7 @@ Number.prototype.bytesToSize ||= function bytesToSize(precision)
 	return (precision ? num.toFixed(precision) : Math.round(num)) + ["b", "KB", "MB", "GB", "TB", "PB"][i];
 };
 
+// Returns what the number is for a given subset of bits. NOTE: the offset is from the 'right' or the lowest bits, so for the first 4 bits from the left, you'd use bitsToNum(4, 4)
 Number.prototype.bitsToNum ||= function bitsToNum(qty, offset)
 {
 	return (this >> offset) & ((1 << qty) - 1);	// eslint-disable-line no-bitwise

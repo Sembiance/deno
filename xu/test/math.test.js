@@ -1,5 +1,5 @@
 import {} from "../math.js";
-import {assertEquals, assertStrictEquals, assertThrows} from "std";
+import {assert, assertEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("degreesToRadians", () =>
 {
@@ -18,6 +18,7 @@ Deno.test("radiansToDegrees", () =>
 Deno.test("randomInt", () =>
 {
 	assertThrows(() => Math.randomInt(1, 7, {exclude : 2}));
+	assertThrows(() => Math.randomInt(1, 7, {exclude : [1, 2, 3, 4, 5, 6, 7]}));
 
 	for(let i=0;i<1000;i++)
 	{
@@ -46,4 +47,11 @@ Deno.test("rotatePointInBox", () =>
 {
 	const r = [416.685_842_870_420_86, 248.086_570_489_100_64];
 	assertEquals(r, Math.rotatePointInBox(15, 20, 120, 300, 500));
+});
+
+Deno.test("trueRandom", () =>
+{
+	const a = Math.trueRandom();
+	assert(a>=0);
+	assert(a<=1);
 });

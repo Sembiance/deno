@@ -25,6 +25,35 @@ Deno.test("dirname", () =>	// eslint-disable-line sembiance/shorter-arrow-funs
 	assertStrictEquals(import.meta.dirname, "/mnt/compendium/DevLab/deno/xu/test");
 });
 
+Deno.test("fetch", async () =>
+{
+	const r = `{
+  "slideshow": {
+    "author": "Yours Truly", 
+    "date": "date of publication", 
+    "slides": [
+      {
+        "title": "Wake up to WonderWidgets!", 
+        "type": "all"
+      }, 
+      {
+        "items": [
+          "Why <em>WonderWidgets</em> are great", 
+          "Who <em>buys</em> WonderWidgets"
+        ], 
+        "title": "Overview", 
+        "type": "all"
+      }
+    ], 
+    "title": "Sample Slide Show"
+  }
+}
+`;
+
+	assertStrictEquals(await xu.fetch("https://httpbin.org/json"), r);
+	assertEquals(await xu.fetch("https://httpbin.org/json", {asJSON : true}), xu.parseJSON(r));
+});
+
 Deno.test("freeze", () =>
 {
 	const a = {abc : 123, sub : {num : 47}};
@@ -34,6 +63,9 @@ Deno.test("freeze", () =>
 	assertThrows(() => { a.goodbye = "world"; });
 	assertThrows(() => { delete a.hello; });
 	assertThrows(() => { a.hello = "goodbye"; });
+
+	const b = 47;
+	assertStrictEquals(xu.freeze(b), b);
 });
 
 Deno.test("parseJSON", () =>
@@ -60,12 +92,20 @@ Deno.test("sizes", () =>
 	assertStrictEquals(xu.TB, 1024*1024*1024*1024);
 });
 
+Deno.test("surround", () =>
+{
+	assertStrictEquals(xu.paren("paren").decolor(), "(paren)");
+	assertStrictEquals(xu.quote("quote").decolor(), `"quote"`);
+	assertStrictEquals(xu.bracket("bracket").decolor(), "[bracket]");
+	assertStrictEquals(xu.colon("colon").decolor(), "colon: ");
+});
+
 Deno.test("trim", () =>
 {
 	const r = xu.trim`
 	This is just
-		a test of the xu trimming	`;
-	assertStrictEquals(r, "This is just\na test of the xu trimming");
+		a ${"test"} of the xu trimming	`;
+	assertStrictEquals(r, "This is just\natestof the xu trimming");
 });
 
 Deno.test("tryFallback", () =>

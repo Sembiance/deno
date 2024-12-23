@@ -1,8 +1,9 @@
-export default async function _main(data, {html, include})
+export default async function _main(data, {html, compileStylus, include})
 {
 	return html`
 ${await include("common/htmlOpen")}
 	${await include("common/headOpen")}
+	${await compileStylus("stylus/main")}
 	${await include("common/headClose")}
 	${await include("common/bodyOpen")}
 		${await include("common/header")}

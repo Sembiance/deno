@@ -8,6 +8,12 @@ const FILES_DIR = path.join(import.meta.dirname, "files");
 const TEST_FILE_PATH = path.join(FILES_DIR, "input.png");
 const TEST_FILE_MD5 = "8be8ce12e5e0589d69a54b21b1d4af9e";
 
+Deno.test("crc16XModem", async () =>
+{
+	const rawData = await Deno.readFile(TEST_FILE_PATH);
+	assertStrictEquals(await hashUtil.hashData("CRC-16/XMODEM", rawData), 38419);
+});
+
 Deno.test("hashData", async () =>
 {
 	const rawData = await Deno.readFile(TEST_FILE_PATH);

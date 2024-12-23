@@ -1,3 +1,4 @@
+/* eslint-disable sembiance/shorter-arrow-funs */
 import {} from "../string.js";
 import {base64Encode, base64Decode, assertStrictEquals, delay} from "std";
 
@@ -8,9 +9,31 @@ Deno.test("capitalize", () =>
 	assertStrictEquals(r, a.capitalize());
 });
 
+Deno.test("decodeURLPath", () =>
+{
+	assertStrictEquals("spanish%20pack%20n%C2%B01%20by%20llfb/grafismo/digitaliz./fotos_de_humphrey-ctl/euskal_4/%3f%20&%20jupiter".decodeURLPath(), "spanish pack n%C2%B01 by llfb/grafismo/digitaliz./fotos_de_humphrey-ctl/euskal_4/? & jupiter");
+	assertStrictEquals("this has newlines%0aand%0dcarriage returnsand%09tabsand%5cbackslashes%5c%5comg%3f%23!&".decodeURLPath(), "this has newlines\nand\rcarriage returnsand\ttabsand\\backslashes\\\\omg?#!&");
+});
+
 Deno.test("decolor", () =>
 {
 	assertStrictEquals(base64Encode((new TextDecoder()).decode(base64Decode("G1s5N21TaW5nbGUgTGluZSBCb29sZWFuIFBpZRtbMG06IBtbOTNtdHJ1ZRtbMG0gNiw0MDcgKDgxJSkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAbWzkzbWZhbHNlG1swbSAxLDQ3NyAoMTklKQogICAgICAgICAgICAgICAgICAgICAgICAbWzk2bVsbWzBtG1szODs1OzIwOG3ilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilojilogbWzBtG1szODs1OzkzbeKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiOKWiBtbMG0bWzk2bV0bWzBt")).decolor()), "U2luZ2xlIExpbmUgQm9vbGVhbiBQaWU6IHRydWUgNiw0MDcgKDgxJSkgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBmYWxzZSAxLDQ3NyAoMTklKQogICAgICAgICAgICAgICAgICAgICAgICBb4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paI4paIXQ==");
+});
+
+Deno.test("encodeURLPath", () =>
+{
+	assertStrictEquals("crazy?filename?withpercents%andquestion?marks".encodeURLPath(), "crazy%3ffilename%3fwithpercents%25andquestion%3fmarks");
+	assertStrictEquals("this has newlines\nand\rcarriage returnsand\ttabsand\\backslashes\\\\omg?#!&".encodeURLPath(), "this has newlines%0aand%0dcarriage returnsand%09tabsand%5cbackslashes%5c%5comg%3f%23!&");
+});
+
+Deno.test("escapeRegex", () =>
+{
+	assertStrictEquals("this/is NOT! a [very] awesome test*".escapeRegex(), "this\\/is NOT! a \\[very\\] awesome test\\*");
+});
+
+Deno.test("escapeXML", () =>
+{
+	assertStrictEquals(`this filename is > 88 and < 22 with "string's" & more...`.escapeXML(), "this filename is &gt; 88 and &lt; 22 with &quot;string&#039;s&quot; &amp; more...");
 });
 
 Deno.test("innerTrim", () =>
@@ -90,6 +113,11 @@ Deno.test("toProperCase", () =>
 	const a = "hello THERE my good Friend";
 	const r = "Hello There My Good Friend";
 	assertStrictEquals(r, a.toProperCase());
+});
+
+Deno.test("toVisible", () =>
+{
+	assertStrictEquals(`T\x01his newline\nand\rcarriage \x1bescape string with \ttabs\vverticaland nulls \0 with \x07 bells and backspaces \b`.toVisible(), "This newline␤and↵carriage ␛escape string with ⇥tabs⇩verticaland nulls ␀ with ⍾ bells and backspaces ⌫");	// eslint-disable-line unicorn/no-hex-escape, unicorn/escape-case
 });
 
 Deno.test("trimChars", () =>

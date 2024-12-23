@@ -292,7 +292,7 @@ Deno.test("exception", async () =>
 	{
 		assertStrictEquals(reason, "exception");
 		assert(error.includes("EXPECTED EXCEPTION DUE TO #7"));
-		assert(error.includes("exception.agent.js:10:9"));
+		assert(error.includes("exception.agent.js:9:9"));
 		assertStrictEquals(msg.isMsg, true);
 		assertStrictEquals(msg.v, 7);
 		fails.push(msg);

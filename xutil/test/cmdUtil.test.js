@@ -11,7 +11,7 @@ Deno.test("cmdInit", () =>
 			verbose   : {desc : "verbose description", defaultValue : 0},
 			json      : {desc : "json description"},
 			jsonFile  : {desc : "jsonFile description", hasValue : true},
-			dontChain : {desc : "dontChain description", hasValue : true, multiple : true}
+			dontChain : {desc : "dontChain description", hasValue : true, multiple : true, allowed : ["onlyProg", "prog1", "prog2"]}
 		},
 		args :
 		[
