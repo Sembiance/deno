@@ -84,7 +84,8 @@ Deno.test("routeBasic", async () =>
 	}));
 	routes.set(/^\/test\/subPath/, req => new Response(`subPath ${(new URL(req.url)).pathname}`));
 
-	const server = webUtil.serve(serveOpts, await webUtil.route(routes, {xlog, customArg : "Hello,"}), {xlog});
+	const webRouteHandler = await webUtil.route(routes, {xlog, customArg : "Hello,"});
+	const server = webUtil.serve(serveOpts, webRouteHandler, {xlog});
 
 	let a = await fetch("http://127.0.0.1:37291/noResponse");
 	assertStrictEquals(a.status, 500);
@@ -132,6 +133,11 @@ Deno.test("routeBasic", async () =>
 	assertStrictEquals(a.status, 200);
 	a = await a.text();
 	assertStrictEquals(a, "subPath /test/subPath/omg/it/keeps/going");
+
+	a = await webRouteHandler({url : "http://127.0.0.1:37291/test?hello=Cruel World!"}, undefined, {customArg : "Goodbye,"});
+	assertStrictEquals(a.status, 200);
+	a = await a.text();
+	assertStrictEquals(a, "Goodbye, Cruel World! http://127.0.0.1:37291/test?hello=Cruel World!");
 
 	server.stop();
 });

@@ -69,7 +69,7 @@ export async function route(routesRaw, args, {devMode, getStopper}={})
 			getStopper(async () => await monitorer.stop());
 	}
 
-	return async request =>
+	return async (request, _info, extraArgs={}) =>
 	{
 		const u = new URL(request.url);
 		const [prefix, {handler}={}] = routesEntries.find(([v]) => (v instanceof RegExp ? v.test(u.pathname) : u.pathname===v)) || [];
@@ -78,7 +78,7 @@ export async function route(routesRaw, args, {devMode, getStopper}={})
 		
 		try
 		{
-			const response = await handler(request, args);
+			const response = await handler(request, {...args, ...extraArgs});
 			if(!response)
 			{
 				if(args?.xlog)
