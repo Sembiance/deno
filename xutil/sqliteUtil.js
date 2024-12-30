@@ -12,7 +12,16 @@ export function dropTable(db, tableid)
 
 export function prepare(db, statementRaw)
 {
-	const statement = db.prepare(statementRaw);
+	let statement;
+	try
+	{
+		statement = db.prepare(statementRaw);
+	}
+	catch(err)
+	{
+		console.error(`Failed to prepare statement: ${statementRaw}`, err);
+		return null;
+	}
 
 	const r = {db};
 	for(const n of ["all", "get", "run"])
