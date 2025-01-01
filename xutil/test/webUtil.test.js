@@ -47,7 +47,7 @@ Deno.test("serveException", async () =>
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 500);
 	a = await a.text();
-	assertStrictEquals(a, "Error: Error: THIS ERROR IS EXPECTED");
+	assertStrictEquals(a, "127.0.0.1:37291 error: Error: THIS ERROR IS EXPECTED");
 	server.stop();
 });
 
@@ -58,8 +58,39 @@ Deno.test("serveExceptionAsync", async () =>
 	let a = await fetch("http://127.0.0.1:37291/test");
 	assertStrictEquals(a.status, 500);
 	a = await a.text();
-	assertStrictEquals(a, "Error: Error: THIS ERROR IS EXPECTED");
+	assertStrictEquals(a, "127.0.0.1:37291 error: Error: THIS ERROR IS EXPECTED");
 	server.stop();
+});
+
+Deno.test("shutdown", async () =>
+{
+	const server = webUtil.serve(serveOpts, async req =>
+	{
+		const r = ["Hello,"];
+		await delay(xu.SECOND);
+		r.push("World!");
+		await delay(xu.SECOND*3);
+		r.push(req.url);
+		return new Response(r.join(" "));
+	}, {xlog});
+
+	const reqURLs = ["test", "test2", "test3"].map(v => `http://127.0.0.1:37291/${v}`);
+	const promises = reqURLs.map(reqURL => fetch(reqURL));
+	await delay(xu.SECOND);
+	const before = performance.now();
+	await server.server.shutdown();
+	assertStrictEquals(Math.round((performance.now()-before)/xu.SECOND), 3);
+
+	const fetchResults = await Promise.all(promises);
+	assertStrictEquals(fetchResults.length, reqURLs.length);
+	for(let i=0;i<reqURLs.length;i++)
+	{
+		const fetchResult = fetchResults[i];
+		assertStrictEquals(fetchResult.status, 200);
+		assertStrictEquals(fetchResult.url, reqURLs[i]);
+		const fetchResultText = await fetchResult.text();
+		assertStrictEquals(fetchResultText, `Hello, World! ${reqURLs[i]}`);
+	}
 });
 
 Deno.test("route404", async () =>
