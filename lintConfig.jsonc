@@ -21,7 +21,6 @@
 				"no-compare-neg-zero",
 				"no-cond-assign",
 				"no-constant-condition",
-				"no-control-regex",
 				"no-debugger",
 				"no-delete-var",
 				"no-deprecated-deno-api",
@@ -77,11 +76,12 @@
 			"exclude" :
 			[
 				"no-empty",
-				"no-this-alias",
 				"no-unused-vars",	// Complains about variables that have to be included and recommends you rename them with an underscore prefix. Lame.
 
 				// handled by eslint
 				"camelcase",		// also sometimes exempted on a per dir basis with .eslintrc.js files (see dexvert/src/program/)
+				"no-control-regex",
+				"no-this-alias",
 				"require-await"
 			]
 		}

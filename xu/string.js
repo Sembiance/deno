@@ -41,7 +41,8 @@ String.prototype.escapeXML ||= function escapeXML()
 		replaceAll("<", "&lt;").
 		replaceAll(">", "&gt;").
 		replaceAll('"', "&quot;").
-		replaceAll("'", "&#039;");
+		replaceAll("'", "&#039;").
+		replace(/[\x00-\x1F\x7F]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`);	// eslint-disable-line no-control-regex, unicorn/no-hex-escape
 };
 String.prototype.escapeHTML ||= String.prototype.escapeXML;
 

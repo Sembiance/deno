@@ -19,7 +19,7 @@ export class HTML
 			...this.argOpts,
 			html : this.html.bind(this),
 			compileStylus : this.compileStylus.bind(this),
-			async include(includeSubPath, includeData=data) { return await self.render(includeSubPath, includeData, {skipMinify : true}); } });
+			async include(includeSubPath, includeData=data) { return await self.render(includeSubPath, includeData); } });
 		return htmlRaw.trim();
 	}
 

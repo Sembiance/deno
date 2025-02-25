@@ -169,7 +169,13 @@ Array.prototype.parallelMap ||= async function parallelMap(fn, atOnce=Math.min(M
 		({PQueue} = await import("denoLandX"));
 
 	if(atOnce)
-		return await (new PQueue({concurrency : atOnce===-1 ? navigator.hardwareConcurrency : atOnce})).addAll(this.map((v, i) => () => fn(v, i)));
+	{
+		let r = [];
+		for(const chunk of this.chunk(1_000_000))	// This chunking is to prevent a 'Too Many Promises' problem with massive arrays. Not ideal since it's gonna wait for each chunk to finish before starting the next one, but meh
+			r = r.concat(await (new PQueue({concurrency : atOnce===-1 ? navigator.hardwareConcurrency : atOnce})).addAll(chunk.map((v, i) => () => fn(v, i))));
+		return r;
+		//return await (new PQueue({concurrency : atOnce===-1 ? navigator.hardwareConcurrency : atOnce})).addAll(this.map((v, i) => () => fn(v, i)));
+	}
 
 	return await Promise.all(this.map(fn));
 };

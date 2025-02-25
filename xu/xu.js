@@ -228,6 +228,12 @@ xu.fetch = async function xuFetch(url, opts={})
 	return r;
 };
 
+/** Convience method to import the freshest version of a file, useful during development */
+xu.importDev = async function importDev(importPath)
+{
+	return await import(`${importPath}#${xu.randStr()}`);
+}
+
 /** template literal that allows you to easily include multi-line strings and each line will be trimmed */
 xu.trim = function trim(strs, ...vals)
 {

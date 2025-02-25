@@ -179,6 +179,14 @@ Deno.test("parallelMap", async () =>
 	assertEquals(r, [2, 4, 6, 8, 10]);
 });
 
+Deno.test("parallelMapHuge", async () =>
+{
+	const a = [].pushSequence(1, 100_000);
+	const r = await a.parallelMap(i => (i*2), navigator.hardwareConcurrency);
+	assertStrictEquals(a.length, r.length);
+	assertEquals(a.map(v => v*2), r);
+});
+
 Deno.test("pickRandom", () =>
 {
 	let a = [1];

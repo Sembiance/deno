@@ -44,7 +44,7 @@ export class UInt8ArrayReader
 	}
 
 	// Writes out len bytes to disk at filePath
-	async writeToDisk(len, filePath) { await Deno.writeFile(filePath, Uint8Array.from(this.arr.subarray(this.pos, this.post(len)))); }
+	async writeToDisk(len, filePath, options) { await Deno.writeFile(filePath, Uint8Array.from(this.arr.subarray(this.pos, this.post(len))), options); }
 
 	raw(len, copy) { return Uint8Array.from(this.arr.subarray(this.pos, copy ? this.pos+len : this.post(len))); }
 	

@@ -34,6 +34,9 @@ export {decodeAscii85 as ascii85Decode} from "jsr:@std/encoding@1.0.5/ascii85";
 // fs
 export * as fs from "jsr:@std/fs@1.0.5";
 
+// crypto
+export * as http from "jsr:@std/http@1.0.12";
+
 // io
 export {readAll} from "jsr:@std/io@0.225.0/read-all";
 export {writeAll} from "jsr:@std/io@0.225.0/write-all";

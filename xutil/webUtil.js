@@ -1,7 +1,12 @@
 import {xu} from "xu";
 import {printUtil, fileUtil} from "xutil";
-import {path} from "std";
+import {path, base64Decode} from "std";
 import {XLog} from "xlog";
+
+export function getAuthorizedUser(headers)
+{
+	return (new TextDecoder().decode(base64Decode(headers.get("authorization").split(" ")[1]))).split(":")[0];
+}
 
 // serveOptions: {hostname, port}
 export function serve(serveOptions, handler, {xlog=new XLog("warn")}={})
@@ -31,9 +36,9 @@ export function serve(serveOptions, handler, {xlog=new XLog("warn")}={})
 //   Each key is either a string that must match the URL prefix, or a regex to check against the URL
 //   Each value is either a string (path to a file.js that will handle the request with a default function) or a function that will handle the request directly
 // devMode can be set to true and then any changes to file.js handlers will be monitored and it will automatically reload the handler
-//   NOTE: devMode only works if all the strings in routesRaw that point to file paths share a common directory
+//   NOTE: devMode only works if all the strings in routesRaw that point to file paths share a common parent/grandparent directory
 // getStopper is an optional function that will be called with a function that you can call to stop the monitorer when you choose to stop the server
-export async function route(routesRaw, args, {devMode, getStopper}={})
+export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
 {
 	const routes = routesRaw instanceof Map ? routesRaw : new Map(Object.entries(routesRaw));
 	const routesEntries = (await Array.from(routes.entries()).parallelMap(async ([prefix, handlerRaw]) => ([prefix, {originalHandler : handlerRaw, handler : (typeof handlerRaw==="string" ? (await import(handlerRaw)).default : handlerRaw)}]))).sortMulti([([prefix]) => prefix], [true]);
@@ -78,6 +83,9 @@ export async function route(routesRaw, args, {devMode, getStopper}={})
 		const [prefix, {handler}={}] = routesEntries.find(([v]) => (v instanceof RegExp ? v.test(u.pathname) : u.pathname===v)) || [];
 		if(!handler)
 			return new Response("404 not found", {status : 404});
+
+		if(logHits && args.xlog)
+			args.xlog.info`Hit handled (${prefix}): ${u.toString()}`;
 		
 		try
 		{
