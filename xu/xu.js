@@ -232,7 +232,7 @@ xu.fetch = async function xuFetch(url, opts={})
 xu.importDev = async function importDev(importPath)
 {
 	return await import(`${importPath}#${xu.randStr()}`);
-}
+};
 
 /** template literal that allows you to easily include multi-line strings and each line will be trimmed */
 xu.trim = function trim(strs, ...vals)
