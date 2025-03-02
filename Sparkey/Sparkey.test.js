@@ -1,6 +1,6 @@
 import {xu} from "xu";
-import {assertStrictEquals, path} from "std";
-import {fileUtil, hashUtil} from "xutil";
+import {assertStrictEquals, assert, path, delay} from "std";
+import {fileUtil, hashUtil, runUtil} from "xutil";
 import {Sparkey} from "./Sparkey.js";
 
 Deno.test("putGet", async () =>
@@ -84,6 +84,23 @@ Deno.test("maxLen", async () =>
 
 	await db.truncate();
 	db.unload();
+});
+
+Deno.test("openFiles", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");
+	const db = new Sparkey(dbFilePathPrefix);
+	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.getText("hello"), "Hello, World!");
+
+	let {stdout} = await runUtil.run("lsof", ["-p", Deno.pid.toString()]);
+	assert(stdout.includes("/mnt/compendium/DevLab/deno/Sparkey/sparkey.so"));
+
+	await db.truncate();
+	db.unload();
+
+	({stdout} = await runUtil.run("lsof", ["-p", Deno.pid.toString()]));
+	assert(!stdout.includes("/mnt/compendium/DevLab/deno/Sparkey/sparkey.so"));
 });
 
 Deno.test("truncate", async () =>

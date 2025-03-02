@@ -31,11 +31,18 @@ uint8_t * get(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyL
 	sparkey_logiter * iter;
 	r = sparkey_logiter_create(&iter, sparkey_hash_getreader(reader));
 	if(r!=SPARKEY_SUCCESS)
+	{
+		sparkey_hash_close(&reader);
 		return 0;
+	}
 
 	r =  sparkey_hash_get(reader, key, keyLen, iter);
 	if(sparkey_logiter_state(iter)!=SPARKEY_ITER_ACTIVE)
+	{
+		sparkey_hash_close(&reader);
+		sparkey_logiter_close(&iter);
 		return 0;
+	}
 
 	uint64_t valueLen = sparkey_logiter_valuelen(iter);
 	if(maxLen!=0)
@@ -43,11 +50,15 @@ uint8_t * get(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyL
 	uint8_t * valueBuf = (uint8_t *)malloc(4 + valueLen);
 	uint64_t actualValueLen;
 	r = sparkey_logiter_fill_value(iter, sparkey_hash_getreader(reader), valueLen, valueBuf+4, &actualValueLen);
-	if(r!=SPARKEY_SUCCESS)
-		return 0;
 
 	sparkey_hash_close(&reader);
 	sparkey_logiter_close(&iter);
+
+	if(r!=SPARKEY_SUCCESS)
+	{
+		free(valueBuf);
+		return 0;
+	}
 
 	memcpy(valueBuf, &actualValueLen, 4);
 
@@ -77,11 +88,18 @@ uint64_t getLength(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t
 	sparkey_logiter * iter;
 	r = sparkey_logiter_create(&iter, sparkey_hash_getreader(reader));
 	if(r!=SPARKEY_SUCCESS)
+	{
+		sparkey_hash_close(&reader);
 		return 0;
+	}
 
 	r =  sparkey_hash_get(reader, key, keyLen, iter);
 	if(sparkey_logiter_state(iter)!=SPARKEY_ITER_ACTIVE)
+	{
+		sparkey_hash_close(&reader);
+		sparkey_logiter_close(&iter);
 		return 0;
+	}
 
 	uint64_t valueLen = sparkey_logiter_valuelen(iter);
 
@@ -116,6 +134,7 @@ uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen
 	r = sparkey_logwriter_put(writer, keyLen, key, valueLen, value);
 	if(r!=SPARKEY_SUCCESS)
 	{
+		sparkey_logwriter_close(&writer);
 		free(logFilePath);
 		return 0;
 	}
@@ -178,6 +197,7 @@ uint8_t putMany(uint8_t * dbPath, uint32_t dbPathLen, uint32_t entryCount, uint8
 		r = sparkey_logwriter_put(writer, keylen, keys+keypos, valuelen, values+valuepos);		
 		if(r!=SPARKEY_SUCCESS)
 		{
+			sparkey_logwriter_close(&writer);
 			free(logFilePath);
 			return 0;
 		}
