@@ -21,6 +21,7 @@ export {crypto} from "jsr:@std/crypto@1.0.3/crypto";
 
 // csv
 export {parse as csvParse} from "jsr:@std/csv@1.0.3/parse";
+export {stringify as csvStringify} from "jsr:@std/csv@1.0.3/stringify";
 
 // datetime
 export {format as dateFormat} from "jsr:@std/datetime@0.225.2/format";
