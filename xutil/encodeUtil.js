@@ -18,6 +18,12 @@ export async function decode(data, fromEncoding, {iconvPath="iconv"}={})
 	if(fromEncoding==="MACINTOSHJP")
 		return await decodeMacintosh({data, region : "japan", preserveWhitespace : true});
 
+	if(fromEncoding==="MACINTOSH_TO_JP")
+	{
+		const str = typeof data==="string" ? data : new TextDecoder("UTF-8").decode(data);
+		return await decode(await encodeMacintosh({str}), "MACINTOSHJP");
+	}
+
 	if(!run)
 		({run} = await import(path.join(import.meta.dirname, "runUtil.js")));
 	
