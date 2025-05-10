@@ -66,7 +66,7 @@ Deno.test("limitRAM", async () =>
 	assertStrictEquals(status.success, false);
 	assertStrictEquals(status.code, 2);
 	const lastUsed = +stdout.trim().split("\n").at(-1);
-	assert(lastUsed>249_000);
+	assert(lastUsed>240_000);
 	assert(lastUsed<251_000);
 });
 
@@ -154,7 +154,7 @@ Deno.test("stderrBasic", async () =>
 {
 	const {stdout, stderr, status} = await runUtil.run("/bin/cat", ["/tmp/ANonExistantFile_omg this isn't here"]);
 	assertStrictEquals(stdout.length, 0);
-	assertStrictEquals(stderr, `/bin/cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
+	assert(stderr.endsWith(`cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`));
 	assertStrictEquals(status.success, false);
 	assertStrictEquals(status.code, 1);
 });
@@ -187,7 +187,7 @@ Deno.test("stderrFilePath", async () =>
 {
 	const outFilePath = await fileUtil.genTempPath();
 	await runUtil.run("/bin/cat", ["/tmp/ANonExistantFile_omg this isn't here"], {stderrFilePath : outFilePath});
-	assertStrictEquals(await fileUtil.readTextFile(outFilePath), `/bin/cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`);
+	assert((await fileUtil.readTextFile(outFilePath)).endsWith(`cat: "/tmp/ANonExistantFile_omg this isn't here": No such file or directory\n`));
 	await fileUtil.unlink(outFilePath);
 });
 

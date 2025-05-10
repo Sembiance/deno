@@ -165,7 +165,7 @@ Deno.test("monitor", async () =>
 		"delete d.txt",
 		"create c.txt",
 		"delete c.txt", "create subdir/d.txt",
-		"delete subdir/b.txt", "delete subdir/d.txt", "delete subdir",
+		"delete subdir/d.txt", "delete subdir/b.txt", "delete subdir",	// sometimes the d.txt and b.txt order can change
 		"create c.txt", "modify c.txt"
 	];
 	const monitorcb = async ({type, filePath}) =>		// eslint-disable-line require-await

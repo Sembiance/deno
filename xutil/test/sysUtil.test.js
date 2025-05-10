@@ -4,26 +4,37 @@ import {assert, assertStrictEquals} from "std";
 
 Deno.test("calcMaxProcs", async () =>
 {
+	if(Deno.hostname()!=="ridgeport")
+		return;
+
 	const a = await sysUtil.calcMaxProcs(undefined, {expectedMemoryUsage : 8*xu.GB});
 	assertStrictEquals(a, 12);
 });
 
 Deno.test("getAudioPlaybackDevices", async () =>
 {
+	if(Deno.hostname()!=="ridgeport")
+		return;
+
 	const a = await sysUtil.getAudioPlaybackDevices();
 	assert(a.length>3);
 	assert(a.find(o => o.longName.includes("Shure MV5")));
-	assert(a.find(o => o.longName.includes("DragonFly Red")));
 });
 
 Deno.test("getCPUIdleUsage", async () =>
 {
+	if(Deno.hostname()!=="ridgeport")
+		return;
+
 	const a = await sysUtil.getCPUIdleUsage();
 	assert(a>0 && a<100);
 });
 
 Deno.test("getDiskUsage", async () =>
 {
+	if(Deno.hostname()!=="ridgeport")
+		return;
+
 	const mountPoints = ["/", "/mnt/ram", "/mnt/compendium"];
 	const r = await sysUtil.getDiskUsage(mountPoints);
 	assert(Object.keys(r).length===3);
@@ -54,6 +65,9 @@ Deno.test("memInfo", async () =>
 
 Deno.test("optimalParallelism", async () =>
 {
+	if(Deno.hostname()!=="ridgeport")
+		return;
+
 	assertStrictEquals(await sysUtil.optimalParallelism(3), 1);
 	assertStrictEquals(await sysUtil.optimalParallelism(300), 15);
 	assertStrictEquals(await sysUtil.optimalParallelism(3000), 15);

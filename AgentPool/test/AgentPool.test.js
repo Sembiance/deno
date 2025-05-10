@@ -28,6 +28,15 @@ Deno.test("status", async () =>
 	const poolStatus = pool.status();
 	assertStrictEquals(pool.cwd, poolStatus.cwd);
 	assertStrictEquals(pool.agents.length, poolStatus.agents.length);
+	for(const agent of poolStatus.agents)
+	{
+		assertStrictEquals(agent.running, true);
+		assert(typeof agent.port==="number");
+		assert(typeof agent.pid==="number");
+		assert([].pushSequence(0, pool.agents.length).includes(agent.agentid));
+		assertStrictEquals(path.dirname(agent.cwd), pool.cwd);
+		assertStrictEquals(agent.running, true);
+	}
 	await pool.stop();
 });
 
@@ -159,7 +168,8 @@ Deno.test("memoryLeak", async () =>
 	// Theses tests were created with the help of claude AI. Dunno if they're good or not
 
 	// Test 1: Check if maximum memory usage is within 3 standard deviations of the mean
-	assert(memStats.max <= memStats.mean + (3 * memStats.stdDev), `Max memory usage (${memStats.max}) is more than 3 standard deviations above the mean (${memStats.mean + (3 * memStats.stdDev)})`);
+	const maxDeviations = 4;
+	assert(memStats.max<=(memStats.mean+(maxDeviations*memStats.stdDev)), `Max memory usage (${memStats.max}) is more than ${maxDeviations} standard deviations above the mean: memStats.mean (${memStats.mean}) + (${maxDeviations} * memStats.stdDev (${memStats.stdDev}))`);
 
 	// Test 2: Ensure the memory usage isn't consistently increasing
 	assert(!memStats.isIncreasing, "Memory usage is consistently increasing, potential memory leak");

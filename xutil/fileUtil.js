@@ -47,7 +47,11 @@ export async function exists(v, {lstat}={})
 			return false;
 
 		// If any part of the checked path that is marked as a directory is actually a file, an error is thrown, so we check for that and then clearly return false as the subFile doesn't exist within a file
-		if(err?.message?.startsWith("Not a directory"))
+		if(err?.message?.toLowerCase()?.startsWith("not a directory"))
+			return false;
+
+		// If the filename is too long, just return false
+		if(err?.message?.toLowerCase()?.startsWith("file name too long"))
 			return false;
 		
 		// Otherwise we probably got a permission denied or some other error, so throw that

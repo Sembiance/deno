@@ -1,5 +1,5 @@
 import {xu} from "xu";
-import {assertStrictEquals, assert, path, delay} from "std";
+import {assertStrictEquals, assert, path} from "std";
 import {fileUtil, hashUtil, runUtil} from "xutil";
 import {Sparkey} from "./Sparkey.js";
 

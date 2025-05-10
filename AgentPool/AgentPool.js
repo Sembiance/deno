@@ -206,6 +206,7 @@ export class AgentPool
 		for(const agent of this.agents)
 		{
 			const agentStatus = {};
+			agentStatus.pid = agent.runner?.p?.pid;
 			for(const key of ["agentid", "cwd", "port", "running", "lastDuration"])
 			{
 				if(Object.hasOwn(agent, key))
