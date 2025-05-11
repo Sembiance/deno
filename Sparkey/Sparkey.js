@@ -12,10 +12,11 @@ export class Sparkey
 		this.dbFilePathPrefixBuffer = this.encoder.encode(dbFilePathPrefix);
 
 		this.sparkey = Deno.dlopen(path.join(import.meta.dirname, "sparkey.so"), {
-			get       : { parameters : ["buffer", "u32", "buffer", "u32", "u64"], result : "buffer" },
-			getLength : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u64" },
-			put       : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" },
-			putMany   : { parameters : ["buffer", "u32", "u32", "buffer", "buffer"], result : "u8" }
+			get         : { parameters : ["buffer", "u32", "buffer", "u32", "u64"], result : "buffer" },
+			getLength   : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u64" },
+			put         : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" },
+			putMany     : { parameters : ["buffer", "u32", "u32", "buffer", "buffer"], result : "u8" },
+			extractFile : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u64" }
 		});
 	}
 
@@ -36,7 +37,7 @@ export class Sparkey
 	getLength(k)
 	{
 		const keyBuffer = this.encoder.encode(k);
-		const len =  this.sparkey.symbols.getLength(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length);
+		const len = this.sparkey.symbols.getLength(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length);
 		return len>=Number.MIN_SAFE_INTEGER && len<=Number.MAX_SAFE_INTEGER ? Number(len) : len;
 	}
 
@@ -44,6 +45,13 @@ export class Sparkey
 	{
 		const r = this.get(k, maxLen);
 		return r ? this.decoder.decode(r) : undefined;
+	}
+
+	extractFile(k, filePath)
+	{
+		const keyBuffer = this.encoder.encode(k);
+		const filePathBuffer = this.encoder.encode(filePath);
+		return this.sparkey.symbols.extractFile(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length, filePathBuffer, filePathBuffer.length);
 	}
 
 	put(k, v)

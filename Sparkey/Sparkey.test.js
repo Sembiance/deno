@@ -46,10 +46,30 @@ Deno.test("putFile", async () =>
 	assertStrictEquals(await hashUtil.hashFile("blake3", srcFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
 	assertStrictEquals(await db.putFile("testFileData", srcFilePath));
 
-	const tmpFilePath = await fileUtil.genTempPath(undefined, "-Sparkey-test-binary.png");
+	const tmpFilePath = await fileUtil.genTempPath(undefined, "-Sparkey-test-putFile.png");
 	await Deno.writeFile(tmpFilePath, db.get("testFileData"));
 	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
 	assertStrictEquals(await hashUtil.hashFile("blake3", tmpFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
+	await fileUtil.unlink(tmpFilePath);
+
+	await db.truncate();
+	db.unload();
+});
+
+Deno.test("extractFile", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-extractFile");
+	const db = new Sparkey(dbFilePathPrefix);
+
+	const srcFilePath = path.join(import.meta.dirname, "test.png");
+	assertStrictEquals(await hashUtil.hashFile("blake3", srcFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
+	assertStrictEquals(await db.putFile("testFileData", srcFilePath));
+
+	const tmpFilePath = await fileUtil.genTempPath(undefined, "-Sparkey-test-extractFile.png");
+	await db.extractFile("testFileData", tmpFilePath);
+	assertStrictEquals(await fileUtil.exists(tmpFilePath), true);
+	assertStrictEquals(await hashUtil.hashFile("blake3", tmpFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
+	await fileUtil.unlink(tmpFilePath);
 
 	await db.truncate();
 	db.unload();
