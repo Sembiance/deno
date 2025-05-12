@@ -1,9 +1,16 @@
 import {xu, fg} from "xu";
-import {diffUtil} from "xutil";
-import {createRequire} from "node:module";
+import {diffUtil, fileUtil} from "xutil";
+import {XLog} from "xlog";
 
-const require = createRequire(import.meta.url);
-const {globals : eslintGlobals } = require("/mnt/compendium/DevLab/common/eslint/shared-deno.eslintrc");
+const xlog = new XLog();
+
+const eslintConfigLines = (await fileUtil.readTextFile("/mnt/compendium/DevLab/common/eslint/deno.eslint.config.js")).split("\n");
+eslintConfigLines.splice(0, 1, `const common = {${["languageOptions", "plugins", "rules"].map(v => `${v} : []`).join(", ")}};`);
+const eslintConfigTmpFilePath = await fileUtil.genTempPath(undefined, ".js");
+await fileUtil.writeTextFile(eslintConfigTmpFilePath, eslintConfigLines.join("\n"));
+const {default : eslintConfig} = await import(eslintConfigTmpFilePath);
+const eslintGlobals = eslintConfig[0].languageOptions.globals;
+
 const denoGlobals = Object.fromEntries(Array.from(Object.getOwnPropertyNames(globalThis)).sortMulti().map(v => ([v, "writable"])));
 
 // extras that are conditionaly enabled with --v8-flags
