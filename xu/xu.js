@@ -157,11 +157,11 @@ xu.freeze = function freeze(o, {recursive}={})
 };
 
 /** parses the given raw data as JSON and if it fails return the fallback */
-xu.parseJSON = function parseJSON(raw, fallback)
+xu.parseJSON = function parseJSON(raw, fallback, {fixInvalidControlChars}={})
 {
 	try
 	{
-		return JSON.parse(raw);	// eslint-disable-line no-restricted-syntax
+		return JSON.parse(fixInvalidControlChars ? raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "") : raw);	// eslint-disable-line no-restricted-syntax, no-control-regex
 	}
 	catch
 	{
