@@ -137,7 +137,7 @@ Deno.test("waitUntilSimple", async () =>
 	let counter = 0;
 	setTimeout(() => { test = 123; }, xu.SECOND*2);
 	let errorTimeout = setTimeout(() => { throw new Error("Should not see"); }, xu.SECOND*3);	// eslint-disable-line sembiance/shorter-arrow-funs
-	await xu.waitUntil(async () =>
+	let finished = await xu.waitUntil(async () =>
 	{
 		await delay(500);
 		counter++;
@@ -145,13 +145,14 @@ Deno.test("waitUntilSimple", async () =>
 	});
 	clearTimeout(errorTimeout);
 	assertStrictEquals(counter, 4);
+	assertStrictEquals(finished, true);
 
 	// 200ms interval
 	test = null;
 	counter = 0;
 	setTimeout(() => { test = 123; }, xu.SECOND);
 	errorTimeout = setTimeout(() => { throw new Error("Should not see"); }, xu.SECOND*2);	// eslint-disable-line sembiance/shorter-arrow-funs
-	await xu.waitUntil(async () =>
+	finished = await xu.waitUntil(async () =>
 	{
 		await delay(1);
 		counter++;
@@ -159,22 +160,25 @@ Deno.test("waitUntilSimple", async () =>
 	}, {interval : 200});
 	clearTimeout(errorTimeout);
 	assertStrictEquals(counter, 6);
+	assertStrictEquals(finished, true);
 
 	// 1 second timeout
 	let beforeTime = performance.now();
-	await xu.waitUntil(() => false, {timeout : xu.SECOND*2});
+	finished = await xu.waitUntil(() => false, {timeout : xu.SECOND*2});
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
+	assertStrictEquals(finished, false);
 
 	// non-async function
 	test = null;
 	beforeTime = performance.now();
 	setTimeout(() => { test = true; }, xu.SECOND*2);
-	await xu.waitUntil(() => !!test);
+	finished = await xu.waitUntil(() => !!test);
 	assertStrictEquals(Math.round((performance.now()-beforeTime)/xu.SECOND), 2);
+	assertStrictEquals(finished, true);
 
 	// timeout
-	const finishedCorrectly = await xu.waitUntil(() => test===47, {timeout : xu.SECOND});
-	assertStrictEquals(finishedCorrectly, false);
+	finished = await xu.waitUntil(() => test===47, {timeout : xu.SECOND});
+	assertStrictEquals(finished, false);
 });
 
 Deno.test("waitUntilStopEarly", async () =>
@@ -183,13 +187,15 @@ Deno.test("waitUntilStopEarly", async () =>
 	const stopper = {};
 	const startedAt = performance.now();
 	setTimeout(() => { stopper.stop = true; }, xu.SECOND*2);
-	await xu.waitUntil(() => false, {stopper});
+	let finished = await xu.waitUntil(() => false, {stopper});
 	assertStrictEquals(Math.round((performance.now()-startedAt)/xu.SECOND), 2);
+	assertStrictEquals(finished, false);
 
 	// stopAfter
 	let count=0;
-	await xu.waitUntil(() => { count++; return false; }, {stopAfter : 10});
+	finished = await xu.waitUntil(() => { count++; return false; }, {stopAfter : 10});
 	assertStrictEquals(count, 10);
+	assertStrictEquals(finished, false);
 });
 
 /*

@@ -276,22 +276,25 @@ xu.tryFallbackAsync = async function tryFallbackAsync(fn, fallbackResult)
 xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAfter}={})
 {
 	let i=0;
-	let timedOut = false;
+	let stopped = false;
 	const startedAt = timeout ? performance.now() : null;
 	while(!(await fun()))
 	{
 		await delay(interval || Math.min(5*(i++), xu.SECOND));
 		if(timeout && (performance.now()-startedAt)>timeout)
 		{
-			timedOut = true;
+			stopped = true;
 			break;
 		}
 
 		if(stopper?.stop || (stopAfter && i>=stopAfter))
+		{
+			stopped = true;
 			break;
+		}
 	}
 
-	return !timedOut;
+	return !stopped;
 };
 
 /** returns a random ASCII name in the format PID_RANDOM INT_COUNTER INCR where each number is represented as base-36 ASCII a-z0-9 */
