@@ -369,3 +369,46 @@ Deno.test("getXVFBNum", async () =>
 	const xvfbNum = await runUtil.getXVFBNum();
 	assert(xvfbNum>10);
 });
+
+Deno.test("ssh", async () =>
+{
+	const xlog = new XLog("none");	// remove "none" or change to something else to debug output
+
+	xlog.info`a`;
+	let startedAt = performance.now();
+	let {stdout, stderr, err} = await runUtil.ssh("sembiance", ["hostname"], {xlog, risky : true});
+	const riskyDuration = performance.now()-startedAt;
+	assertStrictEquals(stdout.trim(), "sembiance");
+	assertStrictEquals(stderr, "");
+	assertStrictEquals(err, undefined);
+
+	xlog.info`b`;
+	startedAt = performance.now();
+	({stdout, stderr} = await runUtil.ssh("sembiance", ["hostname"], {xlog}));
+	const safeDuration = performance.now()-startedAt;
+	assertStrictEquals(stdout.trim(), "sembiance");
+	assertStrictEquals(stderr, "");
+
+	assert(riskyDuration>safeDuration);
+
+	xlog.info`c`;
+	({stdout, stderr, err} = await runUtil.ssh("sembiance", ["sleep 3"], {xlog, risky : true, timeout : xu.SECOND}));
+	assertStrictEquals(stdout, undefined);
+	assertStrictEquals(stderr, undefined);
+	assertStrictEquals(err, `remote script on sembiance failed to finish`);
+
+	xlog.info`d`;
+	({stdout, stderr, err} = await runUtil.ssh("sembiance", ["sleep 3"], {xlog, timeout : xu.SECOND}));
+	assertStrictEquals(stdout, undefined);
+	assertStrictEquals(stderr, undefined);
+	assertStrictEquals(err, `ssh on sembiance timed out`);
+
+	xlog.info`e`;
+	({stdout, stderr} = await runUtil.ssh("sembiance", ["hostname", "cat /etc/conf.d/hostname"], {xlog}));
+	assert(stdout.trim().split("\n").length>=2);
+	assertStrictEquals(stdout.trim().split("\n")[0], "sembiance");
+	assert(stdout.trim().split("\n").slice(1).join("\n").includes(`hostname="sembiance"`));
+	assertStrictEquals(stderr, "");
+
+	xlog.info`fin.`;
+});

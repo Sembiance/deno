@@ -25,7 +25,7 @@ export async function concat(srcFilePaths, destFilePath, {seperator}={})
 	destFile.close();
 }
 
-/** Empties the dirPath, deleting anything in it **/
+/** Empties the dirPath, deleting anything in it without deleting the actual directory itself **/
 export async function emptyDir(dirPath)
 {
 	const srcPaths = await tree(dirPath, {depth : 1});

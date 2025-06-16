@@ -38,6 +38,15 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
 	}
 }
 
+export async function runUntilSuccess(...args)
+{
+	do
+	{
+		const {stdout, stderr, status} = await run(...args);
+		if(status?.success)
+			return {stdout, stderr, status};
+	} while(true);
+}
 
 /** Will run the given cmd and pass it the given args.
  * Options:
@@ -383,7 +392,7 @@ export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, d
 		r.push("--include", include);
 
 	if(exclude)
-		r.push("--exclude", exclude);
+		r.push(...Array.force(exclude).flatMap(v => (["--exclude", v]).flat()));
 	
 	if((srcHost || destHost) && (fast || identityFilePath))
 	{
@@ -398,8 +407,9 @@ export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, d
 		r.push("-e", `ssh ${sshArgs.join(" ")}`);
 	}
 	
-	r.push(`${srcHost ? `${srcHost}:` : ""}${src}`);
-	r.push(`${destHost ? `${destHost}:` : ""}${dest}`);
+	
+	r.push(...Array.force(src).map(v => `${srcHost ? `${srcHost}:` : ""}${v}`));
+	r.push(...Array.force(dest).map(v => `${destHost ? `${destHost}:` : ""}${v}`));
 
 	return r;
 }
@@ -431,4 +441,125 @@ export async function getXVFBNum()
 	await fileUtil.unlock(lockFile);
 
 	return xvfbNum;
+}
+
+export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, timeout, xlog}={})
+{
+	cmds = Array.force(cmds);
+
+	const waitUntilOpts = {};
+	if(timeout)
+		waitUntilOpts.timeout = timeout;
+
+	const sshArgs = ["-c", "aes256-gcm@openssh.com", "-o", "Compression=no"];
+	if(identityFilePath)
+		sshArgs.push("-i", identityFilePath);
+	if(port)
+		sshArgs.push("-p", port);
+	sshArgs.push(host);
+
+	if(!risky)
+	{
+		// if we are not risky, then the command is safe to be run more than once, so we just try until ssh doesn't return code 255
+		do
+		{
+			const {stdout, stderr, status, timedOut} = await run("ssh", [...sshArgs, cmds.join("; ")], timeout ? {timeout} : {});
+			if(timedOut)
+				return {err : `ssh on ${host} timed out`};
+				
+			if(status.code===255)
+			{
+				if(!quiet && xlog)
+					xlog.info`ssh to ${host} failed with code 255, retrying...`;
+				continue;
+			}
+
+			return {stdout, stderr, status};
+		} while(true);
+	}
+
+	// we have a risky command. so let's be asbsolutely sure the command runs once and only once
+	const localDirPath = await fileUtil.genTempPath(undefined, ".ssh");
+	await Deno.mkdir(localDirPath);
+	const scriptFilePath = await fileUtil.genTempPath(localDirPath, ".sh");
+	const destPaths =
+	{
+		script   : `/tmp/${path.basename(scriptFilePath)}`,
+		started  : `/tmp/${path.basename(scriptFilePath, ".sh")}-started`,
+		finished : `/tmp/${path.basename(scriptFilePath, ".sh")}-finished`,
+		stdout   : `/tmp/${path.basename(scriptFilePath, ".sh")}-stdout`,
+		stderr   : `/tmp/${path.basename(scriptFilePath, ".sh")}-stderr`,
+		pid      : `/tmp/${path.basename(scriptFilePath, ".sh")}-pid`
+	};
+
+	await fileUtil.writeTextFile(scriptFilePath, `#!/bin/bash\n
+touch ${destPaths.started}
+${cmds.some(v => v.includes("dra ")) ? `
+shopt -s expand_aliases
+source /mnt/compendium/sys/bash/bash_aliases
+` : ""}
+${cmds.join("\n")}
+touch ${destPaths.finished}`);
+	const scriptFileSize = (await Deno.stat(scriptFilePath)).size;
+
+	const subSSHOpts = {identityFilePath, port, quiet, timeout, xlog};
+
+	const cleanupFiles = async () =>
+	{
+		await fileUtil.unlink(localDirPath, {recursive : true});
+		await ssh(host, `rm -f ${destPaths.script} ${destPaths.started} ${destPaths.finished} ${destPaths.stdout} ${destPaths.stderr} ${destPaths.pid}`, subSSHOpts);
+	};
+
+	// step 1: copy the script file to the remote host and ensure the file size is correct
+	if(!await xu.waitUntil(async () =>
+	{
+		await runUntilSuccess("rsync", rsyncArgs(scriptFilePath, destPaths.script, {destHost : host, port, identityFilePath, quiet, timeout, fast : true}));
+
+		const remoteFileSize = +(await ssh(host, `stat -c %s ${destPaths.script}`, subSSHOpts)).stdout.trim();
+		if(remoteFileSize!==scriptFileSize)
+		{
+			if(!quiet && xlog)
+				xlog.info`rsync to ${host} failed, remote file ${destPaths.script} size of ${remoteFileSize} != ${scriptFileSize}. retrying...`;
+			return false;
+		}
+
+		return true;
+	}, waitUntilOpts))
+		return await cleanupFiles(), {err : `failed to copy script file to ${host}`};
+
+	// step 2: start the script on the remote host, ensuring it was started
+	await xu.waitUntil(async () =>
+	{
+		const {stdout, stderr, status} = await run("ssh", [...sshArgs, `daemonize -o ${destPaths.stdout} -e ${destPaths.stderr} -p ${destPaths.pid} -c ${path.dirname(destPaths.script)} /bin/bash ${destPaths.script}`]);
+
+		let scriptStarted = false;
+		await xu.waitUntil(async () =>
+		{
+			scriptStarted = !!(await ssh(host, `test -f ${destPaths.started}`, subSSHOpts)).status.success;
+			return scriptStarted;
+		}, {interval : 100, stopAfter : (xu.SECOND/100)*4});	// give it 4 full seconds to start before trying again
+		if(!scriptStarted)
+		{
+			if(!quiet && xlog)
+				xlog.warn`remote script on ${host} failed to start ${status} ${stdout} ${stderr}. retrying...`;
+			return false;
+		}
+
+		return true;
+	}, waitUntilOpts);
+
+	// step 3: wait for script to finish
+	if(!await xu.waitUntil(async () => !!(await ssh(host, `test -f ${destPaths.finished}`, subSSHOpts)).status.success, waitUntilOpts))
+		return await cleanupFiles(), {err : `remote script on ${host} failed to finish`};
+
+	// step 4: rsync down the stdout and stderr files
+	if(!await runUntilSuccess("rsync", rsyncArgs([destPaths.stdout, destPaths.stderr], localDirPath, {srcHost : host, port, identityFilePath, quiet, timeout, fast : true})))
+		return await cleanupFiles(), {err : `failed to copy down stdout/stderr files from ${host}`};
+
+	const stdout = await fileUtil.readTextFile(path.join(localDirPath, path.basename(destPaths.stdout)));
+	const stderr = await fileUtil.readTextFile(path.join(localDirPath, path.basename(destPaths.stderr)));
+
+	await cleanupFiles();
+
+	return {stdout, stderr};
 }
