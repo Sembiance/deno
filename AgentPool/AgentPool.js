@@ -23,10 +23,41 @@ export class AgentPool
 		this.logPrefix = `${xu.bracket(`${fg.white("AgentPool")}${fg.cyan("-")}${fg.peach(path.basename(this.agentFilePath, path.extname(this.agentFilePath)))}`)}`;
 	}
 
-	async init()
+	async init({maxProcessDuration, watchdogInterval=xu.SECOND}={})
 	{
 		this.cwd = await fileUtil.genTempPath(undefined, `AgentPool-${path.basename(this.agentFilePath, path.extname(this.agentFilePath))}`);
 		await Deno.mkdir(this.cwd, {recursive : true});
+		if(maxProcessDuration)
+			this.watchdog({maxProcessDuration, watchdogInterval});
+	}
+
+	async watchdog({maxProcessDuration, watchdogInterval})
+	{
+		this.watchdogRunning = true;
+		
+		// why don't we use xu.fetch() and set the timeout there? because if it's >maxProcessDuration then it's likely that whole agent is stuck somehow and another fetch() will just stall too. safer to kill.
+		await xu.waitUntil(async () =>
+		{
+			if(this.stopping)
+				return true;
+
+			for(const agent of this.agents)
+			{
+				if(!agent.running || !agent.runner || !agent.startedAt)
+					continue;
+
+				const agentProcessDuration = performance.now()-agent.startedAt;
+				if(agentProcessDuration<maxProcessDuration)
+					continue;
+
+				this.xlog.warn`${agent.logPrefix} ${fg.orange("WATCHDOG")} agent process duration of ${agentProcessDuration} > ${maxProcessDuration}, restarting agent...`;
+				await agent.stop();
+				await xu.waitUntil(() => !agent.runner && !agent.startedAt);
+				await agent.start();
+			}
+		}, {interval : watchdogInterval});
+
+		this.watchdogRunning = false;
 	}
 
 	async start({qty=navigator.hardwareConcurrency, runEnv, sequential, interval}={})
@@ -193,7 +224,7 @@ export class AgentPool
 		this.stopping = true;
 		await this.agents.parallelMap(async agent => await agent.stop(), this.agents.length);
 
-		await xu.waitUntil(() => this.agents.every(agent => !agent.running && agent.finished));
+		await xu.waitUntil(() => this.agents.every(agent => !agent.running && agent.finished) && !this.watchdogRunning);
 		if(!keepCWD)
 			await fileUtil.unlink(this.cwd, {recursive : true});
 

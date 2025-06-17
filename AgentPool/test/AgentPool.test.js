@@ -1,7 +1,7 @@
 import {xu} from "xu";
 import {XLog} from "xlog";
 import {assert, assertEquals, assertStrictEquals, delay, path} from "std";
-import {fileUtil} from "xutil";
+import {fileUtil, runUtil} from "xutil";
 import {AgentPool} from "AgentPool";
 
 Deno.test("startStop", async () =>
@@ -318,3 +318,36 @@ Deno.test("exception", async () =>
 
 	await pool.stop({keepCWD : true});
 });
+
+Deno.test("watchdog", async () =>
+{
+	const debugLog = [];
+	const xlog = new XLog("warn", {logger : v => debugLog.push(v.decolor())});
+
+	const successes = [];
+	const onSuccess = r => successes.push(r);
+
+	const fails = [];
+	const onFail = ({reason, error}, {msg}) => fails.push({msg, reason, error});
+
+	const pool = new AgentPool(path.join(import.meta.dirname, "watchdog.agent.js"), {onSuccess, onFail, xlog});
+	await pool.init({maxProcessDuration : xu.SECOND*2});
+	await pool.start({qty : 2});
+	pool.process([].pushSequence(1, 10).map(v => ({isMsg : true, v})));
+	const beforeWatchdogPIDS = pool.status().agents.map(agent => agent.pid);
+	await delay(xu.SECOND*3);
+	const afterWatchdogPIDS = pool.status().agents.map(agent => agent.pid);
+	assertStrictEquals(beforeWatchdogPIDS.length, 2);
+	assertStrictEquals(afterWatchdogPIDS.length, 2);
+	assertStrictEquals(beforeWatchdogPIDS.subtractAll(afterWatchdogPIDS).length, 1);
+	assertStrictEquals(debugLog.length, 1);
+	assert(debugLog[0].includes("WATCHDOG agent process duration"));
+	assertStrictEquals(fails.length, 1);
+	assertStrictEquals(fails[0].msg.v, 7);
+	assertStrictEquals(fails[0].reason, "fetch failed");
+
+	assert(await xu.waitUntil(() => successes.length===9));
+
+	await pool.stop({keepCWD : true});
+});
+
