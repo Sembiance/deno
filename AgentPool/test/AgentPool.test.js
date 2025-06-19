@@ -1,7 +1,7 @@
 import {xu} from "xu";
 import {XLog} from "xlog";
 import {assert, assertEquals, assertStrictEquals, delay, path} from "std";
-import {fileUtil, runUtil} from "xutil";
+import {fileUtil} from "xutil";
 import {AgentPool} from "AgentPool";
 
 Deno.test("startStop", async () =>
@@ -22,10 +22,11 @@ Deno.test("startStop", async () =>
 
 Deno.test("status", async () =>
 {
-	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"));
+	const results = [];
+	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {onSuccess : r => results.push(r)});
 	await pool.init();
 	await pool.start({qty : 3});
-	const poolStatus = pool.status();
+	let poolStatus = await pool.status();
 	assertStrictEquals(pool.cwd, poolStatus.cwd);
 	assertStrictEquals(pool.agents.length, poolStatus.agents.length);
 	for(const agent of poolStatus.agents)
@@ -37,12 +38,23 @@ Deno.test("status", async () =>
 		assertStrictEquals(path.dirname(agent.cwd), pool.cwd);
 		assertStrictEquals(agent.running, true);
 	}
+
+	const vals = [].pushSequence(1, 50).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0, liveOutput : true}));
+	pool.process(vals);
+	assert(await xu.waitUntil(() => results.length===vals.length, {timeout : xu.SECOND*30}));
+	poolStatus = await pool.status();
+	for(const agent of poolStatus.agents)
+	{
+		assert(agent.status.length>=15);
+		assert(agent.status.every(v => (/^handling \d+$/).test(v)));
+	}
+
 	await pool.stop();
 });
 
 Deno.test("processSimple", async () =>
 {
-	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
+	const vals = [].pushSequence(1, 1000).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0, liveOutput : true}));
 
 	const results = [];
 	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {onSuccess : r => results.push(r)});
@@ -334,9 +346,9 @@ Deno.test("watchdog", async () =>
 	await pool.init({maxProcessDuration : xu.SECOND*2});
 	await pool.start({qty : 2});
 	pool.process([].pushSequence(1, 10).map(v => ({isMsg : true, v})));
-	const beforeWatchdogPIDS = pool.status().agents.map(agent => agent.pid);
+	const beforeWatchdogPIDS = (await pool.status()).agents.map(agent => agent.pid);
 	await delay(xu.SECOND*3);
-	const afterWatchdogPIDS = pool.status().agents.map(agent => agent.pid);
+	const afterWatchdogPIDS = (await pool.status()).agents.map(agent => agent.pid);
 	assertStrictEquals(beforeWatchdogPIDS.length, 2);
 	assertStrictEquals(afterWatchdogPIDS.length, 2);
 	assertStrictEquals(beforeWatchdogPIDS.subtractAll(afterWatchdogPIDS).length, 1);

@@ -513,7 +513,7 @@ touch ${destPaths.finished}`);
 	// step 1: copy the script file to the remote host and ensure the file size is correct
 	if(!await xu.waitUntil(async () =>
 	{
-		await runUntilSuccess("rsync", rsyncArgs(scriptFilePath, destPaths.script, {destHost : host, port, identityFilePath, quiet, timeout, fast : true}));
+		await runUntilSuccess("rsync", rsyncArgs(scriptFilePath, destPaths.script, {destHost : host, port, identityFilePath, quiet, timeout, fast : true}), {liveOutput : xlog?.atLeast("debug")});
 
 		const remoteFileSize = +(await ssh(host, `stat -c %s ${destPaths.script}`, subSSHOpts)).stdout.trim();
 		if(remoteFileSize!==scriptFileSize)
@@ -530,7 +530,7 @@ touch ${destPaths.finished}`);
 	// step 2: start the script on the remote host, ensuring it was started
 	await xu.waitUntil(async () =>
 	{
-		const {stdout, stderr, status} = await run("ssh", [...sshArgs, `daemonize -o ${destPaths.stdout} -e ${destPaths.stderr} -p ${destPaths.pid} -c ${path.dirname(destPaths.script)} /bin/bash ${destPaths.script}`]);
+		const {stdout, stderr, status} = await run("ssh", [...sshArgs, `daemonize -o ${destPaths.stdout} -e ${destPaths.stderr} -p ${destPaths.pid} -c ${path.dirname(destPaths.script)} /bin/bash ${destPaths.script}`], {liveOutput : xlog?.atLeast("debug")});
 
 		let scriptStarted = false;
 		await xu.waitUntil(async () =>
@@ -553,7 +553,7 @@ touch ${destPaths.finished}`);
 		return await cleanupFiles(), {err : `remote script on ${host} failed to finish`};
 
 	// step 4: rsync down the stdout and stderr files
-	if(!await runUntilSuccess("rsync", rsyncArgs([destPaths.stdout, destPaths.stderr], localDirPath, {srcHost : host, port, identityFilePath, quiet, timeout, fast : true})))
+	if(!await runUntilSuccess("rsync", rsyncArgs([destPaths.stdout, destPaths.stderr], localDirPath, {srcHost : host, port, identityFilePath, quiet, timeout, fast : true}), {liveOutput : xlog?.atLeast("debug")}))
 		return await cleanupFiles(), {err : `failed to copy down stdout/stderr files from ${host}`};
 
 	const stdout = await fileUtil.readTextFile(path.join(localDirPath, path.basename(destPaths.stdout)));

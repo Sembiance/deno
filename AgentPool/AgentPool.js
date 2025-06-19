@@ -168,6 +168,7 @@ export class AgentPool
 			await xu.waitUntil(async () => await fileUtil.exists(agent.portFilePath));
 			agent.port = +(await fileUtil.readTextFile(agent.portFilePath));
 			agent.opURL = `http://127.0.0.1:${agent.port}/op`;
+			agent.statusURL = `http://127.0.0.1:${agent.port}/status`;
 			agent.running = true;
 			agent.startedOnce = true;
 
@@ -231,7 +232,7 @@ export class AgentPool
 		this.xlog.debug`${this.logPrefix} Stopped.`;
 	}
 
-	status({simpleLog}={})
+	async status({simpleLog}={})
 	{
 		const r = {cwd : this.cwd, queue : Array.from(this.queue), agents : []};
 		for(const agent of this.agents)
@@ -250,6 +251,8 @@ export class AgentPool
 					agentStatus.log = agentStatus.log.join("\n").decolor();
 				agentStatus.duration = performance.now()-agent.startedAt;
 			}
+
+			agentStatus.status = await xu.fetch(agent.statusURL, {asJSON : true, silent : true});
 			r.agents.push(agentStatus);
 		}
 		
@@ -277,7 +280,7 @@ export class AgentPool
 	}
 }
 
-export async function agentInit(handler, {xlog=new XLog("warn")}={})
+export async function agentInit(handler, statusHandler)
 {
 	const agentCWD = Deno.env.get("AGENT_CWD");
 	if(!agentCWD?.length)
@@ -288,18 +291,30 @@ export async function agentInit(handler, {xlog=new XLog("warn")}={})
 
 	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request =>
 	{
-		let r;
+		const u = new URL(request.url);
+		if(u.pathname==="/status")
+		{
+			if(!statusHandler)
+				return new Response(JSON.stringify({err : "no status handler provided"}), {status : 500});
+
+			try
+			{
+				return new Response(JSON.stringify((await statusHandler()) || {}));
+			}
+			catch(err)
+			{
+				return new Response(JSON.stringify({err : err.stack}), {status : 500});
+			}
+		}
 
 		try
 		{
-			r = new Response(JSON.stringify((await handler(await request.json())) || {}));
+			return new Response(JSON.stringify((await handler(await request.json())) || {}));
 		}
 		catch(err)
 		{
-			r = new Response(err.stack, {status : 500});
+			return new Response(err.stack, {status : 500});
 		}
-
-		return r;
 	});
 		
 	await fileUtil.writeTextFile(path.join(agentCWD, "port"), webServer.server.addr.port.toString());
