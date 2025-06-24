@@ -181,7 +181,8 @@ Deno.test("memoryLeak", async () =>
 
 	// Test 1: Check if maximum memory usage is within 3 standard deviations of the mean
 	const maxDeviations = 4;
-	assert(memStats.max<=(memStats.mean+(maxDeviations*memStats.stdDev)), `Max memory usage (${memStats.max}) is more than ${maxDeviations} standard deviations above the mean: memStats.mean (${memStats.mean}) + (${maxDeviations} * memStats.stdDev (${memStats.stdDev}))`);
+	const maxDeviationAmount = (memStats.mean+(maxDeviations*memStats.stdDev));
+	assert(memStats.max<=maxDeviationAmount, `Max memory usage (${memStats.max}) is more than ${maxDeviationAmount} aka ${maxDeviations} standard deviations above the mean: memStats.mean (${memStats.mean}) + (${maxDeviations} * memStats.stdDev (${memStats.stdDev}))`);
 
 	// Test 2: Ensure the memory usage isn't consistently increasing
 	assert(!memStats.isIncreasing, "Memory usage is consistently increasing, potential memory leak");

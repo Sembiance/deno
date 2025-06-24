@@ -304,6 +304,15 @@ Deno.test("readJSONLFile", async () =>
 	count = 0;
 	await fileUtil.readJSONLFile(path.join(FILES_DIR, "1.jsonl.gz"), async () => { await delay(1); count++; });
 	assertStrictEquals(count, 78);
+
+	try
+	{
+		await fileUtil.readJSONLFile(path.join(FILES_DIR, "1.jsonl.gz"), () => { noVar-=otherNoVar; });	// eslint-disable-line no-undef, sonarjs/no-implicit-global, sonarjs/no-reference-error
+	}
+	catch(err)
+	{
+		assert(err.stack.includes("ReferenceError: noVar is not defined"));
+	}
 });
 
 Deno.test("readTextFile", async () =>

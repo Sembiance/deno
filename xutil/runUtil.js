@@ -208,7 +208,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let stdoutBuffer = null;
 	if(stdoutcb || xlog)
 	{
-		stdoutPromise = lineReader(p.stdout, (stdoutcb ? line => stdoutcb(line, p) : (line => xlog.info`${line}`)));
+		stdoutPromise = lineReader(p.stdout, (stdoutcb ? async line => await stdoutcb(line, p) : (line => xlog.info`${line}`)));
 	}
 	else if(stdoutFilePath)
 	{
@@ -229,7 +229,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	let stderrBuffer = null;
 	if(stderrcb || xlog)
 	{
-		stderrPromise = lineReader(p.stderr, (stderrcb ? line => stderrcb(line, p) : (line => xlog.warn`${line}`)));
+		stderrPromise = lineReader(p.stderr, (stderrcb ? async line => await stderrcb(line, p) : (line => xlog.warn`${line}`)));
 	}
 	else if(stderrFilePath)
 	{
@@ -261,7 +261,18 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		cbCalled = true;
 
 		// Wait for the process to finish (or be killed by the timeoutHandler)
-		const [{success, code, signal}] = await Promise.all([p.status.catch(() => {}),	stdoutPromise.catch(() => {}),	stderrPromise.catch(() => {}), stdinPromise.catch(() => {})]);
+		// NOTE ROB: If I start getting exceptions thrown relating to the uncaught exceptions here and the timeout, I can 'catch' them with something like a catcher:
+		/*
+		const catcher = err =>
+		{
+			if(err type check here against what is fine)
+				return;
+			
+			throw err;
+		}
+		// The code below used to do .catch(() => {}) which just 'ate' any exceptions in things like stdoutcb, etc
+		*/
+		const [{success, code, signal}] = await Promise.all([p.status,	stdoutPromise,	stderrPromise, stdinPromise]);
 
 		// If we have a timeout still running, clear it
 		if(typeof timerid==="number")
@@ -515,7 +526,7 @@ touch ${destPaths.finished}`);
 	{
 		await runUntilSuccess("rsync", rsyncArgs(scriptFilePath, destPaths.script, {destHost : host, port, identityFilePath, quiet, timeout, fast : true}), {liveOutput : xlog?.atLeast("debug")});
 
-		const remoteFileSize = +(await ssh(host, `stat -c %s ${destPaths.script}`, subSSHOpts)).stdout.trim();
+		const remoteFileSize = +((await ssh(host, `stat -c %s ${destPaths.script}`, subSSHOpts))?.stdout?.trim() || 0);
 		if(remoteFileSize!==scriptFileSize)
 		{
 			if(!quiet && xlog)
@@ -535,7 +546,7 @@ touch ${destPaths.finished}`);
 		let scriptStarted = false;
 		await xu.waitUntil(async () =>
 		{
-			scriptStarted = !!(await ssh(host, `test -f ${destPaths.started}`, subSSHOpts)).status.success;
+			scriptStarted = !!(await ssh(host, `test -f ${destPaths.started}`, subSSHOpts))?.status?.success;
 			return scriptStarted;
 		}, {interval : 100, stopAfter : (xu.SECOND/100)*4});	// give it 4 full seconds to start before trying again
 		if(!scriptStarted)
@@ -549,7 +560,7 @@ touch ${destPaths.finished}`);
 	}, waitUntilOpts);
 
 	// step 3: wait for script to finish
-	if(!await xu.waitUntil(async () => !!(await ssh(host, `test -f ${destPaths.finished}`, subSSHOpts)).status.success, waitUntilOpts))
+	if(!await xu.waitUntil(async () => !!(await ssh(host, `test -f ${destPaths.finished}`, subSSHOpts))?.status?.success, waitUntilOpts))
 		return await cleanupFiles(), {err : `remote script on ${host} failed to finish`};
 
 	// step 4: rsync down the stdout and stderr files

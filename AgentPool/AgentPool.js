@@ -232,7 +232,7 @@ export class AgentPool
 		this.xlog.debug`${this.logPrefix} Stopped.`;
 	}
 
-	async status({simpleLog}={})
+	async status()
 	{
 		const r = {cwd : this.cwd, queue : Array.from(this.queue), agents : []};
 		for(const agent of this.agents)
@@ -247,8 +247,6 @@ export class AgentPool
 			if(agent.startedAt)
 			{
 				agentStatus.log = Array.from(agent.log || []);
-				if(simpleLog)
-					agentStatus.log = agentStatus.log.join("\n").decolor();
 				agentStatus.duration = performance.now()-agent.startedAt;
 			}
 

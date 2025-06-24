@@ -4,6 +4,8 @@ import * as runUtil from "../runUtil.js";
 import * as fileUtil from "../fileUtil.js";
 import {XLog} from "xlog";
 
+const FILES_DIR = path.join(path.dirname(path.fromFileUrl(import.meta.url)), "files");
+
 Deno.test("status", async () =>
 {
 	let {status} = await runUtil.run("uname");
@@ -148,6 +150,18 @@ Deno.test("stdoutcb2", async () =>
 
 	assertStrictEquals(lineCount, 11);
 	assertStrictEquals(seenLastLine, true);
+});
+
+Deno.test("stdoutcberr", async () =>
+{
+	try
+	{
+		await runUtil.run("pigz", ["-dc", path.join(FILES_DIR, "1.jsonl.gz")], {stdoutcb : () => { missingVar-=otherMissingVar; }});	// eslint-disable-line no-undef, sonarjs/no-implicit-global, sonarjs/no-reference-error
+	}
+	catch(err)
+	{
+		assert(err.stack.includes("ReferenceError: missingVar is not defined"));
+	}
 });
 
 Deno.test("stderrBasic", async () =>
@@ -395,7 +409,7 @@ Deno.test("ssh", async () =>
 	({stdout, stderr, err} = await runUtil.ssh("sembiance", ["sleep 3"], {xlog, risky : true, timeout : xu.SECOND}));
 	assertStrictEquals(stdout, undefined);
 	assertStrictEquals(stderr, undefined);
-	assertStrictEquals(err, `remote script on sembiance failed to finish`);
+	assert(["failed to copy script file to sembiance", "remote script on sembiance failed to finish"].includes(err));
 
 	xlog.info`d`;
 	({stdout, stderr, err} = await runUtil.ssh("sembiance", ["sleep 3"], {xlog, timeout : xu.SECOND}));
