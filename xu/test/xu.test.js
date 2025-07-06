@@ -1,5 +1,5 @@
 import {xu} from "../xu.js";
-import {delay, assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "std";
+import {delay, assert, assertEquals, assertNotStrictEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("clone", () =>
 {
@@ -23,6 +23,31 @@ Deno.test("clone", () =>
 Deno.test("dirname", () =>	// eslint-disable-line sembiance/shorter-arrow-funs
 {
 	assertStrictEquals(import.meta.dirname, "/mnt/compendium/DevLab/deno/xu/test");
+});
+
+Deno.test("falloff", () =>
+{
+	let counter, duration;
+	let times = 1000;
+
+	do
+	{
+		counter = 0;
+		duration = 0;
+		do
+			duration += xu.falloff(counter++);
+		while(counter<5);
+		assert(duration>=150);
+		assert(duration<=199);
+
+		counter = 0;
+		duration = 0;
+		do
+			duration += xu.falloff(counter++);
+		while(counter<10);
+		assert(duration>=1425);
+		assert(duration<=1892);
+	} while(--times);
 });
 
 Deno.test("fetch", async () =>
@@ -50,8 +75,8 @@ Deno.test("fetch", async () =>
 }
 `;
 
-	assertStrictEquals(await xu.fetch("https://httpbin.org/json"), r);
-	assertEquals(await xu.fetch("https://httpbin.org/json", {asJSON : true}), xu.parseJSON(r));
+	assertStrictEquals(await xu.fetch("https://sembiance.com/xu_fetch_test.json"), r);
+	assertEquals(await xu.fetch("https://sembiance.com/xu_fetch_test.json", {asJSON : true}), xu.parseJSON(r));
 });
 
 Deno.test("freeze", () =>

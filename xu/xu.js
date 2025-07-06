@@ -142,6 +142,13 @@ xu.clone = function clone(v, {skipKeys, shallow=false}={})
 	return (Array.isArray(v) ? v.clone({shallow}) : (Object.isObject(v) ? Object.clone(v, {skipKeys, shallow}) : v));
 };
 
+xu.falloff = function falloff(counter, {factor=2, min=0, max=xu.SECOND*5, step=5}={})
+{
+	//const fib = n => (n<2 ? n : fib(n-1) + fib(n-2));
+	const duration = Math.min(max, Math.max(min, min+(step*(counter**factor))));
+	return Math.min(max, duration+Math.randomInt(0, Math.min(Math.floor(duration*0.66), Math.max(5, Math.floor(duration*0.33)))));
+};
+
 /** freezes an object/array, making it immutable. Options: recursive : true|false */
 xu.freeze = function freeze(o, {recursive}={})
 {
@@ -156,18 +163,6 @@ xu.freeze = function freeze(o, {recursive}={})
 	return o;
 };
 
-/** parses the given raw data as JSON and if it fails return the fallback */
-xu.parseJSON = function parseJSON(raw, fallback, {fixInvalidControlChars}={})
-{
-	try
-	{
-		return JSON.parse(fixInvalidControlChars ? raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "") : raw);	// eslint-disable-line no-restricted-syntax, no-control-regex
-	}
-	catch
-	{
-		return fallback;
-	}
-};
 
 /** convience method for fetch. Additional valid args:
  * timeout - ms duration after which the fetch will be aborted
@@ -234,6 +229,30 @@ xu.importDev = async function importDev(importPath)
 	return await import(`${importPath}#${xu.randStr()}`);
 };
 
+/** parses the given raw data as JSON and if it fails return the fallback */
+xu.parseJSON = function parseJSON(raw, fallback, {fixInvalidControlChars}={})
+{
+	try
+	{
+		return JSON.parse(fixInvalidControlChars ? raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "") : raw);	// eslint-disable-line no-restricted-syntax, no-control-regex
+	}
+	catch
+	{
+		return fallback;
+	}
+};
+
+/** returns a random ASCII name in the format PID_RANDOM INT_COUNTER INCR where each number is represented as base-36 ASCII a-z0-9 */
+let TMP_COUNTER = 0;
+xu.randStr = function randStr()
+{
+	if(TMP_COUNTER>=2_176_782_335)
+		TMP_COUNTER = 0;
+
+	const strPrefix = xu.tryFallback(() => Deno.pid.toString(36), Math.randomInt(0, 46655));
+	return `${strPrefix}${(TMP_COUNTER++).toString(36)}${Math.randomInt(0, 1_679_615).toString(36)}`;
+};
+
 /** template literal that allows you to easily include multi-line strings and each line will be trimmed */
 xu.trim = function trim(strs, ...vals)
 {
@@ -280,7 +299,8 @@ xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAf
 	const startedAt = timeout ? performance.now() : null;
 	while(!(await fun()))
 	{
-		await delay(interval || Math.min(5*(i++), xu.SECOND));
+		await delay(interval || xu.falloff(i++, {max : xu.SECOND}));
+		//await delay(interval || Math.min(5*(i++), xu.SECOND));
 		if(timeout && (performance.now()-startedAt)>timeout)
 		{
 			stopped = true;
@@ -297,18 +317,6 @@ xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAf
 	return !stopped;
 };
 
-/** returns a random ASCII name in the format PID_RANDOM INT_COUNTER INCR where each number is represented as base-36 ASCII a-z0-9 */
-let TMP_COUNTER = 0;
-xu.randStr = function randStr()
-{
-	if(TMP_COUNTER>=2_176_782_335)
-		TMP_COUNTER = 0;
-
-	const strPrefix = xu.tryFallback(() => Deno.pid.toString(36), Math.randomInt(0, 46655));
-	return `${strPrefix}${(TMP_COUNTER++).toString(36)}${Math.randomInt(0, 1_679_615).toString(36)}`;
-};
-
 xu.nbsp = " ";
 
 export { xu, fg };
-

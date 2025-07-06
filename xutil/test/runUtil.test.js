@@ -387,10 +387,11 @@ Deno.test("getXVFBNum", async () =>
 Deno.test("ssh", async () =>
 {
 	const xlog = new XLog("none");	// remove "none" or change to something else to debug output
+	const host = "sembiance@sembiance";
 
 	xlog.info`a`;
 	let startedAt = performance.now();
-	let {stdout, stderr, err} = await runUtil.ssh("sembiance", ["hostname"], {xlog, risky : true});
+	let {stdout, stderr, err} = await runUtil.ssh(host, ["hostname"], {xlog, risky : true});
 	const riskyDuration = performance.now()-startedAt;
 	assertStrictEquals(stdout.trim(), "sembiance");
 	assertStrictEquals(stderr, "");
@@ -398,7 +399,7 @@ Deno.test("ssh", async () =>
 
 	xlog.info`b`;
 	startedAt = performance.now();
-	({stdout, stderr} = await runUtil.ssh("sembiance", ["hostname"], {xlog}));
+	({stdout, stderr} = await runUtil.ssh(host, ["hostname"], {xlog}));
 	const safeDuration = performance.now()-startedAt;
 	assertStrictEquals(stdout.trim(), "sembiance");
 	assertStrictEquals(stderr, "");
@@ -406,19 +407,42 @@ Deno.test("ssh", async () =>
 	assert(riskyDuration>safeDuration);
 
 	xlog.info`c`;
-	({stdout, stderr, err} = await runUtil.ssh("sembiance", ["sleep 3"], {xlog, risky : true, timeout : xu.SECOND}));
+	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 5", "kill $$"], {xlog, risky : true, timeout : xu.SECOND*20}));
 	assertStrictEquals(stdout, undefined);
 	assertStrictEquals(stderr, undefined);
-	assert(["failed to copy script file to sembiance", "remote script on sembiance failed to finish"].includes(err));
+	assertStrictEquals(err, `remote script on ${host} failed to finish, proc no longer exists`);
 
 	xlog.info`d`;
-	({stdout, stderr, err} = await runUtil.ssh("sembiance", ["sleep 3"], {xlog, timeout : xu.SECOND}));
-	assertStrictEquals(stdout, undefined);
-	assertStrictEquals(stderr, undefined);
-	assertStrictEquals(err, `ssh on sembiance timed out`);
+	const ranFilePath = `/tmp/${xu.randStr()}`;
+	const bashScript = `
+		if test -f ${ranFilePath}
+		then
+			rm -f ${ranFilePath}
+			echo ${ranFilePath}
+		else
+			touch ${ranFilePath}
+			kill $$
+		fi
+	`;
+	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 5", bashScript], {xlog, risky : true, retryRiskyInterval : xu.SECOND, timeout : xu.SECOND*30}));
+	assertStrictEquals(stdout, `${ranFilePath}\n`);
+	assertStrictEquals(stderr, "");
+	assertStrictEquals(err, undefined);
 
 	xlog.info`e`;
-	({stdout, stderr} = await runUtil.ssh("sembiance", ["hostname", "cat /etc/conf.d/hostname"], {xlog}));
+	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 3"], {xlog, risky : true, timeout : xu.SECOND}));
+	assertStrictEquals(stdout, "");
+	assertStrictEquals(stderr, "");
+	assert([`failed to copy script file to ${host}`, `remote script on ${host} failed to finish`].includes(err));
+
+	xlog.info`f`;
+	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 3"], {xlog, timeout : xu.SECOND}));
+	assertStrictEquals(stdout, undefined);
+	assertStrictEquals(stderr, undefined);
+	assertStrictEquals(err, `ssh to ${host} timed out`);
+
+	xlog.info`g`;
+	({stdout, stderr} = await runUtil.ssh(host, ["hostname", "cat /etc/conf.d/hostname"], {xlog}));
 	assert(stdout.trim().split("\n").length>=2);
 	assertStrictEquals(stdout.trim().split("\n")[0], "sembiance");
 	assert(stdout.trim().split("\n").slice(1).join("\n").includes(`hostname="sembiance"`));

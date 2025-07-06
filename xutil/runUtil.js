@@ -3,7 +3,7 @@ import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import * as printUtil from "./printUtil.js";
-import {path, TextLineStream, Buffer, getAvailablePort} from "std";
+import {path, TextLineStream, Buffer, getAvailablePort, delay} from "std";
 
 const XVFB_NUM_MIN = 10;
 const XVFB_NUM_MAX = 59999;	// in theory since we call runUtil with -nolisten tcp, we just have unix sockets, so no real upper limit on number (billions) but 59,999 - 10 should be plenty
@@ -38,13 +38,16 @@ async function killPIDKids(parentPID, timeoutSignal="SIGTERM")
 	}
 }
 
-export async function runUntilSuccess(...args)
+export async function runUntilSuccess(cmd, args, options={})
 {
+	let retryCounter = 0;
 	do
 	{
-		const {stdout, stderr, status} = await run(...args);
+		const {stdout, stderr, status} = await run(cmd, args, options);
 		if(status?.success)
 			return {stdout, stderr, status};
+
+		await delay(options.retryInterval || xu.falloff(retryCounter++));
 	} while(true);
 }
 
@@ -454,7 +457,7 @@ export async function getXVFBNum()
 	return xvfbNum;
 }
 
-export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, timeout, xlog}={})
+export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, retryInterval, retryRiskyInterval, retryRiskyMax, timeout, xlog}={})
 {
 	cmds = Array.force(cmds);
 
@@ -471,17 +474,20 @@ export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, tim
 
 	if(!risky)
 	{
+		let retryCounter = 0;
 		// if we are not risky, then the command is safe to be run more than once, so we just try until ssh doesn't return code 255
 		do
 		{
 			const {stdout, stderr, status, timedOut} = await run("ssh", [...sshArgs, cmds.join("; ")], timeout ? {timeout} : {});
 			if(timedOut)
-				return {err : `ssh on ${host} timed out`};
+				return {err : `ssh to ${host} timed out`};
 				
 			if(status.code===255)
 			{
 				if(!quiet && xlog)
-					xlog.info`ssh to ${host} failed with code 255, retrying...`;
+					xlog.info`ssh to ${host} failed with code 255, retrying${retryInterval ? ` in ${retryInterval.msAsHumanReadable({short : true})}` : ""}...`;
+				if(retryInterval)
+					await delay(retryInterval || xu.falloff(retryCounter++));
 				continue;
 			}
 
@@ -513,7 +519,7 @@ ${cmds.join("\n")}
 touch ${destPaths.finished}`);
 	const scriptFileSize = (await Deno.stat(scriptFilePath)).size;
 
-	const subSSHOpts = {identityFilePath, port, quiet, timeout, xlog};
+	const subSSHOpts = {identityFilePath, port, quiet, retryInterval, timeout, xlog};
 
 	const cleanupFiles = async () =>
 	{
@@ -539,29 +545,72 @@ touch ${destPaths.finished}`);
 		return await cleanupFiles(), {err : `failed to copy script file to ${host}`};
 
 	// step 2: start the script on the remote host, ensuring it was started
-	await xu.waitUntil(async () =>
+	let scriptPID;
+	const startScript = async () =>
 	{
-		const {stdout, stderr, status} = await run("ssh", [...sshArgs, `daemonize -o ${destPaths.stdout} -e ${destPaths.stderr} -p ${destPaths.pid} -c ${path.dirname(destPaths.script)} /bin/bash ${destPaths.script}`], {liveOutput : xlog?.atLeast("debug")});
-
-		let scriptStarted = false;
 		await xu.waitUntil(async () =>
 		{
-			scriptStarted = !!(await ssh(host, `test -f ${destPaths.started}`, subSSHOpts))?.status?.success;
-			return scriptStarted;
-		}, {interval : 100, stopAfter : (xu.SECOND/100)*4});	// give it 4 full seconds to start before trying again
-		if(!scriptStarted)
+			const {stdout, stderr, status} = await run("ssh", [...sshArgs, `daemonize -o ${destPaths.stdout} -e ${destPaths.stderr} -p ${destPaths.pid} -c ${path.dirname(destPaths.script)} /bin/bash ${destPaths.script}`], {liveOutput : xlog?.atLeast("debug")});
+
+			let scriptStarted = false;
+			await xu.waitUntil(async () =>
+			{
+				scriptStarted = !!(await ssh(host, `test -f ${destPaths.started}`, subSSHOpts))?.status?.success;
+				return scriptStarted;
+			}, {stopAfter : (xu.SECOND/100)*4});	// give it 4 full seconds to start before trying again
+			if(!scriptStarted)
+			{
+				if(!quiet && xlog)
+					xlog.warn`remote script on ${host} failed to start ${status} ${stdout} ${stderr}. retrying...`;
+				return false;
+			}
+
+			scriptPID = +(await ssh(host, `cat ${destPaths.pid}`, subSSHOpts))?.stdout?.trim();
+
+			return true;
+		}, waitUntilOpts);
+	};
+	await startScript();
+
+	// step 3: wait for script to finish
+	let scriptFailed = false;
+	let retryRiskyAttempt = 0;
+	if(!await xu.waitUntil(async () =>
+	{
+		if((await ssh(host, `test -f ${destPaths.finished}`, subSSHOpts))?.status?.success)
+			return true;
+
+		// this ps command will return 1 line that has a column header of PID and then one line with the pid number we searched for
+		// we used to use `-o pid=` and then just checked to see if we had 'any' output, but this can fail if the SSH command itself fails for some reason, leading to a false positive/negative
+		// so this is afer, we check to make sure we have the column header (which ensures the command worked) and then we make sure we don't have a second line that would have the pid
+		const {stdout : pidOutRaw} = await ssh(host, `ps -p ${scriptPID} -o pid`, subSSHOpts);
+		const pidStatusLines = pidOutRaw?.trim()?.split("\n") || [];
+		if(pidStatusLines?.[0]?.trim()!=="PID")
+			return xlog.warn`failed to get pid status for job ${destPaths.pid} on ${host}. pidOutRaw: ${pidOutRaw}`, false;
+
+		if(pidStatusLines.length===1)
 		{
-			if(!quiet && xlog)
-				xlog.warn`remote script on ${host} failed to start ${status} ${stdout} ${stderr}. retrying...`;
+			if((await ssh(host, `test -f ${destPaths.finished}`, subSSHOpts))?.status?.success)
+				return true;
+
+			if(!retryRiskyInterval || (retryRiskyMax && retryRiskyAttempt++>=retryRiskyMax))
+			{
+				scriptFailed = true;
+				return true;
+			}
+
+			xlog.info`remote script on ${host} failed to finish, proc no longer exists. retrying in ${retryRiskyInterval.msAsHumanReadable({short : true})}`;
+			await delay(retryRiskyInterval);
+			await startScript();
 			return false;
 		}
 
-		return true;
-	}, waitUntilOpts);
-
-	// step 3: wait for script to finish
-	if(!await xu.waitUntil(async () => !!(await ssh(host, `test -f ${destPaths.finished}`, subSSHOpts))?.status?.success, waitUntilOpts))
+		return false;
+	}, waitUntilOpts))
 		return await cleanupFiles(), {err : `remote script on ${host} failed to finish`};
+
+	if(scriptFailed)
+		return await cleanupFiles(), {err : `remote script on ${host} failed to finish, proc no longer exists`};
 
 	// step 4: rsync down the stdout and stderr files
 	if(!await runUntilSuccess("rsync", rsyncArgs([destPaths.stdout, destPaths.stderr], localDirPath, {srcHost : host, port, identityFilePath, quiet, timeout, fast : true}), {liveOutput : xlog?.atLeast("debug")}))
