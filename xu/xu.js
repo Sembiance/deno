@@ -179,7 +179,7 @@ xu.fetch = async function xuFetch(url, opts={})
 		fetchOpts.method ||= "POST";
 		fetchOpts.headers ||= {};
 		fetchOpts.headers["content-type"] ||= "application/json";
-		fetchOpts.body = JSON.stringify(fetchOpts.json);
+		fetchOpts.body ||= JSON.stringify(fetchOpts.json);
 
 		delete fetchOpts.json;
 	}
@@ -315,6 +315,12 @@ xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAf
 	}
 
 	return !stopped;
+};
+
+const domParser = typeof DOMParser!=="undefined" ? new DOMParser() : null;
+xu.fromHTML = function fromHTML(v)
+{
+	return domParser.parseFromString(v, "text/html").body.firstChild;
 };
 
 xu.nbsp = " ";
