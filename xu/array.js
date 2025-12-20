@@ -274,7 +274,7 @@ Array.prototype.shuffle ||= function shuffle()
 };
 
 
-/** Sorts an array, IN PLACE, based on the values returned by the sorter cb functions passed in. reverse can be `true` or an array of booleans corresponding to each sorter cb */
+/** Sorts an array, IN PLACE, based on the values returned by the sorter cb functions passed in. reverse can be `true` or an array of booleans corresponding to each sorter cb, returns array for easy chaining */
 Array.prototype.sortMulti ||= function sortMulti(_sorters, reverse)
 {
 	const sorters = Array.force(_sorters).filter(v => !!v);

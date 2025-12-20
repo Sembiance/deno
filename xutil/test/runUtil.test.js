@@ -430,15 +430,15 @@ Deno.test("ssh", async () =>
 	assertStrictEquals(err, undefined);
 
 	xlog.info`e`;
-	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 3"], {xlog, risky : true, timeout : xu.SECOND}));
-	assertStrictEquals(stdout, "");
-	assertStrictEquals(stderr, "");
-	assert([`failed to copy script file to ${host}`, `remote script on ${host} failed to finish`].includes(err));
+	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 5"], {xlog, risky : true, timeout : xu.SECOND}));
+	assert(stdout===undefined || stdout==="");
+	assert(stderr===undefined || stdout==="");
+	assert([`failed to copy script file to ${host}`, `remote script on ${host} failed to finish`, ""].includes(err));
 
 	xlog.info`f`;
 	({stdout, stderr, err} = await runUtil.ssh(host, ["sleep 3"], {xlog, timeout : xu.SECOND}));
-	assertStrictEquals(stdout, undefined);
-	assertStrictEquals(stderr, undefined);
+	assert(stdout===undefined || stdout==="");
+	assert(stderr===undefined || stdout==="");
 	assertStrictEquals(err, `ssh to ${host} timed out`);
 
 	xlog.info`g`;

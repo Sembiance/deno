@@ -31,9 +31,11 @@ export function prepare(db, statementRaw)
 			let stmtResult = null;
 			await xu.waitUntil(() =>
 			{
+				//console.log({statement, statementRaw, n, args});
 				try
 				{
 					stmtResult = statement[n](...args);
+					//console.log(stmtResult);
 				}
 				catch (err)
 				{

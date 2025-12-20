@@ -166,7 +166,7 @@ export async function monitor(dirPath, cb)
 	};
 
 	const {p} = await runUtil.run("inotifywait", ["-mr", "--timefmt", "%s", "--format", "%T %e %w%f", "-e", "create", "-e", "close_write", "-e", "delete", "-e", "moved_from", "-e", "moved_to", dirPath], {detached : true, stdoutcb : linecb, stderrcb : linecb});
-	return {stop : async () => await runUtil.kill(p)};
+	return {stop : async () => await runUtil.kill(p, "SIGKILL")};
 }
 
 /** Safely moves a file from src to dest, will try to just rename it, but will copy and remove original if needed */

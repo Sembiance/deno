@@ -10,7 +10,7 @@ export class XLog
 	logLines = [];
 
 	// noANSI does not need to be set if you have a logFilePath or logger set
-	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, includeDateTime, inspectOptions={}}={})
+	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, includeDateTime, inspectOptions={strAbbreviateSize : 9999}}={})
 	{
 		this.lastMessageAt = performance.now();
 		this.level = level;
@@ -22,6 +22,7 @@ export class XLog
 		this.signalHandler = async () => await this.flush();
 		this.inspectOptions = inspectOptions;
 		this.includeDateTime = includeDateTime;
+		this.cbs = {};
 
 		if(this.logFilePath)
 			Deno.addSignalListener("SIGUSR2", this.signalHandler);
@@ -88,9 +89,14 @@ export class XLog
 				
 				if((!this.logFilePath && !this.logger) || this.alwaysEcho)
 					console[(["fatal", "error", "warn"].includes(levelName) ? "error" : "log")](outText);
+
+				if(this.cbs[levelName])
+					this.cbs[levelName](outText);
 				
 				return outText;
 			};
+
+			this[`on${levelName.toProperCase()}`] = cb => { this.cbs[levelName] = cb; };
 		}
 	}
 
@@ -134,6 +140,8 @@ export class XLog
 
 		return LEVELS.indexOf(this.level)>=LEVELS.indexOf(logLevel);
 	}
+
+	onWarn(cb) {}	// eslint-disable-line no-unused-vars
 
 	/* returns a shallow copy, assigning a possible new log level but keeping the old logger function if present */
 	clone(newLogLevel)

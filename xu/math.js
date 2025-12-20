@@ -1,5 +1,11 @@
 import {} from "./array.js";
 
+/** Clamps a value so it's no smaller and no larger than given min/max values */
+Math.clamp ||= function clamp(value, min, max)
+{
+	return Math.min(Math.max(value, min), max);
+};
+
 /** Converts an angle from degrees to radians */
 Math.degreesToRadians ||= function degreesToRadians(degrees)
 {

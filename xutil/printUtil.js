@@ -253,7 +253,7 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration, includePer, perSampleCount=20, dontAutoFinish}={})
+	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish}={})
 	{
 		this.min = min;
 		this.max = max;
@@ -292,7 +292,7 @@ class Progress
 			}
 		}
 
-		v = Math.max(Math.min(v, this.max), this.min);
+		v = Math.clamp(v, this.min, this.max);
 		this.lastValue = v;
 		const pos = Math.floor(v.scale(this.min, this.max, 0, this.barWidth));
 		stdoutWrite(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);

@@ -29,7 +29,7 @@ export class UInt8ArrayReader
 	skip(v) { this.pos+=v; }
 	skipUntil(m)
 	{
-		const index = this.sub(this.remaining(), true).arr.indexOfX(m);
+		const index = this.arr.subarray(this.pos).indexOfX(m);
 		if(index===-1)
 			return false;
 

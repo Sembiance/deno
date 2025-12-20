@@ -5,7 +5,8 @@ import {path} from "std";
 /** Returns the [width, height] of the image at imageFilePath */
 export async function getWidthHeight(imageFilePath, {timeout=xu.MINUTE*5}={})
 {
-	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", "%wx%h", `./${path.basename(imageFilePath)}[0]`], {cwd : path.dirname(imageFilePath), timeout});
+	// the [0] suffix forces me to escape any percentage signs in the filename
+	const {stdout, stderr} = await runUtil.run("identify", ["-quiet", "-format", "%wx%h", `./${path.basename(imageFilePath).replaceAll("%", "%%")}[0]`], {cwd : path.dirname(imageFilePath), timeout});
 	
 	const parts = stdout.split("x");
 	if(!parts || parts.length!==2)
@@ -42,8 +43,7 @@ export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOn
 		return imageInfo;
 	
 	// Available properties: https://imagemagick.org/script/escape.php
-	const PROPS =
-	{
+	const PROPS = {
 		colorCount      : "%k",
 		format          : "%[magick]",
 		canvasHeight    : "%H",

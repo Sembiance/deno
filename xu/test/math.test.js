@@ -1,6 +1,13 @@
 import {} from "../math.js";
 import {assert, assertEquals, assertStrictEquals, assertThrows} from "std";
 
+Deno.test("clamp", () =>
+{
+	assertStrictEquals(47, Math.clamp(47, 1, 100));
+	assertStrictEquals(47, Math.clamp(212, 1, 47));
+	assertStrictEquals(47, Math.clamp(-382, 47, 100));
+});
+
 Deno.test("degreesToRadians", () =>
 {
 	const a = 45;
