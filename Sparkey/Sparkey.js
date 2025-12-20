@@ -14,6 +14,7 @@ export class Sparkey
 		this.sparkey = Deno.dlopen(path.join(import.meta.dirname, "sparkey.so"), {
 			get         : { parameters : ["buffer", "u32", "buffer", "u32", "u64"], result : "buffer" },
 			getLength   : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u64" },
+			delete      : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u8" },
 			put         : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" },
 			putMany     : { parameters : ["buffer", "u32", "u32", "buffer", "buffer"], result : "u8" },
 			extractFile : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u64" }
@@ -62,7 +63,15 @@ export class Sparkey
 
 	async putFile(k, filePath)
 	{
-		await runUtil.run(path.join(import.meta.dirname, "sparkey_put", "sparkey_put"), [this.dbFilePathPrefix, k, filePath]);
+		const {status, stderr} = await runUtil.run(path.join(import.meta.dirname, "sparkey_put", "sparkey_put"), [this.dbFilePathPrefix, k, filePath]);
+		if(!status?.success)
+			throw new Error(`Sparkey putFile failed: ${stderr}`);
+	}
+
+	delete(k)
+	{
+		const keyBuffer = this.encoder.encode(k);
+		return !!this.sparkey.symbols.delete(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length);
 	}
 
 	putMany(keys, vals)
@@ -103,6 +112,11 @@ export class Sparkey
 	{
 		await fileUtil.unlink(`${this.decoder.decode(this.dbFilePathPrefixBuffer)}.spi`, {recusive : true});
 		await fileUtil.unlink(`${this.decoder.decode(this.dbFilePathPrefixBuffer)}.spl`, {recusive : true});
+	}
+
+	async listKeys()
+	{
+		return (await runUtil.run("/mnt/compendium/bin/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.trim()?.split("\n");
 	}
 
 	unload()

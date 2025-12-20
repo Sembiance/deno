@@ -62,7 +62,7 @@ static void parse_options(int argc, char **argv)
     argc -= i;
     argv += i;
 
-    if(argc<2)
+    if(argc<3)
         usage();
 
     dbFilePathPrefix = argv[0];
@@ -70,7 +70,7 @@ static void parse_options(int argc, char **argv)
 	inputFilePath = argv[2];
 }
 
-uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen, uint8_t * value, uint32_t valueLen)
+uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen, uint8_t * value, uint64_t valueLen)
 {
 	sparkey_logwriter * writer;
 
@@ -88,6 +88,7 @@ uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen
 
 	if(r!=SPARKEY_SUCCESS)
 	{
+		fprintf(stderr, "Failed to create or append log writer, error: %d %s\n", r, sparkey_errstring(r));
 		free(logFilePath);
 		return 0;
 	}
@@ -95,6 +96,8 @@ uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen
 	r = sparkey_logwriter_put(writer, keyLen, key, valueLen, value);
 	if(r!=SPARKEY_SUCCESS)
 	{
+		fprintf(stderr, "Failed to put key/val, error: %d %s\n", r, sparkey_errstring(r));
+		sparkey_logwriter_close(&writer);
 		free(logFilePath);
 		return 0;
 	}
@@ -102,6 +105,7 @@ uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen
 	r = sparkey_logwriter_close(&writer);
 	if(r!=SPARKEY_SUCCESS)
 	{
+		fprintf(stderr, "Failed to close log writer, error: %d %s\n", r, sparkey_errstring(r));
 		free(logFilePath);
 		return 0;
 	}
@@ -116,7 +120,10 @@ uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen
 	free(hashFilePath);
 
 	if(r!=SPARKEY_SUCCESS)
+	{
+		fprintf(stderr, "Failed to write hash file, error: %d %s\n", r, sparkey_errstring(r));
 		return 0;
+	}
 
 	return 1;
 }
@@ -127,18 +134,21 @@ int main(int argc, char ** argv)
     uint8_t * data=0;
     struct stat s;
 	uint8_t result=0;
+	int exitCode = EXIT_SUCCESS;
 
     parse_options(argc, argv);
 
     if(stat(inputFilePath, &s)==-1)
     {
         fprintf(stderr, "Failed to stat [%s]: %s\n", inputFilePath, strerror(errno));
+		exitCode = EXIT_FAILURE;
         goto cleanup;
     }
 
     if(s.st_size==0)
     {
         fprintf(stderr, "Input file [%s] is zero bytes long\n", inputFilePath);
+		exitCode = EXIT_FAILURE;
         goto cleanup;
     }
 
@@ -146,6 +156,7 @@ int main(int argc, char ** argv)
     if(infd==-1)
     {
         fprintf(stderr, "Failed to open input file [%s]: %s\n", inputFilePath, strerror(errno));
+		exitCode = EXIT_FAILURE;
         goto cleanup;
     }
 
@@ -153,13 +164,15 @@ int main(int argc, char ** argv)
     if((void *)data==MAP_FAILED)
     {
         fprintf(stderr, "Failed to mmap input file [%s]: %s\n", inputFilePath, strerror(errno));
+		data = 0;
+		exitCode = EXIT_FAILURE;
         goto cleanup;
     }
 
 	result = put((uint8_t *)dbFilePathPrefix, strlen(dbFilePathPrefix), (uint8_t *)keyName, strlen(keyName), data, s.st_size);
 	if(result==0)
 	{
-		fprintf(stderr, "Failed to put key/val into db\n");
+		exitCode = EXIT_FAILURE;
 		goto cleanup;
 	}
 
@@ -169,6 +182,5 @@ int main(int argc, char ** argv)
     if(infd>=0)
         close(infd);
 
-    exit(EXIT_SUCCESS);
-
+    exit(exitCode);
 }

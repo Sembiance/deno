@@ -181,6 +181,53 @@ uint64_t extractFile(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32
 	return totalReadCount;
 }
 
+uint8_t delete(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen)
+{
+	sparkey_logwriter * writer;
+
+	char * logFilePath = (char *)malloc(dbPathLen + 5);
+	memcpy(logFilePath, dbPath, dbPathLen);
+	memcpy(logFilePath + dbPathLen, ".spl", 4);
+	logFilePath[dbPathLen + 4] = 0;
+
+	sparkey_returncode r;
+	r = sparkey_logwriter_append(&writer, logFilePath);
+	if(r!=SPARKEY_SUCCESS)
+	{
+		free(logFilePath);
+		return 0;
+	}
+
+	r = sparkey_logwriter_delete(writer, keyLen, key);
+	if(r!=SPARKEY_SUCCESS)
+	{
+		sparkey_logwriter_close(&writer);
+		free(logFilePath);
+		return 0;
+	}
+
+	r = sparkey_logwriter_close(&writer);
+	if(r!=SPARKEY_SUCCESS)
+	{
+		free(logFilePath);
+		return 0;
+	}
+
+	char * hashFilePath = (char *)malloc(dbPathLen + 5);
+	memcpy(hashFilePath, dbPath, dbPathLen);
+	memcpy(hashFilePath + dbPathLen, ".spi", 4);
+	hashFilePath[dbPathLen + 4] = 0;
+
+	r = sparkey_hash_write(hashFilePath, logFilePath, 0);
+	free(logFilePath);
+	free(hashFilePath);
+
+	if(r!=SPARKEY_SUCCESS)
+		return 0;
+
+	return 1;
+}
+
 uint8_t put(uint8_t * dbPath, uint32_t dbPathLen, uint8_t * key, uint32_t keyLen, uint8_t * value, uint32_t valueLen)
 {
 	sparkey_logwriter * writer;
