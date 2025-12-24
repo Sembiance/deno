@@ -14,8 +14,7 @@ const DEFAULT_SEQUENCE_DELAY = 250;
 
 const VINPUT_PATH = "/dev/vinput0";
 
-const KEY_CODE =
-{
+const KEY_CODE = {
 	"CTRL"   : 29,
 	"CTRL_L" : 29,
 	"CTRL_R" : 97,

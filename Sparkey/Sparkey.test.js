@@ -100,7 +100,7 @@ Deno.test("putFile", async () =>
 
 Deno.test("putFileHuge", async () =>
 {
-	if(Deno.hostname()!=="ridgeport")
+	if(Deno.hostname()!=="eaglehollow")
 		return;
 	if(!(await fileUtil.exists(HUGE_FILE_PATH)))
 		return;

@@ -4,7 +4,7 @@ import {assert, assertStrictEquals} from "std";
 
 Deno.test("calcMaxProcs", async () =>
 {
-	if(Deno.hostname()!=="ridgeport")
+	if(Deno.hostname()!=="eaglehollow")
 		return;
 
 	const a = await sysUtil.calcMaxProcs(undefined, {expectedMemoryUsage : 8*xu.GB});
@@ -13,7 +13,7 @@ Deno.test("calcMaxProcs", async () =>
 
 Deno.test("getAudioPlaybackDevices", async () =>
 {
-	if(Deno.hostname()!=="ridgeport")
+	if(Deno.hostname()!=="eaglehollow")
 		return;
 
 	const a = await sysUtil.getAudioPlaybackDevices();
@@ -23,7 +23,7 @@ Deno.test("getAudioPlaybackDevices", async () =>
 
 Deno.test("getCPUIdleUsage", async () =>
 {
-	if(Deno.hostname()!=="ridgeport")
+	if(Deno.hostname()!=="eaglehollow")
 		return;
 
 	const a = await sysUtil.getCPUIdleUsage();
@@ -32,7 +32,7 @@ Deno.test("getCPUIdleUsage", async () =>
 
 Deno.test("getDiskUsage", async () =>
 {
-	if(Deno.hostname()!=="ridgeport")
+	if(Deno.hostname()!=="eaglehollow")
 		return;
 
 	const mountPoints = ["/", "/mnt/ram", "/mnt/compendium"];
@@ -65,7 +65,7 @@ Deno.test("memInfo", async () =>
 
 Deno.test("optimalParallelism", async () =>
 {
-	if(Deno.hostname()!=="ridgeport")
+	if(Deno.hostname()!=="eaglehollow")
 		return;
 
 	assertStrictEquals(await sysUtil.optimalParallelism(3), 1);

@@ -155,8 +155,7 @@ export const macintoshProcessors =
 	]
 };
 
-const UNICODE_CONVERSION_MAP =
-{
+const UNICODE_CONVERSION_MAP = {
 	// latin
 	"À" : "A", "Á" : "A", "Â" : "A", "Ã" : "A", "Ä" : "A", "Å" : "A", "Æ" : "AE",
 	"Ç" : "C", "È" : "E", "É" : "E", "Ê" : "E", "Ë" : "E", "Ì" : "I", "Í" : "I",
