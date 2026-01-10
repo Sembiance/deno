@@ -151,7 +151,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		xvfbArgs.push("-screen", "0", "1920x1080x24");
 		xvfbProc = new Deno.Command("/usr/bin/Xvfb", {args : xvfbArgs, clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 	
-		if(!await xu.waitUntil(async () => !!(await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`)), {timeout : xu.SECOND*20}))
+		if(!await xu.waitUntil(async () => !!await fileUtil.exists(`/tmp/.X11-unix/X${xvfbPort}`), {timeout : xu.SECOND*20}))
 			throw new Error(`virtualX requested for cmd \`${cmd}\`, ran \`Xvfb ${xvfbArgs.join(" ")}\` but failed to find X11 sock file within 20 seconds`);
 
 		runOpts.env ||= {};
@@ -170,7 +170,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		console.log(`runUtil.run running \`${fg.orange(runCmd)} ${runArgs.map(v => (v.includes(" ") ? `"${v}"` : v)).join(" ")}\` with options ${printUtil.inspect(runOpts).squeeze()}`);
 
 	// Create our cwd if needed, otherwise we'll get an error
-	if(cwd && !(await fileUtil.exists(cwd)))
+	if(cwd && !await fileUtil.exists(cwd))
 		await Deno.mkdir(cwd, {recursive : true});
 
 	// Kick off our process
@@ -202,7 +202,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 
 	const lineReader = async function(readable, cb)
 	{
-		for await(const line of readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
+		for await (const line of readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
 			await cb(line);
 	};
 

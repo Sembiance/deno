@@ -1,4 +1,4 @@
-import {} from "../math.js";
+import "../math.js";
 import {assert, assertEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("clamp", () =>

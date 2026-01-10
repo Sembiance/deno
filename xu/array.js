@@ -1,5 +1,5 @@
-import {} from "./object.js";
-import {} from "./math.js";
+import "./object.js";
+import "./math.js";
 
 /** Returns an average of all the numbers in the array (arithmetic mean) */
 Array.prototype.average ||= function average()

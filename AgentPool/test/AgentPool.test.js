@@ -17,7 +17,7 @@ Deno.test("startStop", async () =>
 	await delay(xu.SECOND);
 	await pool.stop();
 	assertStrictEquals(debugLog.length, 13);
-	assert(!(await fileUtil.exists(pool.cwd)));
+	assert(!await fileUtil.exists(pool.cwd));
 });
 
 Deno.test("status", async () =>

@@ -37,7 +37,7 @@ export function prepare(db, statementRaw)
 					stmtResult = statement[n](...args);
 					//console.log(stmtResult);
 				}
-				catch (err)
+				catch(err)
 				{
 					if(err.toString().includes("database is locked"))
 						return false;

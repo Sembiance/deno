@@ -1,4 +1,4 @@
-import {} from "../object.js";
+import "../object.js";
 import {delay, assertEquals, assertNotEquals, assertStrictEquals, assertThrows} from "std";
 
 Deno.test("average", () =>

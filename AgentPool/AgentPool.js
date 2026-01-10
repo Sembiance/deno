@@ -102,11 +102,11 @@ export class AgentPool
 				// NOTE: Could add an AbortController to fetch that is triggered if the agent crashes or if an optional 'timeout' is specified (see how it's done in xu.fetch)
 				const fetchResult = await fetch(agent.opURL, {method : "POST", headers : {"content-type" : "application/json"}, body : JSON.stringify(msg)});
 				const fetchText = await fetchResult.text();
-				sendResult = fetchResult.status===200 ? {cb : "onSuccess", r : xu.parseJSON(fetchText)} : {cb : "onFail", r : {reason : "exception", error : fetchText}};
+				sendResult = fetchResult.status===200 ? {cb : "onSuccess", r : xu.parseJSON(fetchText)} : {cb : "onFail", r : {reason : "exception", msg, error : fetchText}};
 			}
 			catch(err)
 			{
-				sendResult = {cb : "onFail", r : {reason : agent.running ? "fetch failed" : "crashed", error : err.stack}};
+				sendResult = {cb : "onFail", r : {reason : agent.running ? "fetch failed" : "crashed", msg, error : err.stack}};
 			}
 			agent.lastDuration = performance.now()-agent.startedAt;
 
@@ -135,7 +135,7 @@ export class AgentPool
 
 			agent.running = false;
 			delete agent.runner;
-			await fileUtil.unlink(agent.portFilePath);
+			await fileUtil.unlink(agent.portFilePath, {recursive : true});
 
 			if(!agent.startedOnce)
 				return this.xlog.error`${agent.logPrefix} agent crashed on first start attempt:\n${agent.log.join("\n")}`;
@@ -284,7 +284,7 @@ export async function agentInit(handler, statusHandler)
 	if(!agentCWD?.length)
 		throw new Error("AGENT_CWD env not set!");
 
-	if(!(await fileUtil.exists(agentCWD)))
+	if(!await fileUtil.exists(agentCWD))
 		throw new Error(`AGENT_CWD env points to non-existent path: ${agentCWD}`);
 
 	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request =>
@@ -293,21 +293,21 @@ export async function agentInit(handler, statusHandler)
 		if(u.pathname==="/status")
 		{
 			if(!statusHandler)
-				return new Response(JSON.stringify({err : "no status handler provided"}), {status : 500});
+				return Response.json({err : "no status handler provided"}, {status : 500});
 
 			try
 			{
-				return new Response(JSON.stringify((await statusHandler()) || {}));
+				return Response.json(await statusHandler() || {});
 			}
 			catch(err)
 			{
-				return new Response(JSON.stringify({err : err.stack}), {status : 500});
+				return Response.json({err : err.stack}, {status : 500});
 			}
 		}
 
 		try
 		{
-			return new Response(JSON.stringify((await handler(await request.json())) || {}));
+			return Response.json(await handler(await request.json()) || {});
 		}
 		catch(err)
 		{

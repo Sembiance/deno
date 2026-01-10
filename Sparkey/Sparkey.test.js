@@ -102,7 +102,7 @@ Deno.test("putFileHuge", async () =>
 {
 	if(Deno.hostname()!=="eaglehollow")
 		return;
-	if(!(await fileUtil.exists(HUGE_FILE_PATH)))
+	if(!await fileUtil.exists(HUGE_FILE_PATH))
 		return;
 
 	const beforeSum = await hashUtil.hashFile("blake3", HUGE_FILE_PATH);

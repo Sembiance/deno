@@ -1,4 +1,4 @@
-import {} from "../uint8array.js";
+import "../uint8array.js";
 import {assertEquals, assertStrictEquals, path} from "std";
 
 const a = await Deno.readFile(path.join(path.resolve((new URL(".", import.meta.url)).pathname), "files", "siren.sound"));

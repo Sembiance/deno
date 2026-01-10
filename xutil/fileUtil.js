@@ -228,7 +228,7 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 	}
 	else
 	{
-		for await(const line of (await Deno.open(filePath)).readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
+		for await (const line of (await Deno.open(filePath)).readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
 			await cb(dontParse ? line : xu.parseJSON(line), line);
 	}
 
@@ -297,7 +297,7 @@ export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=fal
 	let r = [];
 	try
 	{
-		for await(const entry of Deno.readDir(root))	// if root dir is removed while traversing, this will throw an exception
+		for await (const entry of Deno.readDir(root))	// if root dir is removed while traversing, this will throw an exception
 		{
 			const entryPath = path.join(root, entry.name);
 			if((!regex || regex.test(path.relative(_originalRoot, entryPath))) && ((entry.isDirectory && !nodir) || (!entry.isDirectory && !nofile)) && (!entry.isSymlink || !nosymlink))

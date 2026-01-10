@@ -1,9 +1,9 @@
-import {} from "./array.js";
+import "./array.js";
 
 /** Clamps a value so it's no smaller and no larger than given min/max values */
 Math.clamp ||= function clamp(value, min, max)
 {
-	return Math.min(Math.max(value, min), max);
+	return Math.min(Math.max(value, min), max);	// eslint-disable-line sembiance/prefer-math-clamp
 };
 
 /** Converts an angle from degrees to radians */

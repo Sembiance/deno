@@ -1,4 +1,4 @@
-import {} from "./array.js";
+import "./array.js";
 
 /** Deletes all keys in an object, in place. Useful to clear an object that is 'const' */
 Object.clear ||= function clear(o)

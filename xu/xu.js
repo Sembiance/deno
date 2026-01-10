@@ -1,11 +1,11 @@
 let delay=null;	// This method allows us to use this code in both deno and browser
 try { ({delay} = await import("std")); } catch {}	// eslint-disable-line @stylistic/brace-style
-import {} from "./array.js";
-import {} from "./math.js";
-import {} from "./number.js";
-import {} from "./object.js";
-import {} from "./string.js";
-import {} from "./uint8array.js";
+import "./array.js";
+import "./math.js";
+import "./number.js";
+import "./object.js";
+import "./string.js";
+import "./uint8array.js";
 
 const xu = {};
 
@@ -145,8 +145,8 @@ xu.clone = function clone(v, {skipKeys, shallow=false}={})
 xu.falloff = function falloff(counter, {factor=2, min=0, max=xu.SECOND*5, step=5}={})
 {
 	//const fib = n => (n<2 ? n : fib(n-1) + fib(n-2));
-	const duration = Math.min(max, Math.max(min, min+(step*(counter**factor))));
-	return Math.min(max, duration+Math.randomInt(0, Math.min(Math.floor(duration*0.66), Math.max(5, Math.floor(duration*0.33)))));
+	const duration = Math.min(max, Math.max(min, min+(step*(counter**factor))));	// eslint-disable-line sembiance/prefer-math-clamp
+	return Math.min(max, duration+Math.randomInt(0, Math.min(Math.floor(duration*0.66), Math.max(5, Math.floor(duration*0.33)))));	// eslint-disable-line sembiance/prefer-math-clamp
 };
 
 /** freezes an object/array, making it immutable. Options: recursive : true|false */
@@ -317,7 +317,7 @@ xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAf
 	return !stopped;
 };
 
-const domParser = typeof DOMParser!=="undefined" ? new DOMParser() : null;
+const domParser = typeof DOMParser!=="undefined" ? new DOMParser() : null;	// eslint-disable-line no-undef
 xu.fromHTML = function fromHTML(v)
 {
 	return domParser.parseFromString(v, "text/html").body.firstChild;

@@ -39,7 +39,7 @@ export async function getInfo(imageFilePath, {timeout=xu.MINUTE*5, widthHeightOn
 	const imageInfo = {width : wh[0], height : wh[1]};
 
 	// Because imagemagick is so damn slow at calculating info, we don't bother getting advanced info if the image is too large
-	if(widthHeightOnly || [imageInfo.width, imageInfo.height].some(v => v>=2000))
+	if(widthHeightOnly || [imageInfo.width, imageInfo.height].some(v => v>2000))
 		return imageInfo;
 	
 	// Available properties: https://imagemagick.org/script/escape.php

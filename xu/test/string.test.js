@@ -1,5 +1,5 @@
 /* eslint-disable sembiance/shorter-arrow-funs */
-import {} from "../string.js";
+import "../string.js";
 import {base64Encode, base64Decode, assertStrictEquals, delay} from "std";
 
 Deno.test("capitalize", () =>

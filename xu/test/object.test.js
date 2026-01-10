@@ -1,4 +1,4 @@
-import {} from "../object.js";
+import "../object.js";
 import {assertEquals, assertNotStrictEquals, assertStrictEquals} from "std";
 
 Deno.test("clear", () =>

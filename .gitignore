@@ -1,5 +1,5 @@
-*.code-workspace
-xutil/test/files/
-denoLandX/
-deno-dom/
-wip.js
+/*.code-workspace
+/xutil/test/files/
+/denoLandX/
+/deno-dom/
+/wip.js
