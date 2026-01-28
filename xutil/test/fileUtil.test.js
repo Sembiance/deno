@@ -276,6 +276,12 @@ Deno.test("readFileBytes", async () =>
 
 	a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 4, 58);
 	assertEquals(a, new TextEncoder().encode("IDAT"));
+
+	a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 999_999);
+	assertEquals(a.length, 383_592);
+
+	a = await fileUtil.readFileBytes(path.join(FILES_DIR, "test.png"), 999_999, 183_592);
+	assertEquals(a.length, 200_000);
 });
 
 Deno.test("readJSONLFile", async () =>

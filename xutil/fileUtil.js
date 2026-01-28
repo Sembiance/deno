@@ -239,10 +239,12 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 /** reads in byteCount bytes from filePath and returns a Uint8Array */
 export async function readFileBytes(filePath, byteCount, offset=null)
 {
+	const bytesToRead = Math.min(byteCount, (await Deno.stat(filePath)).size-(offset || 0));
+
 	const f = await Deno.open(filePath, {read : true});
 	if(offset!==null)
 		await f.seek(offset, offset<0 ? Deno.SeekMode.End : Deno.SeekMode.Start);
-	const buf = new Uint8Array(byteCount);
+	const buf = new Uint8Array(bytesToRead);
 	let bytesRead = 0;
 	while(bytesRead<buf.length)
 	{
