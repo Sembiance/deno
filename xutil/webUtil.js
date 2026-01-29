@@ -93,14 +93,14 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
 			if(!response)
 			{
 				if(args?.xlog)
-					args.xlog.warn`request handler ${prefix} did not return a response`;
+					args.xlog.warn`request handler ${prefix} for URL ${request.url} did not return a response`;
 				return new Response("no response found", {status : 500});
 			}
 			
 			if(!(response instanceof Response))
 			{
 				if(args?.xlog)
-					args.xlog.warn`request handler ${prefix} returned an invalid response: ${response}`;
+					args.xlog.warn`request handler ${prefix} for URL ${request.url} returned an invalid response: ${response}`;
 				return new Response("invalid response found", {status : 500});
 			}
 			return response;
@@ -108,7 +108,7 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
 		catch(err)
 		{
 			if(args?.xlog)
-				args.xlog.error`request handler ${prefix} threw an error: ${err}`;
+				args.xlog.error`request handler ${prefix} for URL ${request.url} threw an error: ${err}`;
 			return new Response(`error<br>${printUtil.inspect(err)}`, {status : 500});
 		}
 	};
