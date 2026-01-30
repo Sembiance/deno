@@ -253,7 +253,7 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status="", includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish}={})
+	constructor({min=0, max=100, barWidth=70, status="", maxLength=null, includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish}={})
 	{
 		this.min = min;
 		this.max = max;
@@ -262,7 +262,7 @@ class Progress
 		this.includeCount = includeCount;
 		this.includeDuration = includeDuration;
 		this.includePer = includePer;
-		this.maxLength = this.max.toLocaleString().length;
+		this.maxLength = maxLength || this.max.toLocaleString().length;
 		this.lastValue = min;
 		this.lastPerValue = this.lastValue;
 		this.startedAt = performance.now();
@@ -356,8 +356,13 @@ class Progress
 	setMax(max)
 	{
 		this.max = max;
-		this.maxLength = this.max.toLocaleString().length;
+		this.setMaxLength(this.max.toLocaleString().length);
 		this.set(this.lastValue);
+	}
+
+	setMaxLength(maxLength)
+	{
+		this.maxLength = maxLength;
 	}
 
 	finish(msg="")
