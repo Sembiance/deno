@@ -9,20 +9,25 @@ export async function areEqual(a, b)
 	return !!status.success;
 }
 
-export async function concat(srcFilePaths, destFilePath, {seperator}={})
+export async function concat(srcFilePaths, destFilePath, {separator}={})
 {
 	const destFile = await Deno.open(destFilePath, {read : false, write : true, append : true, truncate : false, create : true});
-	const seperatorData = typeof seperator==="string" ? new TextEncoder().encode(seperator) : seperator;
-	for(let i=0;i<srcFilePaths.length;i++)
+	try
 	{
-		const srcFile = await Deno.open(srcFilePaths[i], {read : true, write : false});
-		await srcFile.readable.pipeTo(destFile.writable, {preventClose : true});
+		const seperatorData = typeof separator==="string" ? new TextEncoder().encode(separator) : separator;
+		for(let i=0;i<srcFilePaths.length;i++)
+		{
+			const srcFile = await Deno.open(srcFilePaths[i], {read : true, write : false});
+			await srcFile.readable.pipeTo(destFile.writable, {preventClose : true});
 
-		if(seperatorData && i<(srcFilePaths.length-1))
-			await (new Blob([seperatorData])).stream().pipeTo(destFile.writable, {preventClose : true});
+			if(seperatorData && i<(srcFilePaths.length-1))
+				await (new Blob([seperatorData])).stream().pipeTo(destFile.writable, {preventClose : true});
+		}
 	}
-
-	destFile.close();
+	finally
+	{
+		destFile.close();
+	}
 }
 
 /** Empties the dirPath, deleting anything in it without deleting the actual directory itself **/
@@ -207,7 +212,7 @@ export async function searchReplace(filePath, findMe, replaceWith)
 		return;
 	
 	const data = await readTextFile(filePath);
-	await writeTextFile(filePath, data.toString("utf8")[typeof data==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
+	await writeTextFile(filePath, data.toString("utf8")[typeof findMe==="string" ? "replaceAll" : "replace"](findMe, replaceWith));
 }
 
 /** Reads in a JSON L file, line by line, calling async cb(line) for each line read */
@@ -216,7 +221,7 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 	const lines = [];
 	cb ||= line =>
 	{
-		if(!line)
+		if(!line?.length)
 			return;
 		
 		lines.push(line);
@@ -239,23 +244,34 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 /** reads in byteCount bytes from filePath and returns a Uint8Array */
 export async function readFileBytes(filePath, byteCount, offset=null)
 {
-	const bytesToRead = Math.min(byteCount, (await Deno.stat(filePath)).size-(offset || 0));
+	const fileSize = (await Deno.stat(filePath)).size;
+	if(offset!==null && (offset>=fileSize || offset<-fileSize))
+		throw new Error(`Offset ${offset} is beyond the end of the file ${fileSize}`);
 
-	const f = await Deno.open(filePath, {read : true});
-	if(offset!==null)
-		await f.seek(offset, offset<0 ? Deno.SeekMode.End : Deno.SeekMode.Start);
+	const bytesToRead = Math.min(byteCount, fileSize-(offset===null ? 0 : (offset<0 ? fileSize+offset : offset)));
 	const buf = new Uint8Array(bytesToRead);
 	let bytesRead = 0;
-	while(bytesRead<buf.length)
+
+	const f = await Deno.open(filePath, {read : true});
+	try
 	{
-		const readCount = await f.read(buf.subarray(bytesRead));
-		if(readCount===null)
-			break;
-		bytesRead += readCount;
+		if(offset!==null)
+			await f.seek(offset, offset<0 ? Deno.SeekMode.End : Deno.SeekMode.Start);
+		
+		while(bytesRead<buf.length)
+		{
+			const readCount = await f.read(buf.subarray(bytesRead));
+			if(readCount===null)
+				break;
+			bytesRead += readCount;
+		}
+	}
+	finally
+	{
+		f.close();
 	}
 	
-	f.close();
-	return buf;
+	return buf.subarray(0, bytesRead);
 }
 
 /** reads in the entire file at filePath and converts to encoding. This is because Deno.readTextFile as of 1.21 will throw an exception on ANY invalid UTF-8 chars which is NOT ideal */

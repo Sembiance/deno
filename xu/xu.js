@@ -50,15 +50,6 @@ xu.c =
 		cyan    : "\x1B[46m",
 		white   : "\x1B[47m",
 
-		// dim colors
-		redDim     : "\x1B[41m",
-		greenDim   : "\x1B[42m",
-		yellowDim  : "\x1B[43m",
-		blueDim    : "\x1B[44m",
-		magentaDim : "\x1B[45m",
-		cyanDim    : "\x1B[46m",
-		whiteDim   : "\x1B[47m",
-
 		// 256 colors
 		peach       : "\x1B[48;5;203m",
 		pink        : "\x1B[48;5;205m",
@@ -156,7 +147,7 @@ xu.freeze = function freeze(o, {recursive}={})
 		return o;
 
 	if(recursive)
-		(Object.isObject(o) ? Object.values(o) : o).forEach(v => xu.freeze(v, true));
+		(Object.isObject(o) ? Object.values(o) : o).forEach(v => xu.freeze(v, {recursive : true}));
 
 	Object.freeze(o);
 
@@ -187,13 +178,14 @@ xu.fetch = async function xuFetch(url, opts={})
 	let abortTimeout = null;
 	if(fetchOpts.timeout)
 	{
+		const fetchOptsTimeout = fetchOpts.timeout;
 		const abortController = new AbortController();
 		fetchOpts.signal = abortController.signal;
 
 		abortTimeout = setTimeout(() =>
 		{
 			if(!opts.silent)
-				console.error(`xu.fetch (${url}) timed out after ${fetchOpts.timeout ? fetchOpts.timeout.msAsHumanReadable() : "???ms"}`);
+				console.error(`xu.fetch (${url}) timed out after ${fetchOptsTimeout.msAsHumanReadable()}`);
 			abortTimeout = null;
 			abortController.abort();
 		}, fetchOpts.timeout);
@@ -249,7 +241,7 @@ xu.randStr = function randStr()
 	if(TMP_COUNTER>=2_176_782_335)
 		TMP_COUNTER = 0;
 
-	const strPrefix = xu.tryFallback(() => Deno.pid.toString(36), Math.randomInt(0, 46655));
+	const strPrefix = xu.tryFallback(() => Deno.pid.toString(36), Math.randomInt(0, 46655).toString(36));
 	return `${strPrefix}${(TMP_COUNTER++).toString(36)}${Math.randomInt(0, 1_679_615).toString(36)}`;
 };
 

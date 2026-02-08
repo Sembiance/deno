@@ -102,11 +102,11 @@ export class AgentPool
 				// NOTE: Could add an AbortController to fetch that is triggered if the agent crashes or if an optional 'timeout' is specified (see how it's done in xu.fetch)
 				const fetchResult = await fetch(agent.opURL, {method : "POST", headers : {"content-type" : "application/json"}, body : JSON.stringify(msg)});
 				const fetchText = await fetchResult.text();
-				sendResult = fetchResult.status===200 ? {cb : "onSuccess", r : xu.parseJSON(fetchText)} : {cb : "onFail", r : {reason : "exception", msg, error : fetchText}};
+				sendResult = fetchResult.status===200 ? {cb : "onSuccess", r : xu.parseJSON(fetchText)} : {cb : "onFail", r : {reason : "exception", error : fetchText}};
 			}
 			catch(err)
 			{
-				sendResult = {cb : "onFail", r : {reason : agent.running ? "fetch failed" : "crashed", msg, error : err.stack}};
+				sendResult = {cb : "onFail", r : {reason : agent.running ? "fetch failed" : "crashed", error : err.stack}};
 			}
 			agent.lastDuration = performance.now()-agent.startedAt;
 
@@ -186,7 +186,6 @@ export class AgentPool
 
 		await agent.start();
 
-		// now do something like:
 		while(1)
 		{
 			if(!agent.running)	// due to crash

@@ -30,7 +30,7 @@ export async function hashData(algorithm, dataRaw)
 	const data = typeof dataRaw==="string" ? new TextEncoder().encode(dataRaw) : dataRaw;
 
 	if(algorithm==="CRC-16/XMODEM")
-		return crc16XModem(dataRaw);
+		return crc16XModem(data);
 
 	return (new Uint8Array(await crypto.subtle.digest(algorithm, data))).asHex();
 }

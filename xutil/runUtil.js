@@ -457,7 +457,7 @@ export async function getXVFBNum()
 	return xvfbNum;
 }
 
-export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, retryInterval, retryRiskyInterval, retryRiskyMax, timeout, xlog}={})
+export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, retryInterval=5, retryRiskyInterval, retryRiskyMax, timeout, xlog}={})
 {
 	cmds = Array.force(cmds);
 
@@ -485,9 +485,8 @@ export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, ret
 			if(status.code===255)
 			{
 				if(!quiet && xlog)
-					xlog.info`ssh to ${host} failed with code 255, retrying${retryInterval ? ` in ${retryInterval.msAsHumanReadable({short : true})}` : ""}...`;
-				if(retryInterval)
-					await delay(retryInterval || xu.falloff(retryCounter++));
+					xlog.info`ssh to ${host} failed with code 255, retrying in ${retryInterval.msAsHumanReadable({short : true})}...`;
+				await delay(retryInterval || xu.falloff(retryCounter++));
 				continue;
 			}
 

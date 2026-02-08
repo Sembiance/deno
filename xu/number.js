@@ -31,64 +31,64 @@ Number.prototype.ease ||= function ease(type)
 {
 	const x = this;		// eslint-disable-line consistent-this
 
-	if(type==="easeInQuad")
+	if(type==="inQuad")
 		return x*x;
 
-	if(type==="easeInCubic")
+	if(type==="inCubic")
 		return x*x*x;
 
-	if(type==="easeInQuart")
+	if(type==="inQuart")
 		return x*x*x*x;
 
-	if(type==="easeInQuint")
+	if(type==="inQuint")
 		return x*x*x*x*x;
 
-	if(type==="easeOutQuad")
+	if(type==="outQuad")
 		return 1-(1-x)*(1-x);
 
-	if(type==="easeOutCubic")
+	if(type==="outCubic")
 		return 1-((1-x) ** 3);
 
-	if(type==="easeOutQuart")
+	if(type==="outQuart")
 		return 1-((1-x) ** 4);
 
-	if(type==="easeInOutQuad")
+	if(type==="inOutQuad")
 		return x<0.5 ? (2*x*x) : (1 - ((-2*x+2) ** 2)/2);
 
-	if(type==="easeOutQuint")
+	if(type==="outQuint")
 		return 1-((1-x) ** 5);
 
-	if(type==="easeInOutCubic")
+	if(type==="inOutCubic")
 		return x<0.5 ? (4*x*x*x) : (1-((-2*x+2) ** 3)/2);
 
-	if(type==="easeInOutQuart")
+	if(type==="inOutQuart")
 		return x<0.5 ? (8*x*x*x*x) : (1-((-2*x+2) ** 4)/2);
 
-	if(type==="easeInOutQuint")
+	if(type==="inOutQuint")
 		return x<0.5 ? (16*x*x*x*x*x) : (1-((-2*x+2) ** 5)/2);
 
-	if(type==="easeInSine")
+	if(type==="inSine")
 		return 1-Math.cos(x* Math.PI/2);
 
-	if(type==="easeInOutSine")
+	if(type==="inOutSine")
 		return -(Math.cos(Math.PI*x)-1)/2;
 
-	if(type==="easeInExpo")
+	if(type==="inExpo")
 		return x===0 ? 0 : (2 ** (10*x-10));
 
-	if(type==="easeOutExpo")
+	if(type==="outExpo")
 		return x===1 ? 1 : 1-(2 ** (-10*x));
 
-	if(type==="easeInOutExpo")
+	if(type==="inOutExpo")
 		return x===0 ? 0 : (x===1 ? 1 : (x<0.5 ? ((2 ** (20*x-10))/2) : ((2-(2 * (-20*x+10)))/2)));
 
-	if(type==="easeInCirc")
+	if(type==="inCirc")
 		return 1-Math.sqrt(1-(x ** 2));
 
-	if(type==="easeOutCirc")
+	if(type==="outCirc")
 		return Math.sqrt(1-((x-1) ** 2));
 
-	if(type==="easeInOutCirc")
+	if(type==="inOutCirc")
 		return x<0.5 ? ((1-Math.sqrt(1-((2*x) ** 2)))/2) : ((Math.sqrt(1-((-2*x+2) ** 2))+1)/2);
 
 	const c1 = 1.70158;
@@ -97,34 +97,34 @@ Number.prototype.ease ||= function ease(type)
 	const c4 = (2*Math.PI)/3;
 	const c5 = (2*Math.PI)/4.5;
 
-	if(type==="easeInBack")
+	if(type==="inBack")
 		return c3 * x * x * x - c1 * x * x;
 
-	if(type==="easeOutBack")
+	if(type==="outBack")
 		return 1+c3*((x-1) ** 3)+c1*((x-1) ** 2);
 
-	if(type==="easeInOutBack")
+	if(type==="inOutBack")
 		return x<0.5 ? ((((2*x) ** 2)*((c2+1)*2*x-c2))/2) : ((((2*x-2) ** 2)*((c2+1)*(x*2-2)+c2)+2)/2);
 
-	if(type==="easeInElastic")
+	if(type==="inElastic")
 		return x===0 ? 0 : (x===1 ? 1 : (-(2 ** (10*x-10))*Math.sin((x*10-10.75)*c4)));
 	
-	if(type==="easeOutElastic")
+	if(type==="outElastic")
 		return x===0 ? 0 : (x===1 ? 1 : ((2 ** (-10*x))*Math.sin((x*10-0.75)*c4)+1));
 	
-	if(type==="easeInOutElastic")
+	if(type==="inOutElastic")
 		return x===0 ? 0 : (x===1 ? 1 : (x<0.5 ? (-((2 ** (20*x-10))*Math.sin((20*x-11.125)*c5))/2) : ((2 ** (-20*x+10))*Math.sin((20*x-11.125)*c5)/2+1)));
 
-	if(type==="easeInBounce")
-		return 1-(Number(1-x).ease("bounceOut"));
+	if(type==="inBounce")
+		return 1-(Number(1-x).ease("outBounce"));
 
-	if(type==="easeOutBounce")
-		return this.ease("bounceOut");
+	if(type==="outBounce")
+		return x<1/2.75 ? 7.5625*x*x : (x<2/2.75 ? 7.5625*(x-1.5/2.75)*(x-1.5/2.75)+0.75 : (x<2.5/2.75 ? 7.5625*(x-2.25/2.75)*(x-2.25/2.75)+0.9375 : 7.5625*(x-2.625/2.75)*(x-2.625/2.75)+0.984_375));
 
-	if(type==="easeInOutBounce")
-		return x<0.5 ? (1-Number(1-2*x).ease("bounceOut"))/2 : (1+Number(2*x-1).ease("bounceOut"))/2;
+	if(type==="inOutBounce")
+		return x<0.5 ? (1-Number(1-2*x).ease("outBounce"))/2 : (1+Number(2*x-1).ease("outBounce"))/2;
 
-	// Default is "easeOutSine"
+	// Default is "outSine"
 	return Math.sin(x*Math.PI/2);
 };
 /* eslint-enable @stylistic/no-mixed-operators */
@@ -181,7 +181,7 @@ Number.prototype.noExponents ||= function noExponents()
 		mag -= str.length;
 		while(mag>0)
 		{
-			z += 0;
+			z += "0";
 			--mag;
 		}
 	
@@ -203,14 +203,14 @@ Number.prototype.scale ||= function scale(inMin, inMax, outMin, outMax)
  */
 Number.prototype.secondsAsHumanReadable ||= function secondsAsHumanReadable({lang="en", short=false, pad=false, maxParts=Infinity, colorize=false}={})
 {
-	if(this===0)
+	let left = Math.abs(this);
+	if(left===0)
 		return short ? "0s" : "0 seconds";
 	
-	if(this<1)
-		return `${this.toFixed(2)}${short ? "s" : " seconds"}`;
+	if(left<1)
+		return `${left.toFixed(2)}${short ? "s" : " seconds"}`;
 		
 	const r = [];
-	let left = this;	// eslint-disable-line consistent-this
 	[
 		{n :   "year", s :  "y", v : 31_557_600},
 		{n :  "month", s : "mo", v : 2_629_800},
@@ -231,7 +231,7 @@ Number.prototype.secondsAsHumanReadable ||= function secondsAsHumanReadable({lan
 		r.push(`${colorize ? fg.cyan(qtyStr) : qtyStr}${short ? s : ` ${n}${qty>1 || qty===0 ? "s" : ""}`}`);
 	});
 
-	return r.slice(0, maxParts).join(short ? "" : ", ");
+	return `${this<0 ? "-" : ""}${r.slice(0, maxParts).join(short ? "" : ", ")}`;
 };
 
 Number.prototype.msAsHumanReadable = function msAsHumanReadable(options)

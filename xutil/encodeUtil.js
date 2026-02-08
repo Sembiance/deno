@@ -209,7 +209,7 @@ const UNICODE_CONVERSION_MAP = {
 export function unicodeToAscii(text, additionalSymbols)
 {
 	let result = "";
-	const CONVERSION_MAP = Object.assign(UNICODE_CONVERSION_MAP, (additionalSymbols || {}));
+	const CONVERSION_MAP = Object.assign({}, UNICODE_CONVERSION_MAP, (additionalSymbols || {}));
 
 	for(let i=0, len=text.length;i<len;i++)
 	{

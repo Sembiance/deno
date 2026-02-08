@@ -53,7 +53,7 @@ export async function getDiskUsage(mountPoints)
 	for(const line of stdout.trim().split("\n").slice(1))
 	{
 		const {used, avail, target} = (/^\s*(?<used>\d+)\s+(?<avail>\d+)\s+(?<target>.*)$/).exec(line)?.groups || {};
-		usages[target] = {used : +used, available : +avail, target, percentageUsed : (+used/+avail)*100};
+		usages[target] = {used : +used, available : +avail, target, percentageUsed : (+used/(+used + +avail))*100};
 	}
 
 	return usages;
