@@ -221,7 +221,7 @@ export async function readJSONLFile(filePath, cb, {dontParse}={})
 	const lines = [];
 	cb ||= line =>
 	{
-		if(!line?.length)
+		if(!line)
 			return;
 		
 		lines.push(line);

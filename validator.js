@@ -94,9 +94,9 @@ function validate(basePrefix, suffix, o, schema)
 		// validate that the property value falls within a given range
 		if(prop.range)
 		{
-			assert(value>=prop.range[0]);
+			assert(value>=prop.range[0], `${prefix} value [${value}] expected to be at least ${prop.range[0]} but is ${value} ${suffix}`);
 			if(prop.range.length>1)
-				assert(value<=prop.range[1]);
+				assert(value<=prop.range[1], `${prefix} value [${value}] expected to be less than or equal to ${prop.range[1]} but is ${value} ${suffix}`);
 		}
 		
 		// by default, strings and arrays must not be empty

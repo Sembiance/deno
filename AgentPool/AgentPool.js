@@ -1,5 +1,5 @@
 import {xu, fg} from "xu";
-import {path, delay} from "std";
+import {path, delay, getAvailablePort} from "std";
 import {webUtil, runUtil, fileUtil} from "xutil";
 import {XLog} from "xlog";
 
@@ -286,7 +286,8 @@ export async function agentInit(handler, statusHandler)
 	if(!await fileUtil.exists(agentCWD))
 		throw new Error(`AGENT_CWD env points to non-existent path: ${agentCWD}`);
 
-	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request =>
+	const agentPort = getAvailablePort();
+	webUtil.serve({hostname : "127.0.0.1", port : agentPort}, async request =>
 	{
 		const u = new URL(request.url);
 		if(u.pathname==="/status")
@@ -314,5 +315,5 @@ export async function agentInit(handler, statusHandler)
 		}
 	});
 		
-	await fileUtil.writeTextFile(path.join(agentCWD, "port"), webServer.server.addr.port.toString());
+	await fileUtil.writeTextFile(path.join(agentCWD, "port"), agentPort.toString());
 }

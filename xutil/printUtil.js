@@ -253,7 +253,7 @@ export function stdoutWrite(str)
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=70, status="", maxLength=null, includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish}={})
+	constructor({min=0, max=100, barWidth=55, status="", maxLength=null, includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish}={})
 	{
 		this.min = min;
 		this.max = max;
