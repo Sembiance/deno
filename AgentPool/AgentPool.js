@@ -165,8 +165,21 @@ export class AgentPool
 			runOpts.exitcb = agent.exitHandler;
 			agent.runner = await runUtil.run("deno", runUtil.denoArgs(this.agentFilePath), runOpts);
 
-			await xu.waitUntil(async () => await fileUtil.exists(agent.portFilePath));
-			agent.port = +(await fileUtil.readTextFile(agent.portFilePath));
+			let agentPortRaw = "";
+			await xu.waitUntil(async () =>
+			{
+				if(!await fileUtil.exists(agent.portFilePath))
+					return false;
+				
+				agentPortRaw = (await fileUtil.readTextFile(agent.portFilePath)).trim();
+				return agentPortRaw.length>0 && +agentPortRaw>0;
+			});
+			agent.port = +agentPortRaw;
+			if(!agent.port)
+			{
+				this.xlog.error`${agent.logPrefix} Invalid port file ${agent.portFilePath} content: [[[${agentPortRaw}]]]`;
+				throw new Error(`FATAL: Invalid port file content: ${agentPortRaw}`);
+			}
 			agent.opURL = `http://127.0.0.1:${agent.port}/op`;
 			agent.statusURL = `http://127.0.0.1:${agent.port}/status`;
 			agent.running = true;
@@ -286,8 +299,7 @@ export async function agentInit(handler, statusHandler)
 	if(!await fileUtil.exists(agentCWD))
 		throw new Error(`AGENT_CWD env points to non-existent path: ${agentCWD}`);
 
-	const agentPort = getAvailablePort();
-	webUtil.serve({hostname : "127.0.0.1", port : agentPort}, async request =>
+	const webServer = webUtil.serve({hostname : "127.0.0.1", port : 0}, async request =>
 	{
 		const u = new URL(request.url);
 		if(u.pathname==="/status")
@@ -315,5 +327,5 @@ export async function agentInit(handler, statusHandler)
 		}
 	});
 		
-	await fileUtil.writeTextFile(path.join(agentCWD, "port"), agentPort.toString());
+	await fileUtil.writeTextFile(path.join(agentCWD, "port"), webServer.server.addr.port.toString());
 }
