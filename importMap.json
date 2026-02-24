@@ -2,7 +2,7 @@
 	"imports" :
 	{
 		"AgentPool"        : "/mnt/compendium/DevLab/deno/AgentPool/AgentPool.js",
-		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm.js",
+		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm/awesomewm.js",
 		"denoLandX"        : "/mnt/compendium/DevLab/deno/denoLandX.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"jsr"              : "/mnt/compendium/DevLab/deno/jsr.js",

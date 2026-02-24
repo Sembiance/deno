@@ -3,7 +3,7 @@ import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import * as printUtil from "./printUtil.js";
-import {path, TextLineStream, Buffer, getAvailablePort, delay} from "std";
+import {path, TextLineStream, Buffer, getAvailablePort, LimitedBytesTransformStream, delay} from "std";
 
 const XVFB_NUM_MIN = 10;
 const XVFB_NUM_MAX = 59999;	// in theory since we call runUtil with -nolisten tcp, we just have unix sockets, so no real upper limit on number (billions) but 59,999 - 10 should be plenty
@@ -74,6 +74,8 @@ export async function runUntilSuccess(cmd, args, options={})
  *   stderrNull			If set, stderr will be set to "null" thus preventing any output from being buffered.
  *   stdoutUnbuffer     If set, stdout will be unbuffered with `stdbuf -o0`
  *   stderrUnbuffer     If set, stderr will be unbuffered with `stdbuf -o0`
+ *   stdoutLimit        If set, stdout data will be limited to this number of bytes, the excess will be discarded
+ *   stderrLimit        If set, stderr data will be limited to this number of bytes, the excess will be discarded
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
  *   verbose            Set to true to output some details about the program
@@ -85,8 +87,8 @@ export async function runUntilSuccess(cmd, args, options={})
 export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, limitRAM, liveOutput, exitcb,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
-	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer,
-	stderrEncoding="utf-8", stderrFilePath, stderrcb, stderrUnbuffer,
+	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer, stdoutLimit,
+	stderrEncoding="utf-8", stderrFilePath, stderrcb, stderrUnbuffer, stderrLimit,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, virtualXVNCPort, xlog}={})
 {
 	if([!!stdoutcb, !!stdoutFilePath, !!stdoutNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
@@ -220,7 +222,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	else if(!liveOutput && !stdoutNull)
 	{
 		stdoutBuffer = new Buffer();
-		stdoutPromise = p.stdout.pipeTo(stdoutBuffer.writable);
+		stdoutPromise = stdoutLimit ? p.stdout.pipeThrough(new LimitedBytesTransformStream(stdoutLimit)).pipeTo(stdoutBuffer.writable) : p.stdout.pipeTo(stdoutBuffer.writable);
 	}
 	else
 	{
@@ -241,7 +243,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	else if(!liveOutput && !stderrNull)
 	{
 		stderrBuffer = new Buffer();
-		stderrPromise = p.stderr.pipeTo(stderrBuffer.writable);
+		stderrPromise = stderrLimit ? p.stderr.pipeThrough(new LimitedBytesTransformStream(stderrLimit)).pipeTo(stderrBuffer.writable) : p.stderr.pipeTo(stderrBuffer.writable);
 	}
 	else
 	{

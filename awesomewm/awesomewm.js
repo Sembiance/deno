@@ -1,10 +1,21 @@
 import {xu} from "xu";
-import {runUtil} from "xutil";
+import {runUtil, fileUtil} from "xutil";
 import {delay} from "std";
 
-export async function runAwesomeCode(code)
+let dbusSessionPaths = null;
+export async function runAwesomeCode(code, DISPLAY=":0")
 {
-	await runUtil.run("awesome-client", [], {stdinData : code, inheritEnv : true, liveOutput : true});
+	if(!dbusSessionPaths)
+	{
+		const awesomePIDs = (await runUtil.run("pgrep", ["-x", "-u", "sembiance", "awesome"])).stdout.trim().split("\n");
+		dbusSessionPaths = {};
+		for(const awesomePID of awesomePIDs)
+		{
+			const environs = Object.fromEntries((await fileUtil.readTextFile(`/proc/${awesomePID}/environ`)).replaceAll("\0", "\n").trim().split("\n").map(line => ([line.substring(0, line.indexOf("=")), line.substring(line.indexOf("=")+1)])));
+			dbusSessionPaths[environs.DISPLAY] = environs.DBUS_SESSION_BUS_ADDRESS;
+		}
+	}
+	return await runUtil.run("awesome-client", [], {stdinData : code, env : {DISPLAY, DBUS_SESSION_BUS_ADDRESS : dbusSessionPaths[DISPLAY]}});
 }
 
 export async function setLayout(layoutName, workspaceNum, screenNum=null)

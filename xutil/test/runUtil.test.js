@@ -205,6 +205,12 @@ Deno.test("stderrFilePath", async () =>
 	await fileUtil.unlink(outFilePath);
 });
 
+Deno.test("stdoutLimit", async () =>
+{
+	const {stdout} = await runUtil.run("jpeg_exif_dump", ["--scan", path.join(FILES_DIR, "skin.jpg")], {stdoutLimit : xu.MB});
+	assert(stdout.length<xu.MB);
+});
+
 Deno.test("manyInstances-normal", async () =>
 {
 	const results = (await Promise.all([].pushSequence(1, 1000).map(() => runUtil.run("time", ["sleep", Math.randomInt(1, 3)])))).map(o => o.stderr);
