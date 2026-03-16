@@ -93,6 +93,13 @@ Deno.test("freeze", () =>
 	assertStrictEquals(xu.freeze(b), b);
 });
 
+Deno.test("fromHTML", () =>
+{
+	const n = xu.fromHTML(`<h1><b data-scifi="Star Trek">Hello, world!</b></h1>`);
+	assertStrictEquals(n.querySelector("b").dataset.scifi, "Star Trek");
+	assertStrictEquals(n.childNodes[0].textContent, "Hello, world!");
+});
+
 Deno.test("parseJSON", () =>
 {
 	let a = '{"abc" : 123, "xyz" : [4, 7]}';

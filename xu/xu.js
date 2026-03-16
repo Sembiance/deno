@@ -215,6 +215,13 @@ xu.fetch = async function xuFetch(url, opts={})
 	return r;
 };
 
+
+const domParser = typeof DOMParser!=="undefined" ? new DOMParser() : new (await import("/mnt/compendium/DevLab/deno/deno-dom/deno-dom-native.ts")).DOMParser();	// eslint-disable-line no-undef
+xu.fromHTML = function fromHTML(v)
+{
+	return domParser.parseFromString(v, "text/html");	// eslint-disable-line no-restricted-syntax
+};
+
 /** Convience method to import the freshest version of a file, useful during development */
 xu.importDev = async function importDev(importPath)
 {
@@ -243,6 +250,19 @@ xu.randStr = function randStr()
 
 	const strPrefix = xu.tryFallback(() => Deno.pid.toString(36), Math.randomInt(0, 46655).toString(36));
 	return `${strPrefix}${(TMP_COUNTER++).toString(36)}${Math.randomInt(0, 1_679_615).toString(36)}`;
+};
+
+/** retries the given fun until it returns a truthy value */
+xu.retry = async function retry(fun, {tries=5, interval=xu.SECOND})
+{
+	for(let i=0;i<tries;i++)
+	{
+		const r = await fun();
+		if(r)
+			return r;
+
+		await delay(interval);
+	}
 };
 
 /** template literal that allows you to easily include multi-line strings and each line will be trimmed */
@@ -307,12 +327,6 @@ xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAf
 	}
 
 	return !stopped;
-};
-
-const domParser = typeof DOMParser!=="undefined" ? new DOMParser() : null;	// eslint-disable-line no-undef
-xu.fromHTML = function fromHTML(v)
-{
-	return domParser.parseFromString(v, "text/html").body.firstChild;
 };
 
 xu.nbsp = " ";
