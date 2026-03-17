@@ -7,7 +7,7 @@
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"jsr"              : "/mnt/compendium/DevLab/deno/jsr.js",
 		"MediaWiki"        : "/mnt/compendium/DevLab/deno/MediaWiki/MediaWiki.js",
-		"RateLimitedQueue" : "/mnt/compendium/DevLab/deno/RateLimitedQueue/RateLimitedQueue.js",
+		"RateLimiter"      : "/mnt/compendium/DevLab/deno/RateLimiter/RateLimiter.js",
 		"Sparkey"          : "/mnt/compendium/DevLab/deno/Sparkey/Sparkey.js",
 		"std"              : "/mnt/compendium/DevLab/deno/std.js",
 		"thirdParty"       : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js",

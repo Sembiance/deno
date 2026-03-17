@@ -7,6 +7,25 @@ Array.prototype.average ||= function average()
 	return this.sum()/this.length;
 };
 
+/** Returns the average after filtering out outliers using the IQR (Interquartile Range) method.
+ * multiplier controls sensitivity: 1.5 = standard (default), 3.0 = only extreme outliers
+ * Set high/low to false to skip filtering in that direction */
+Array.prototype.averageSansOutliers ||= function averageSansOutliers({multiplier=1.5, high=true, low=true}={})
+{
+	const sorted = Array.from(this).sort((a, b) => a - b);
+	const len = sorted.length;
+
+	const q1 = sorted[Math.floor(len * 0.25)];
+	const q3 = sorted[Math.floor(len * 0.75)];
+	const iqr = q3 - q1;
+
+	const lower = q1 - (multiplier * iqr);
+	const upper = q3 + (multiplier * iqr);
+
+	const filtered = this.filter(v => (!low || v >= lower) && (!high || v <= upper));
+	return filtered.length ? filtered.average() : this.average();
+};
+
 /** Groups up the values in the array into sub array chunks of x length. Set vertical option to batch in the Y direction rather than X */
 Array.prototype.chunk ||= function chunk(num=1, {vertical=false}={})
 {
