@@ -65,3 +65,7 @@ export {Buffer} from "jsr:@std/streams@1.0.14/buffer";
 export {TextLineStream} from "jsr:@std/streams@1.0.14/text-line-stream";
 export {toArrayBuffer} from "jsr:@std/streams@1.0.14/to-array-buffer";
 export {LimitedBytesTransformStream} from "jsr:@std/streams@1.0.14/limited-bytes-transform-stream";
+
+// xml
+export {parse as xmlParse} from "jsr:@std/xml@0.1.0/parse";
+
