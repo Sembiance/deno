@@ -304,14 +304,14 @@ xu.tryFallbackAsync = async function tryFallbackAsync(fn, fallbackResult)
 };
 
 /** waits until the given async function fun returns a truthy value. Default interval is a linear retry starting at 5ms and maxxing out at 1 second */
-xu.waitUntil = async function waitUntil(fun, {interval, timeout, stopper, stopAfter}={})
+xu.waitUntil = async function waitUntil(fun, {interval, timeout, falloffMin=0, falloffMax=xu.SECOND, stopper, stopAfter}={})
 {
 	let i=0;
 	let stopped = false;
 	const startedAt = timeout ? performance.now() : null;
 	while(!(await fun()))
 	{
-		await delay(interval || xu.falloff(i++, {max : xu.SECOND}));
+		await delay(interval || xu.falloff(i++, {min : falloffMin, max : falloffMax}));
 		//await delay(interval || Math.min(5*(i++), xu.SECOND));
 		if(timeout && (performance.now()-startedAt)>timeout)
 		{

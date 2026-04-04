@@ -63,7 +63,7 @@ export class Sparkey
 
 	async putFile(k, filePath)
 	{
-		const {status, stderr} = await runUtil.run(path.join(import.meta.dirname, "sparkey_put", "sparkey_put"), [this.dbFilePathPrefix, k, filePath]);
+		const {status, stderr} = await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyPutFile", [this.dbFilePathPrefix, k, filePath]);
 		if(!status?.success)
 			throw new Error(`Sparkey putFile failed: ${stderr}`);
 	}
@@ -116,7 +116,12 @@ export class Sparkey
 
 	async listKeys()
 	{
-		return (await runUtil.run("/mnt/compendium/bin/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.trim()?.split("\n");
+		return (await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.trim()?.split("\n");
+	}
+
+	async compact(dbNewPrefix)
+	{
+		return !!(await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyCompact", [this.dbFilePathPrefix, ...(dbNewPrefix ? [dbNewPrefix] : [])]))?.status?.success;
 	}
 
 	unload()

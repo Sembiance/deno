@@ -28,13 +28,80 @@ Deno.test("putGet", async () =>
 
 Deno.test("listKeys", async () =>
 {
-	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-listKeys");
 	const db = new Sparkey(dbFilePathPrefix);
 	
 	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
 	assertStrictEquals(db.putText("2nd", "second"), true);
 	assertStrictEquals(db.putText("3rd", "third"), true);
 	assertEquals(await db.listKeys(), ["hello", "2nd", "3rd"]);
+
+	await db.truncate();
+	db.unload();
+});
+
+Deno.test("compact", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-compact");
+	const db = new Sparkey(dbFilePathPrefix);
+	
+	for(let i=0;i<5000;i++)
+		assertStrictEquals(db.putText(`key${i}`, `value${i}`), true);
+
+	assertEquals((await db.listKeys()).length, 5000);
+	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spi`)).size, 52120);
+	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spl`)).size, 87864);
+
+	for(let i=2222;i<3333;i++)
+		assertStrictEquals(db.delete(`key${i}`), true);
+
+	assertEquals((await db.listKeys()).length, 3889);
+	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spi`)).size, 40568);
+	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spl`)).size, 97863);
+
+	assertStrictEquals(await db.compact(), true);
+	
+	assertEquals((await db.listKeys()).length, 3889);
+	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spi`)).size, 40552);
+	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spl`)).size, 67866);
+
+	await db.truncate();
+	db.unload();
+});
+
+Deno.test("keyOrder", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-keyOrder");
+	const db = new Sparkey(dbFilePathPrefix);
+
+	assertStrictEquals(db.putText("keyA", "Letter A"), true);
+	assertStrictEquals(db.putText("keyB", "Letter B"), true);
+	assertStrictEquals(db.putText("keyC", "Letter C"), true);
+	assertStrictEquals(db.putText("keyD", "Letter D"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyB", "keyC", "keyD"]);
+
+	assertStrictEquals(db.delete("keyB"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyD"]);
+
+	assertStrictEquals(db.putText("keyB", "Letter B"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyD", "keyB"]);
+
+	assertStrictEquals(db.delete("keyB"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyD"]);
+	assertStrictEquals(db.delete("keyC"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyD"]);
+
+	assertStrictEquals(db.putText("keyC", "Letter C"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC"]);
+
+	assertStrictEquals(await db.compact(), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC"]);
+
+	assertStrictEquals(db.putText("keyB", "Letter B"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC", "keyB"]);
+
+	assertStrictEquals((await db.compact()), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC", "keyB"]);
 
 	await db.truncate();
 	db.unload();

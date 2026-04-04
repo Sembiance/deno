@@ -2,6 +2,7 @@ import {xu} from "xu";
 import {printUtil, fileUtil} from "xutil";
 import {path, base64Decode} from "std";
 import {XLog} from "xlog";
+import {RateLimiter} from "RateLimiter";
 
 export function getAuthorizedUser(headers)
 {
@@ -112,4 +113,50 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
 			return new Response(`error<br>${printUtil.inspect(err)}`, {status : 500});
 		}
 	};
+}
+
+let rateLimiter, rateLimit, headers;
+export async function scrape(url, {click, waitFor})
+{
+	if(!rateLimiter)
+	{
+		({rateLimit, headers} = xu.parseJSON(await fileUtil.readTextFile("/mnt/compendium/auth/decodoScrape.json")));
+		rateLimiter = new RateLimiter(...rateLimit);
+		rateLimiter.start();
+	}
+
+	/* eslint-disable camelcase */
+	const json = {target : "universal", url, proxy_pool : "premium", headless : "html"};
+	if(click || waitFor)
+		json.browser_actions = [];
+
+	if(waitFor)
+		json.browser_actions.push(...Array.force(waitFor).flatMap(value => ([{type : "wait_for_element", selector : {type : "css", value}, "timeout_s" : 60}])));
+
+	if(click)
+	{
+		json.browser_actions.push(...Array.force(click).flatMap(value => ([
+			{type : "wait_for_element", selector : {type : "css", value }, "timeout_s" : 60},
+			{type : "click", selector : {type : "css", value}},
+			{type : "wait", wait_time_s : 1}
+		])));
+	}
+
+	if(json.browser_actions?.length)
+		json.browser_actions.push({type : "wait", wait_time_s : 5});
+	/* eslint-enable camelcase */
+
+	await rateLimiter.wait();
+	const rawText = await xu.fetch("https://scraper-api.decodo.com/v2/scrape", {json, headers});
+	const pageHTML = xu.parseJSON(rawText)?.results?.[0]?.content;
+	if(pageHTML?.length)
+		return pageHTML;
+
+	throw new Error(`Failed to scrape ${url}: ${rawText}`);
+}
+
+export async function scrapeStop()
+{
+	if(rateLimiter)
+		await rateLimiter.stop();
 }
