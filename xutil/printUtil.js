@@ -244,16 +244,16 @@ export function list(items, options={})
 	return r.join("");
 }
 
-const stdoutEncoder = new TextEncoder();
+const textEncoder = new TextEncoder();
 export function stdoutWrite(str)
 {
-	Deno.stdout.writeSync(stdoutEncoder.encode(str));
+	Deno.stdout.writeSync(textEncoder.encode(str));
 }
 
 /* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
-	constructor({min=0, max=100, barWidth=55, status="", maxLength=null, includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish}={})
+	constructor({min=0, max=100, barWidth=55, status="", maxLength=null, includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish, directTTY}={})
 	{
 		this.min = min;
 		this.max = max;
@@ -272,7 +272,18 @@ class Progress
 		this.perSampleCount = perSampleCount;
 		this.dontAutoFinish = dontAutoFinish;
 
-		stdoutWrite(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
+		if(directTTY)
+		{
+			this.ttyFile = Deno.openSync("/dev/tty", {write : true});
+			this.print = str => this.ttyFile.writeSync(textEncoder.encode(str));
+		}
+		else
+		{
+			this.print = stdoutWrite;
+		}
+
+		this.print(`\n\x1B[1G\x1B[2K${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
+		//this.print(`${xu.c.cursor.hide}${xu.c.fg.cyan}[${" ".repeat(barWidth)}]`);
 		this.set(min);
 	}
 
@@ -295,33 +306,33 @@ class Progress
 		v = Math.clamp(v, this.min, this.max);
 		this.lastValue = v;
 		const pos = Math.floor(v.scale(this.min, this.max, 0, this.barWidth));
-		stdoutWrite(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);
+		this.print(`\x1B[2G${xu.c.fg.white}${"=".repeat(pos>0 ? pos-1 : 0)}${pos>0 ? ">" : ""}${" ".repeat(this.barWidth-pos)}`);
 
 		let curPos = this.barWidth+4;
 		if(this.includeCount)
 		{
-			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${v.toLocaleString().padStart(this.maxLength)} ${xu.c.fg.cyan}/${xu.c.fg.white} ${this.max.toLocaleString().padStart(this.maxLength)}  `);
+			this.print(`\x1B[${curPos}G${xu.c.fg.white}${v.toLocaleString().padStart(this.maxLength)} ${xu.c.fg.cyan}/${xu.c.fg.white} ${this.max.toLocaleString().padStart(this.maxLength)}  `);
 			curPos += (this.maxLength*2)+5;
 		}
 
 		const percent = ((v/this.max)*100).toFixed(2).padStart(6, " ");
-		stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% `);
+		this.print(`\x1B[${curPos}G${xu.c.fg.white}${percent}${xu.c.fg.cyan}% `);
 		curPos += 6+2;
 
 		if(this.includeDuration)
 		{
 			const durationText = (performance.now()-this.startedAt).msAsHumanReadable({short : true, maxParts : 2, pad : false}).padStart(7);
-			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white} ${durationText} `);
+			this.print(`\x1B[${curPos}G${xu.c.fg.white} ${durationText} `);
 			curPos += durationText.length+2;
 		}
 
 		if(this.perText)
 		{
-			stdoutWrite(`\x1B[${curPos}G${xu.c.fg.white}${this.perText} `);
+			this.print(`\x1B[${curPos}G${xu.c.fg.white}${this.perText} `);
 			curPos += this.perText.length+1;
 		}
 
-		stdoutWrite(`\x1B[${curPos}G${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
+		this.print(`\x1B[${curPos}G${status===undefined ? "" : `${xu.c.fg.whiteDim}${status}${" ".repeat(Math.max(this.status.length-status.length, 0))}`}`);
 		if(status)
 			this.status = status;
 		if(v===this.max && !this.dontAutoFinish)
@@ -367,7 +378,12 @@ class Progress
 
 	finish(msg="")
 	{
-		console.log(`${msg}${xu.c.reset}${xu.c.cursor.show}`);
+		this.print(`${msg}${xu.c.reset}${xu.c.cursor.show}\n`);
+		if(this.ttyFile)
+		{
+			this.ttyFile.close();
+			this.ttyFile = null;
+		}
 	}
 }
 /* eslint-enable unicorn/no-hex-escape */

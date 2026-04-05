@@ -22,7 +22,7 @@ Deno.test("concat", async () =>
 	await fileUtil.concat([path.join(FILES_DIR, "a.txt"), path.join(FILES_DIR, "b.txt")], CONCAT_DEST_FILE_PATH);
 	assert(await fileUtil.areEqual(CONCAT_DEST_FILE_PATH, path.join(FILES_DIR, "ab.txt")));
 	await fileUtil.unlink(CONCAT_DEST_FILE_PATH);
-	await fileUtil.concat([path.join(FILES_DIR, "a.txt"), path.join(FILES_DIR, "b.txt")], CONCAT_DEST_FILE_PATH, {seperator : "_"});
+	await fileUtil.concat([path.join(FILES_DIR, "a.txt"), path.join(FILES_DIR, "b.txt")], CONCAT_DEST_FILE_PATH, {separator : "_"});
 	assert(await fileUtil.areEqual(CONCAT_DEST_FILE_PATH, path.join(FILES_DIR, "ab_sep.txt")));
 	await fileUtil.unlink(CONCAT_DEST_FILE_PATH);
 });

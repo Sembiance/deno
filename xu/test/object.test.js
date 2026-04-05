@@ -90,6 +90,6 @@ Deno.test("mapInPlace", () =>
 	assertStrictEquals(Object.equals(r2, Object.mapInPlace(a, (k, v) => v.length)), true);
 	assertStrictEquals(Object.equals(r2, a), true);
 
-	const r3 = {hello : [5], jon : [3]};
+	const r3 = {hello : 5, jon : 3};
 	assertEquals(JSON.stringify(Object.mapInPlace(a, k => ([k.length]))), JSON.stringify(r3));
 });

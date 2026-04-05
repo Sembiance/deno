@@ -1,6 +1,6 @@
 import {xu} from "xu";
 import * as runUtil from "./runUtil.js";
-import {path, toArrayBuffer, TextLineStream} from "std";
+import {path, toArrayBuffer, TextLineStream, writeAll, copyAll} from "std";
 
 /** returns true if files a and b are equals. Calls out to 'cmp' due to how optimized that program is for speed */
 export async function areEqual(a, b)
@@ -14,14 +14,15 @@ export async function concat(srcFilePaths, destFilePath, {separator}={})
 	const destFile = await Deno.open(destFilePath, {read : false, write : true, append : true, truncate : false, create : true});
 	try
 	{
-		const seperatorData = typeof separator==="string" ? new TextEncoder().encode(separator) : separator;
+		const separatorData = typeof separator==="string" ? new TextEncoder().encode(separator) : separator;
 		for(let i=0;i<srcFilePaths.length;i++)
 		{
 			const srcFile = await Deno.open(srcFilePaths[i], {read : true, write : false});
-			await srcFile.readable.pipeTo(destFile.writable, {preventClose : true});
+			await copyAll(srcFile, destFile);
+			srcFile.close();
 
-			if(seperatorData && i<(srcFilePaths.length-1))
-				await (new Blob([seperatorData])).stream().pipeTo(destFile.writable, {preventClose : true});
+			if(separatorData && i<(srcFilePaths.length-1))
+				await writeAll(destFile, separatorData);
 		}
 	}
 	finally
@@ -358,17 +359,15 @@ export async function unlink(targetPath, o={})
 export async function writeJSONLFile(filePath, lines)
 {
 	const gz = filePath.toLowerCase().endsWith(".gz");
-	
-	const file = await Deno.open(gz ? path.join(path.dirname(filePath), path.basename(filePath, ".gz")) : filePath, {create : true, write : true, truncate : true});
+	const actualPath = gz ? path.join(path.dirname(filePath), path.basename(filePath, ".gz")) : filePath;
+	const file = await Deno.open(actualPath, {create : true, write : true, truncate : true});
 	const encoder = new TextEncoder();
-
 	for(const line of lines)
-		await new Blob([encoder.encode(`${JSON.stringify(line)}\n`)]).stream().pipeTo(file.writable, {preventClose : true});
-
+		await writeAll(file, encoder.encode(`${JSON.stringify(line)}\n`));
 	file.close();
 
 	if(gz)
-		await runUtil.run("pigz", ["-f", path.join(path.dirname(filePath), path.basename(filePath, ".gz"))]);
+		await runUtil.run("pigz", ["-f", actualPath]);
 }
 
 /** writes the data as text to filePath. We wrap Deno.writeTextFile() because we needed to do it for readTextFile() and this keeps clear that we always use fileUtil.* for these two ops */

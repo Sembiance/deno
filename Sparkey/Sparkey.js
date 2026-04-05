@@ -116,7 +116,7 @@ export class Sparkey
 
 	async listKeys()
 	{
-		return (await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.trim()?.split("\n");
+		return (await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.replace(/\0$/, "")?.split("\0");
 	}
 
 	async compact(dbNewPrefix)

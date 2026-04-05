@@ -1,3 +1,4 @@
+export * as compressUtil from "./compressUtil.js";
 export * as cmdUtil from "./cmdUtil.js";
 export * as csvUtil from "./csvUtil.js";
 export * as diffUtil from "./diffUtil.js";

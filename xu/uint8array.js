@@ -22,9 +22,12 @@ Uint8Array.prototype.copy ||= function copy(target, targetStart=0, sourceStart=0
 };
 
 /** allows finding more advanced items such as strings or sub arrays */
+let textEncoder;
 Uint8Array.prototype.indexOfX ||= function indexOfX(x)
 {
-	const m = typeof x==="string" ? new TextEncoder().encode(x) : (x instanceof Uint8Array ? x : Uint8Array.from(typeof x[Symbol.iterator]==="function" ? x : [x]));
+	if(typeof x==="string")
+		textEncoder ||= new TextEncoder();
+	const m = typeof x==="string" ? textEncoder.encode(x) : (x instanceof Uint8Array ? x : Uint8Array.from(typeof x[Symbol.iterator]==="function" ? x : [x]));
 	
 	let i=0, subi=0;
 	for(const v of this)

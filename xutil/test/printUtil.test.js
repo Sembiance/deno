@@ -44,7 +44,7 @@ const PROGRESS_DELAYS = [...Array(150).fill(100), ...Array(25).fill(250), 1000, 
 
 Deno.test("progressSimple", async () =>
 {
-	const progress = printUtil.progress({barWidth : 30, max : 555});
+	const progress = printUtil.progress({barWidth : 30, max : 555, directTTY : true});
 	for(let i=0;i<=555;i++)
 	{
 		if(Math.randomInt(1, 5)===1)
@@ -58,7 +58,7 @@ Deno.test("progressSimple", async () =>
 
 Deno.test("progressDurationPer", async () =>
 {
-	const progress = printUtil.progress({barWidth : 30, max : 5555, includeDuration : true, includePer : true});
+	const progress = printUtil.progress({barWidth : 30, max : 5555, includeDuration : true, includePer : true, directTTY : true});
 	for(let i=0;i<=5555;i++)
 	{
 		if(Math.randomInt(1, 4)===1)
@@ -72,7 +72,7 @@ Deno.test("progressDurationPer", async () =>
 
 Deno.test("progressMaxChanges", async () =>
 {
-	const progress = printUtil.progress({barWidth : 30, max : 555});
+	const progress = printUtil.progress({barWidth : 30, max : 555, directTTY : true});
 	let curMax = 555;
 	for(let i=0;i<=curMax;i++)
 	{
@@ -94,7 +94,7 @@ Deno.test("progressMaxChanges", async () =>
 
 Deno.test("progressMaxStartZero", async () =>
 {
-	const bar = printUtil.progress({barWidth : 30, max : 0, dontAutoFinish : true});
+	const bar = printUtil.progress({barWidth : 30, max : 0, dontAutoFinish : true, directTTY : true});
 	let curMax = 555;
 	for(let i=0;i<=curMax;i++)
 	{

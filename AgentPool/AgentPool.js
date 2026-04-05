@@ -106,7 +106,7 @@ export class AgentPool
 			}
 			catch(err)
 			{
-				sendResult = {cb : "onFail", r : {reason : agent.running ? "fetch failed" : "crashed", error : err.stack}};
+				sendResult = {cb : "onFail", r : {reason : (agent.running || agent.stopping) ? "fetch failed" : "crashed", error : err.stack}};
 			}
 			agent.lastDuration = performance.now()-agent.startedAt;
 

@@ -25,9 +25,13 @@ function crc16XModem(data)
 }
 
 // For list of supported algos: https://jsr.io/@std/crypto/0.224.0/crypto.ts
+let textEncoder;
 export async function hashData(algorithm, dataRaw)
 {
-	const data = typeof dataRaw==="string" ? new TextEncoder().encode(dataRaw) : dataRaw;
+	if(typeof dataRaw==="string")
+		textEncoder ||= new TextEncoder();
+
+	const data = typeof dataRaw==="string" ? textEncoder.encode(dataRaw) : dataRaw;
 
 	if(algorithm==="CRC-16/XMODEM")
 		return crc16XModem(data);
