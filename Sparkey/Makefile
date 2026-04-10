@@ -1,6 +1,6 @@
 CFLAGS	= -std=c99 -Wall -Wextra -O3 -g -Wno-unused-parameter -shared -fPIC
 LDFLAGS	=
-LIBS	= -lsparkey
+LIBS	= -lsparkey -lzstd -lpthread
 
 all: sparkey
 
