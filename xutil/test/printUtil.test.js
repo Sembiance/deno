@@ -48,7 +48,7 @@ Deno.test("progressSimple", async () =>
 	for(let i=0;i<=555;i++)
 	{
 		if(Math.randomInt(1, 5)===1)
-			i++;	// eslint-disable-line sonarjs/updated-loop-counter
+			i++;
 
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)
@@ -62,7 +62,7 @@ Deno.test("progressDurationPer", async () =>
 	for(let i=0;i<=5555;i++)
 	{
 		if(Math.randomInt(1, 4)===1)
-			i++;	// eslint-disable-line sonarjs/updated-loop-counter
+			i++;
 
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 3)===1)
@@ -83,7 +83,7 @@ Deno.test("progressMaxChanges", async () =>
 		}
 
 		if(Math.randomInt(1, 5)===1)
-			i++;	// eslint-disable-line sonarjs/updated-loop-counter
+			i++;
 
 		progress.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)
@@ -108,7 +108,7 @@ Deno.test("progressMaxStartZero", async () =>
 		}
 
 		if(Math.randomInt(1, 5)===1)
-			i++;	// eslint-disable-line sonarjs/updated-loop-counter
+			i++;
 
 		bar.set(i, Math.randomInt(1, 10)===1 ? PROGRESS_STATUS_MESSAGES.pickRandom()[0] : undefined);
 		if(Math.randomInt(1, 14)===1)

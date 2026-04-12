@@ -1,5 +1,5 @@
 import {xu, fg} from "xu";
-import {path, delay, getAvailablePort} from "std";
+import {path, delay} from "std";
 import {webUtil, runUtil, fileUtil} from "xutil";
 import {XLog} from "xlog";
 
@@ -23,8 +23,9 @@ export class AgentPool
 		this.logPrefix = `${xu.bracket(`${fg.white("AgentPool")}${fg.cyan("-")}${fg.peach(path.basename(this.agentFilePath, path.extname(this.agentFilePath)))}`)}`;
 	}
 
-	async init({maxProcessDuration, watchdogInterval=xu.SECOND}={})
+	async init({maxProcessDuration, watchdogInterval=xu.SECOND, restartEvery}={})
 	{
+		this.restartEvery = restartEvery;
 		this.cwd = await fileUtil.genTempPath(undefined, `AgentPool-${path.basename(this.agentFilePath, path.extname(this.agentFilePath))}`);
 		await Deno.mkdir(this.cwd, {recursive : true});
 		if(maxProcessDuration)
@@ -134,8 +135,8 @@ export class AgentPool
 				this.xlog.warn`${agent.logPrefix} ${agent.log.join("\n")}`;
 
 			agent.running = false;
-			delete agent.runner;
 			await fileUtil.unlink(agent.portFilePath, {recursive : true});
+			delete agent.runner;
 
 			if(!agent.startedOnce)
 				return this.xlog.error`${agent.logPrefix} agent crashed on first start attempt:\n${agent.log.join("\n")}`;
@@ -185,7 +186,7 @@ export class AgentPool
 			agent.running = true;
 			agent.startedOnce = true;
 
-			this.xlog.debug`${agent.logPrefix} Started on port ${agent.port}...`;
+			this.xlog.debug`${agent.logPrefix} pid:${agent.runner?.p?.pid} Started on port ${agent.port}...`;
 		};
 
 		agent.stop = async () =>
@@ -199,6 +200,7 @@ export class AgentPool
 
 		await agent.start();
 
+		agent.processedCount = 0;
 		while(1)
 		{
 			if(!agent.running)	// due to crash
@@ -215,6 +217,16 @@ export class AgentPool
 
 				if(this.stopping)
 					break;
+
+				if(this.restartEvery && ++agent.processedCount>=this.restartEvery)
+				{
+					this.xlog.debug`${agent.logPrefix} pid:${agent.runner?.p?.pid} Restarting after processing ${agent.processedCount} messages...`;
+					agent.processedCount = 0;
+					await agent.stop();
+					await xu.waitUntil(() => !agent.runner && !agent.startedAt);
+					agent.stopping = false;
+					await agent.start();
+				}
 
 				if(this.queue.length)
 					continue;

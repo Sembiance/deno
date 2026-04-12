@@ -97,7 +97,7 @@ export async function decodeMacintosh({data, processors=[], region="roman", pres
 		{
 			c = MACINTOSH[region][new Uint8Array([byte, bytes[i+1]]).getUInt16BE()];
 			if(c)
-				i++;	// eslint-disable-line sonarjs/updated-loop-counter
+				i++;
 		}
 		c ??= MACINTOSH[region][byte] ?? ((byte<0x20 || byte===0x7F) ? "□" : String.fromCharCode(byte));
 		

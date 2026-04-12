@@ -364,3 +364,32 @@ Deno.test("watchdog", async () =>
 	await pool.stop({keepCWD : true});
 });
 
+Deno.test("restartEvery", async () =>
+{
+	const debugLog = [];
+	const xlog = new XLog("debug", {logger : v => debugLog.push(v.decolor())});
+
+	const results = [];
+	const vals = [].pushSequence(1, 30).map((v, id) => ({id, nums : [v, v*2, v*3], str : xu.randStr(), bool : id%5===0}));
+
+	const pool = new AgentPool(path.join(import.meta.dirname, "simple.agent.js"), {onSuccess : r => results.push(r), xlog});
+	await pool.init({restartEvery : 5});
+	await pool.start({qty : 2});
+	pool.process(vals);
+	assert(await xu.waitUntil(() => results.length===vals.length, {timeout : xu.SECOND*30}));
+	await pool.stop();
+
+	// verify all results processed correctly
+	for(const result of results)
+	{
+		const val = vals.find(({id}) => id===result.id);
+		assertStrictEquals(result.id, val.id);
+		assertStrictEquals(result.bool, result.id%5!==0);
+		assertStrictEquals(result.str, val.str.reverse());
+		assertEquals(result.nums, val.nums.map(v => v*2));
+	}
+
+	// 30 messages across 2 agents with restartEvery=5 → expect multiple restarts
+	const restartLogs = debugLog.filter(v => v.includes("Restarting after processing"));
+	assert(restartLogs.length>=4, `Expected at least 2 restarts, got ${restartLogs.length}`);
+});

@@ -20,8 +20,10 @@ export class Sparkey
 			getLength   : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u64" },
 			delete      : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u8" },
 			put         : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" },
+			putMany     : { parameters : ["buffer", "u32", "u32", "buffer", "buffer"], result : "u8" },
 			extractFile : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u64" },
-			compressAll : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32", "i32"], result : "u8" }
+			compressAll : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32", "i32"], result : "u8" },
+			freeBuffer  : { parameters : ["pointer"], result : "void" }
 		});
 
 		const dictFilePath = `${dbFilePathPrefix}.dict`;
@@ -48,6 +50,8 @@ export class Sparkey
 		const dataView = new Deno.UnsafePointerView(callResult);
 		const r = new Uint8Array(dataView.getUint32());
 		dataView.copyInto(r, 4);
+
+		this.sparkey.symbols.freeBuffer(callResult);
 
 		return this.compressed && !skipDecompress ? this.decompressValue(r) : r;
 	}
@@ -104,6 +108,41 @@ export class Sparkey
 			throw new Error(`Sparkey putFile failed: ${stderr}`);
 	}
 
+	putMany(keys, vals)
+	{
+		if(this.compressed)
+			throw new Error("putMany not supported when compressed");
+
+		const keysEncoded = keys.map(k => this.textEncoder.encode(k));
+		const keysBuffer = new Uint8Array(keysEncoded.map(v => v.length).sum()+(keys.length*4));
+		for(let i=0, pos=0;i<keys.length;i++)
+		{
+			keysBuffer.setUInt32LE(pos, keysEncoded[i].length);
+			pos+=4;
+			keysBuffer.set(keysEncoded[i], pos);
+			pos+=keysEncoded[i].length;
+		}
+
+		const valsBuffer = new Uint8Array(vals.map(v => v.length).sum()+(vals.length*4));
+		for(let i=0, pos=0;i<vals.length;i++)
+		{
+			valsBuffer.setUInt32LE(pos, vals[i].length);
+			pos+=4;
+			valsBuffer.set(vals[i], pos);
+			pos+=vals[i].length;
+		}
+
+		return !!this.sparkey.symbols.putMany(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keys.length, keysBuffer, valsBuffer);
+	}
+
+	putTexts(keys, vals)
+	{
+		if(this.compressed)
+			throw new Error("putTexts not supported when compressed");
+
+		return this.putMany(keys, vals.map(v => this.textEncoder.encode(v)));
+	}
+
 	delete(k)
 	{
 		const keyBuffer = this.textEncoder.encode(k);
@@ -119,7 +158,7 @@ export class Sparkey
 
 	async listKeys()
 	{
-		return (await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.replace(/\0$/, "")?.split("\0");
+		return (await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.replace(/\0$/, "")?.split("\0").filter(v => v?.length);
 	}
 
 	async compact(dbNewPrefix)
@@ -130,7 +169,7 @@ export class Sparkey
 	async compressInit()
 	{
 		if(this.compressed)
-			return;
+			throw new Error("already compressed");
 
 		this.compressed = true;
 
@@ -143,7 +182,11 @@ export class Sparkey
 			ZSTD_decompress_usingDDict : { parameters : ["pointer", "buffer", "usize", "buffer", "usize", "pointer"], result : "usize" },
 			ZSTD_compressBound         : { parameters : ["usize"], result : "usize" },
 			ZSTD_getFrameContentSize   : { parameters : ["buffer", "usize"], result : "u64" },
-			ZSTD_isError               : { parameters : ["usize"], result : "u32" }
+			ZSTD_isError               : { parameters : ["usize"], result : "u32" },
+			ZSTD_freeCCtx              : { parameters : ["pointer"], result : "usize" },
+			ZSTD_freeDCtx              : { parameters : ["pointer"], result : "usize" },
+			ZSTD_freeCDict             : { parameters : ["pointer"], result : "usize" },
+			ZSTD_freeDDict             : { parameters : ["pointer"], result : "usize" }
 		});
 
 		this.compressContext = this.zstd.symbols.ZSTD_createCCtx();
@@ -178,13 +221,18 @@ export class Sparkey
 
 	async compress({sampleCount=5000}={})
 	{
+		if(this.compressed)
+			throw new Error("already compressed");
+		
 		const trainDirPath = await fileUtil.genTempPath();
 		await Deno.mkdir(trainDirPath);
 
 		for(const key of (await this.listKeys()).pickRandom(sampleCount))
 			await this.extractFile(key, path.join(trainDirPath, xu.randStr()));
 
-		await runUtil.run("zstd", ["--train", "-r", trainDirPath, "-o", `${this.dbFilePathPrefix}.dict`, "--maxdict=65536"]);
+		const {stdout, stderr} = await runUtil.run("zstd", ["--train", "-r", trainDirPath, "-o", `${this.dbFilePathPrefix}.dict`, "--maxdict=65536"]);
+		if(!await fileUtil.exists(`${this.dbFilePathPrefix}.dict`))
+			throw new Error(`zstd failed with stdout ${stdout} and stderr: ${stderr}`);
 		await fileUtil.unlink(trainDirPath);
 
 		await this.compressInit();
@@ -207,6 +255,12 @@ export class Sparkey
 	{
 		this.sparkey.close();
 		if(this.zstd)
+		{
+			this.zstd.symbols.ZSTD_freeCCtx(this.compressContext);
+			this.zstd.symbols.ZSTD_freeDCtx(this.decompressContext);
+			this.zstd.symbols.ZSTD_freeCDict(this.compressDict);
+			this.zstd.symbols.ZSTD_freeDDict(this.decompressDict);
 			this.zstd.close();
+		}
 	}
 }
