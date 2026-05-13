@@ -119,9 +119,6 @@ export class Sparkey
 
 	putMany(keys, vals)
 	{
-		if(this.compressed)
-			throw new Error("putMany not supported when compressed");
-
 		const keysEncoded = keys.map(k => this.textEncoder.encode(k));
 		const keysBuffer = new Uint8Array(keysEncoded.map(v => v.length).sum()+(keys.length*4));
 		for(let i=0, pos=0;i<keys.length;i++)
@@ -132,13 +129,14 @@ export class Sparkey
 			pos+=keysEncoded[i].length;
 		}
 
-		const valsBuffer = new Uint8Array(vals.map(v => v.length).sum()+(vals.length*4));
-		for(let i=0, pos=0;i<vals.length;i++)
+		const valsToPut = this.compressed ? vals.map(v => this.compressValue(v)) : vals;
+		const valsBuffer = new Uint8Array(valsToPut.map(v => v.length).sum()+(valsToPut.length*4));
+		for(let i=0, pos=0;i<valsToPut.length;i++)
 		{
-			valsBuffer.setUInt32LE(pos, vals[i].length);
+			valsBuffer.setUInt32LE(pos, valsToPut[i].length);
 			pos+=4;
-			valsBuffer.set(vals[i], pos);
-			pos+=vals[i].length;
+			valsBuffer.set(valsToPut[i], pos);
+			pos+=valsToPut[i].length;
 		}
 
 		return !!this.sparkey.symbols.putMany(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keys.length, keysBuffer, valsBuffer);
@@ -146,9 +144,6 @@ export class Sparkey
 
 	putTexts(keys, vals)
 	{
-		if(this.compressed)
-			throw new Error("putTexts not supported when compressed");
-
 		return this.putMany(keys, vals.map(v => this.textEncoder.encode(v)));
 	}
 
