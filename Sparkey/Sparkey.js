@@ -19,6 +19,7 @@ export class Sparkey
 			get         : { parameters : ["buffer", "u32", "buffer", "u32", "u64"], result : "buffer" },
 			getLength   : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u64" },
 			delete      : { parameters : ["buffer", "u32", "buffer", "u32"], result : "u8" },
+			deleteMany  : { parameters : ["buffer", "u32", "u32", "buffer"], result : "u8" },
 			put         : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u8" },
 			putMany     : { parameters : ["buffer", "u32", "u32", "buffer", "buffer"], result : "u8" },
 			extractFile : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u64" },
@@ -155,6 +156,24 @@ export class Sparkey
 	{
 		const keyBuffer = this.textEncoder.encode(k);
 		return !!this.sparkey.symbols.delete(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length);
+	}
+
+	deleteMany(keys)
+	{
+		if(keys.length===0)
+			return true;
+
+		const keysEncoded = keys.map(k => this.textEncoder.encode(k));
+		const keysBuffer = new Uint8Array(keysEncoded.map(v => v.length).sum()+(keys.length*4));
+		for(let i=0, pos=0;i<keys.length;i++)
+		{
+			keysBuffer.setUInt32LE(pos, keysEncoded[i].length);
+			pos+=4;
+			keysBuffer.set(keysEncoded[i], pos);
+			pos+=keysEncoded[i].length;
+		}
+
+		return !!this.sparkey.symbols.deleteMany(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keys.length, keysBuffer);
 	}
 
 	async truncate()

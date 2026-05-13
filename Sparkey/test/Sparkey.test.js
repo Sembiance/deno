@@ -150,6 +150,37 @@ Deno.test("delete", async () =>
 	db.unload();
 });
 
+Deno.test("deleteMany", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-deleteMany");
+	let db = await Sparkey.create(dbFilePathPrefix);
+
+	assertStrictEquals(db.putText("keyA", "Letter A"), true);
+	assertStrictEquals(db.putText("keyB", "Letter B"), true);
+	assertStrictEquals(db.putText("keyC", "Letter C"), true);
+	assertStrictEquals(db.putText("keyD", "Letter D"), true);
+	assertStrictEquals(db.putText("keyE", "Letter E"), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyB", "keyC", "keyD", "keyE"]);
+
+	assertStrictEquals(db.deleteMany(["keyB", "keyD", "missing"]), true);
+	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyE"]);
+	assertStrictEquals(db.getText("keyA"), "Letter A");
+	assertStrictEquals(db.getText("keyB"), undefined);
+	assertStrictEquals(db.getText("keyC"), "Letter C");
+	assertStrictEquals(db.getText("keyD"), undefined);
+	assertStrictEquals(db.getText("keyE"), "Letter E");
+	assertStrictEquals(db.deleteMany([]), true);
+
+	db.unload();
+	db = await Sparkey.create(dbFilePathPrefix);
+	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyE"]);
+	assertStrictEquals(db.getText("keyB"), undefined);
+	assertStrictEquals(db.getText("keyD"), undefined);
+
+	await db.truncate();
+	db.unload();
+});
+
 Deno.test("getLength", async () =>
 {
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-getLength");
