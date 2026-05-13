@@ -116,7 +116,7 @@ String.prototype.toProperCase ||= function toProperCase()
 	return this.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 };
 
-String.prototype.toVisible ||= function toVisible()
+String.prototype.toVisible ||= function toVisible(includeSpace)
 {
 	/* eslint-disable unicorn/no-hex-escape */
 	const MAPPING =
@@ -131,6 +131,8 @@ String.prototype.toVisible ||= function toVisible()
 		"\x07" : "⍾", // Bell
 		"\x1B" : "␛"  // Escape
 	};
+	if(includeSpace)
+		MAPPING[" "] = "␣";
 	/* eslint-enable unicorn/no-hex-escape */
 
 	return this.split("").map(c => (c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7F ? (MAPPING[c] || "") : c)).join("");

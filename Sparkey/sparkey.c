@@ -558,3 +558,45 @@ uint8_t compressAll(uint8_t * srcDbPath, uint32_t srcDbPathLen, uint8_t * dstDbP
 
 	return (success && r == SPARKEY_SUCCESS) ? 1 : 0;
 }
+
+uint32_t keyCount(uint8_t * dbPath, uint32_t dbPathLen)
+{
+	sparkey_hashreader * reader;
+
+	char * hashFilePath = (char *)malloc(dbPathLen + 5);
+	memcpy(hashFilePath, dbPath, dbPathLen);
+	memcpy(hashFilePath + dbPathLen, ".spi", 4);
+	hashFilePath[dbPathLen + 4] = 0;
+
+	char * logFilePath = (char *)malloc(dbPathLen + 5);
+	memcpy(logFilePath, dbPath, dbPathLen);
+	memcpy(logFilePath + dbPathLen, ".spl", 4);
+	logFilePath[dbPathLen + 4] = 0;
+
+	sparkey_returncode r = sparkey_hash_open(&reader, hashFilePath, logFilePath);
+	free(hashFilePath);
+	free(logFilePath);
+	if(r!=SPARKEY_SUCCESS)
+		return 0;
+
+	sparkey_logiter * iter;
+	r = sparkey_logiter_create(&iter, sparkey_hash_getreader(reader));
+	if(r!=SPARKEY_SUCCESS)
+	{
+		sparkey_hash_close(&reader);
+		return 0;
+	}
+
+	uint32_t keyCount = 0;
+    while (1) {
+        sparkey_logiter_hashnext(iter, reader);
+        if (sparkey_logiter_state(iter) != SPARKEY_ITER_ACTIVE) break;
+
+		keyCount++;
+    }
+
+	sparkey_hash_close(&reader);
+	sparkey_logiter_close(&iter);
+
+	return keyCount;
+}

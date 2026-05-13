@@ -3,6 +3,7 @@
 	{
 		"AgentPool"        : "/mnt/compendium/DevLab/deno/AgentPool/AgentPool.js",
 		"awesomewm"        : "/mnt/compendium/DevLab/deno/awesomewm/awesomewm.js",
+		"B2"               : "/mnt/compendium/DevLab/deno/B2/B2.js",
 		"denoLandX"        : "/mnt/compendium/DevLab/deno/denoLandX.js",
 		"html"             : "/mnt/compendium/DevLab/deno/html/html.js",
 		"jsr"              : "/mnt/compendium/DevLab/deno/jsr.js",

@@ -72,9 +72,10 @@ export async function runAndGetWindow(cmd, args, options={})
 	return {p, wid : pWID};
 }
 
-export async function runTerminal(cmd, options)
+export async function runTerminal(cmd, options={})
 {
-	const r = await runAndGetWindow("urxvt", []);
+	const r = await runAndGetWindow("urxvt", options?.urxvt || []);
+	delete options.urxvt;
 	if(cmd || options?.tabName)
 	{
 		await delay(150);

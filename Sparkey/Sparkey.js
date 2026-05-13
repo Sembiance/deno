@@ -23,6 +23,7 @@ export class Sparkey
 			putMany     : { parameters : ["buffer", "u32", "u32", "buffer", "buffer"], result : "u8" },
 			extractFile : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32"], result : "u64" },
 			compressAll : { parameters : ["buffer", "u32", "buffer", "u32", "buffer", "u32", "i32"], result : "u8" },
+			keyCount    : { parameters : ["buffer", "u32"], result : "u32" },
 			freeBuffer  : { parameters : ["pointer"], result : "void" }
 		});
 
@@ -47,11 +48,17 @@ export class Sparkey
 		if(!callResult)
 			return;
 
-		const dataView = new Deno.UnsafePointerView(callResult);
-		const r = new Uint8Array(dataView.getUint32());
-		dataView.copyInto(r, 4);
-
-		this.sparkey.symbols.freeBuffer(callResult);
+		let r;
+		try
+		{
+			const dataView = new Deno.UnsafePointerView(callResult);
+			r = new Uint8Array(dataView.getUint32());
+			dataView.copyInto(r, 4);
+		}
+		finally
+		{
+			this.sparkey.symbols.freeBuffer(callResult);
+		}
 
 		return this.compressed && !skipDecompress ? this.decompressValue(r) : r;
 	}
@@ -64,6 +71,7 @@ export class Sparkey
 
 	async extractFile(k, filePath, {skipDecompress}={})
 	{
+		await Deno.mkdir(path.dirname(filePath), {recursive : true});
 		const keyBuffer = this.textEncoder.encode(k);
 		const filePathBuffer = this.textEncoder.encode(filePath);
 		const size = this.sparkey.symbols.extractFile(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length, filePathBuffer, filePathBuffer.length);
@@ -158,7 +166,21 @@ export class Sparkey
 
 	async listKeys()
 	{
-		return (await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix]))?.stdout?.replace(/\0$/, "")?.split("\0").filter(v => v?.length);
+		const keys = [];
+		const stdoutcb = async key =>	// eslint-disable-line require-await
+		{
+			if(key?.length)
+				keys.push(key);
+		};
+			
+		await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [this.dbFilePathPrefix], {stdoutcb, stdoutcbDelimiter : "\0"});
+
+		return keys;
+	}
+
+	keyCount()
+	{
+		return this.sparkey.symbols.keyCount(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length);
 	}
 
 	async compact(dbNewPrefix)
@@ -223,6 +245,9 @@ export class Sparkey
 	{
 		if(this.compressed)
 			throw new Error("already compressed");
+
+		if(this.keyCount()<5)
+			return false;
 		
 		const trainDirPath = await fileUtil.genTempPath();
 		await Deno.mkdir(trainDirPath);
@@ -231,9 +256,15 @@ export class Sparkey
 			await this.extractFile(key, path.join(trainDirPath, xu.randStr()));
 
 		const {stdout, stderr} = await runUtil.run("zstd", ["--train", "-r", trainDirPath, "-o", `${this.dbFilePathPrefix}.dict`, "--maxdict=65536"]);
+		await fileUtil.unlink(trainDirPath, {recursive : true});
+
 		if(!await fileUtil.exists(`${this.dbFilePathPrefix}.dict`))
-			throw new Error(`zstd failed with stdout ${stdout} and stderr: ${stderr}`);
-		await fileUtil.unlink(trainDirPath);
+		{
+			if(stderr?.includes("data size of samples too small for target dictionary size"))
+				return false;
+
+			throw new Error(`zstd failed with sparkey keyCount ${this.keyCount()} and zstd stdout ${stdout} and stderr: ${stderr}`);
+		}
 
 		await this.compressInit();
 
@@ -249,6 +280,8 @@ export class Sparkey
 		await Deno.rename(`${tmpPrefix}.spi`, `${this.dbFilePathPrefix}.spi`);
 
 		await this.compact();
+
+		return true;
 	}
 
 	unload()

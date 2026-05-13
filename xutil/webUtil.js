@@ -39,8 +39,9 @@ export function serve(serveOptions, handler, {xlog=new XLog("warn")}={})
 // devMode can be set to true and then any changes to file.js handlers will be monitored and it will automatically reload the handler
 //   NOTE: devMode only works if all the strings in routesRaw that point to file paths share a common parent/grandparent directory
 // getStopper is an optional function that will be called with a function that you can call to stop the monitorer when you choose to stop the server
-export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
+export async function route(routesRaw, args, {devMode, logHits, getStopper, xlog : _xlog}={})
 {
+	const xlog = _xlog || args?.xlog || new XLog("error");
 	const routes = routesRaw instanceof Map ? routesRaw : new Map(Object.entries(routesRaw));
 	const routesEntries = (await Array.from(routes.entries()).parallelMap(async ([prefix, handlerRaw]) => ([prefix, {originalHandler : handlerRaw, handler : (typeof handlerRaw==="string" ? (await import(handlerRaw)).default : handlerRaw)}]))).sortMulti([([prefix]) => prefix], [true]);
 
@@ -68,8 +69,7 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
 				}
 				catch(err)
 				{
-					if(args?.xlog)
-						args.xlog.error`Error loading handler: ${err}`;
+					xlog.error`Error loading handler: ${err}`;
 				}
 			}
 		});
@@ -83,40 +83,45 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper}={})
 		const u = new URL(request.url);
 		const [prefix, {handler}={}] = routesEntries.find(([v]) => (v instanceof RegExp ? v.test(u.pathname) : u.pathname===v)) || [];
 		if(!handler)
+		{
+			xlog.debug`No route found for URL ${request.url}`;
 			return new Response("404 not found", {status : 404});
+		}
 
-		if(logHits && args.xlog)
-			args.xlog.info`Hit handled (${prefix}): ${u.toString()}`;
+		if(logHits)
+			xlog.info`Hit handled (${prefix}): ${u.toString()}`;
 		
 		try
 		{
 			const response = await handler(request, {...args, ...extraArgs});
 			if(!response)
 			{
-				if(args?.xlog)
-					args.xlog.warn`request handler ${prefix} for URL ${request.url} did not return a response`;
+				xlog.warn`request handler ${prefix} for URL ${request.url} did not return a response`;
 				return new Response("no response found", {status : 500});
 			}
 			
 			if(!(response instanceof Response))
 			{
-				if(args?.xlog)
-					args.xlog.warn`request handler ${prefix} for URL ${request.url} returned an invalid response: ${response}`;
+				xlog.warn`request handler ${prefix} for URL ${request.url} returned an invalid response: ${response}`;
 				return new Response("invalid response found", {status : 500});
 			}
 			return response;
 		}
 		catch(err)
 		{
-			if(args?.xlog)
-				args.xlog.error`request handler ${prefix} for URL ${request.url} threw an error: ${err}`;
+			xlog.error`request handler ${prefix} for URL ${request.url} threw an error: ${err}`;
 			return new Response(`error<br>${printUtil.inspect(err)}`, {status : 500});
 		}
 	};
 }
 
+export async function decodoProxyClient()
+{
+	return Deno.createHttpClient({proxy : {url : "http://gate.decodo.com:7000", basicAuth : xu.parseJSON(await fileUtil.readTextFile("/mnt/compendium/auth/decodo.json"))}});
+}
+
 let rateLimiter, rateLimit, headers;
-export async function scrape(url, {click, waitFor})
+export async function scrape(url, {click, waitFor}={})
 {
 	if(!rateLimiter)
 	{

@@ -124,6 +124,12 @@ xu.quote = text => `${fg.greenDim(`"`)}${text}${fg.greenDim(`"`)}`;
 xu.bracket = text => `${fg.cyanDim("[")}${text}${fg.cyanDim("]")}`;
 xu.colon = text => `${fg.whiteDim(text)}${fg.cyanDim(":")} `;
 
+/** returns true if we are headless (ie, run from cron or what not) */
+xu.isHeadless = function isHeadless()
+{
+	return !xu.tryFallback(() => !!Deno.consoleSize()?.rows);
+};
+
 /** clone the given value. Options: skipKeys : ["keyNames", "to", "skip"], shallow : true|false */
 /** WARNING! This is not safe to use with classes. It will clone the class as an object, and thus it won't have all the properties */
 /** I should handle this by detecting it it's a class and then call it's .clone() function IF it has one, otherwise just copy it over as is */

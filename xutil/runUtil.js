@@ -3,7 +3,7 @@ import {xu, fg} from "xu";
 import * as fileUtil from "./fileUtil.js";
 import * as encodeUtil from "./encodeUtil.js";
 import * as printUtil from "./printUtil.js";
-import {path, TextLineStream, Buffer, getAvailablePort, LimitedBytesTransformStream, delay} from "std";
+import {path, TextLineStream, TextDelimiterStream, Buffer, getAvailablePort, LimitedBytesTransformStream, delay} from "std";
 
 const XVFB_NUM_MIN = 10;
 const XVFB_NUM_MAX = 59999;	// in theory since we call runUtil with -nolisten tcp, we just have unix sockets, so no real upper limit on number (billions) but 59,999 - 10 should be plenty
@@ -69,6 +69,7 @@ export async function runUntilSuccess(cmd, args, options={})
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
  *   stdoutcb			If set, this function will be called for every 'line' read from stdout (the current 'p' will be passed as the second arg)
+ *   stdoutcbDelimiter	If set, this delimiter will be used for the stdoutcb instead of normal text line delimiters
  *   stderrcb			If set, this function will be called for every 'line' read from stderr (the current 'p' will be passed as the second arg)
  *   stdoutNull			If set, stdout will be set to "null" thus preventing any output from being buffered.
  *   stderrNull			If set, stderr will be set to "null" thus preventing any output from being buffered.
@@ -87,7 +88,7 @@ export async function runUntilSuccess(cmd, args, options={})
 export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, limitRAM, liveOutput, exitcb,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
-	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer, stdoutLimit,
+	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer, stdoutLimit, stdoutcbDelimiter,
 	stderrEncoding="utf-8", stderrFilePath, stderrcb, stderrUnbuffer, stderrLimit,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, virtualXVNCPort, xlog}={})
 {
@@ -208,12 +209,22 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			await cb(line);
 	};
 
+	const textDelimitedReader = async function(readable, delimiter, cb)
+	{
+		for await (const line of readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextDelimiterStream(delimiter)))
+			await cb(line);
+	};
+
 	// stdout
 	let stdoutPromise = null;
 	let stdoutBuffer = null;
-	if(stdoutcb || xlog)
+	if(xlog)
 	{
-		stdoutPromise = lineReader(p.stdout, (stdoutcb ? async line => await stdoutcb(line, p) : (line => xlog.info`${line}`)));
+		stdoutPromise = lineReader(p.stdout, line => xlog.info`${line}`);
+	}
+	else if(stdoutcb)
+	{
+		stdoutPromise = stdoutcbDelimiter ? textDelimitedReader(p.stdout, stdoutcbDelimiter, async line => await stdoutcb(line, p)) : lineReader(p.stdout, async line => await stdoutcb(line, p));
 	}
 	else if(stdoutFilePath)
 	{

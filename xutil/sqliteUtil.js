@@ -1,4 +1,5 @@
 import {xu} from "xu";
+import {sqlite} from "jsr";
 
 export function createTable(db, tableid, cols, props)
 {
@@ -9,6 +10,19 @@ export function dropTable(db, tableid)
 {
 	return db.exec(`DROP TABLE IF EXISTS ${tableid}`);
 }
+
+export function open(dbFilePath, opts={})
+{
+	const db = new sqlite.Database(dbFilePath, {create : false, memory : false, readonly : false, int64 : true, ...opts});
+	db.exec("PRAGMA journal_mode=WAL");
+	db.exec("PRAGMA synchronous=NORMAL");
+	db.exec("PRAGMA temp_store=MEMORY");
+	db.exec(`PRAGMA mmap_size=${xu.GB*2}`);
+	db.exec(`PRAGMA journal_size_limit=${xu.MB*512}`);
+
+	return db;
+}
+
 
 export function prepare(db, statementRaw)
 {

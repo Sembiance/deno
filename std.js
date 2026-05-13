@@ -64,6 +64,7 @@ export * as path from "jsr:@std/path@1.1.4";
 // streams
 export {Buffer} from "jsr:@std/streams@1.0.17/buffer";
 export {TextLineStream} from "jsr:@std/streams@1.0.17/text-line-stream";
+export {TextDelimiterStream} from "jsr:@std/streams@1.0.17/text-delimiter-stream";
 export {toArrayBuffer} from "jsr:@std/streams@1.0.17/to-array-buffer";
 export {LimitedBytesTransformStream} from "jsr:@std/streams@1.0.17/limited-bytes-transform-stream";
 

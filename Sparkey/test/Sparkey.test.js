@@ -26,6 +26,23 @@ Deno.test("putGet", async () =>
 	db.unload();
 });
 
+Deno.test("keyCount", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-keyCount");
+	let db = await Sparkey.create(dbFilePathPrefix);
+	
+	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.putText("2nd", "second"), true);
+	assertStrictEquals(db.putText("3rd", "third"), true);
+	assertStrictEquals(db.keyCount(), 3);
+	await db.truncate();
+	db.unload();
+
+	db = await Sparkey.create(path.join(import.meta.dirname, "3_index"));
+	assertStrictEquals(db.keyCount(), 2583);
+	db.unload();
+});
+
 Deno.test("listKeys", async () =>
 {
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-listKeys");

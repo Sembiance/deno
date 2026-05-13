@@ -152,6 +152,22 @@ Deno.test("stdoutcb2", async () =>
 	assertStrictEquals(seenLastLine, true);
 });
 
+Deno.test("stdoutcbDelimiter", async () =>
+{
+	const r = ["Martingale.iso/pq/wtrback.gif","Martingale.iso/pq/toursback.gif","Martingale.iso/pq/thumb6.jpg","Martingale.iso/pq/thumb5.jpg","Martingale.iso/pq/thumb4.jpg","Martingale.iso/pq/thumb3.jpg","Martingale.iso/pq/thumb2.jpg","Martingale.iso/pq/thumb1.jpg","Martingale.iso/pq/thinskin.jpg","Martingale.iso/pq/Quilt6.jpg","Martingale.iso/pq/Quilt5.jpg","Martingale.iso/pq/Quilt4.jpg","Martingale.iso/pq/Quilt3.jpg","Martingale.iso/pq/Quilt2.jpg","Martingale.iso/pq/Quilt1.jpg","Martingale.iso/pq/PuzzlingQuiltToolbar.class","Martingale.iso/pq/PuzzlingQuiltPlayingArea.class","Martingale.iso/pq/PuzzlingQuiltPiece.class","Martingale.iso/pq/PuzzlingQuiltGroupBox.class","Martingale.iso/pq/PuzzlingQuiltEtchedRect.class","Martingale.iso/pq/PuzzlingQuiltDialog.class","Martingale.iso/pq/PuzzlingQuiltCheatWindow.class","Martingale.iso/pq/PuzzlingQuiltCell.class","Martingale.iso/pq/PuzzlingQuilt.class","Martingale.iso/pq/Puzzles.html","Martingale.iso/pq/placed.au","Martingale.iso/pq/instruct.html","Martingale.iso/pq/images.html","Martingale.iso/pq/House.gif","Martingale.iso/pq/historyback.gif","Martingale.iso/pq/hires.html","Martingale.iso/pq/button-web.gif","Martingale.iso/pq/button-play.gif","Martingale.iso/pq/button-order.gif","Martingale.iso/pq/button-Library.gif","Martingale.iso/pq/button-Kitchen.gif","Martingale.iso/pq/button-images.gif","Martingale.iso/pq/button-home.gif","Martingale.iso/pq/button-help.gif","Martingale.iso/pq/button-feedback.gif","Martingale.iso/pq/athome.gif","Martingale.iso/pq","Martingale.iso/ws/word.gif","Martingale.iso/ws/wordsrch.html","Martingale.iso/ws/WordSearch.class","Martingale.iso/ws/words.txt","Martingale.iso/ws/WordPuzzle.class","Martingale.iso/ws/WordList.class","Martingale.iso/ws/tradeback.gif","Martingale.iso/ws/spacemusic.au","Martingale.iso/ws/SearchWord.class","Martingale.iso/ws/SearchList.class","Martingale.iso/ws/letters.txt","Martingale.iso/ws/greet02.jpg","Martingale.iso/ws/gong.au","Martingale.iso/ws/ding.au","Martingale.iso/ws","Martingale.iso/readme.txt","Martingale4.jpg","Martingale3.jpg","Martingale2.jpg","Martingale1.jpg","Martingale.iso","Martingale.iso/setup.exe/ICON/2.ico","Martingale.iso/setup.exe/ICON/1.ico","Martingale.iso/setup.exe/ICON","Martingale.iso/setup.exe/CURSOR/4.cur","Martingale.iso/setup.exe/CURSOR/3.cur","Martingale.iso/setup.exe/CURSOR","Martingale.iso/setup.exe/BITMAP/30996.bmp","Martingale.iso/setup.exe/BITMAP/30995.bmp","Martingale.iso/setup.exe/BITMAP/30994.bmp","Martingale.iso/setup.exe/BITMAP/26567.bmp","Martingale.iso/setup.exe/BITMAP/129.bmp","Martingale.iso/setup.exe/BITMAP","Martingale.iso/setup.exe/version.txt","Martingale.iso/setup.exe/string.txt","Martingale.iso/setup.exe"];	// eslint-disable-line @stylistic/comma-spacing
+	const keys = [];
+	const stdoutcb = async (key, p) =>	// eslint-disable-line require-await
+	{
+		assert(p!==undefined);
+		if(key?.length)
+			keys.push(key);
+	};
+	
+	await runUtil.run("/mnt/compendium/DevLab/apps/sparkey/sparkeyListKeys", [path.join(import.meta.dirname, "files", "1_index")], {stdoutcb, stdoutcbDelimiter : "\0"});
+
+	assertEquals(keys, r);
+});
+
 Deno.test("stdoutcberr", async () =>
 {
 	try
