@@ -10,14 +10,14 @@ Deno.test("putGet", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spi`), true);
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spl`), true);
 
 	assertStrictEquals(db.getText("hello"), "Hello, World!");
 
-	assertStrictEquals(db.putText("2nd", "second"), true);
-	assertStrictEquals(db.putText("3rd", "third"), true);
+	assertStrictEquals(db.put("2nd", "second"), true);
+	assertStrictEquals(db.put("3rd", "third"), true);
 
 	assertStrictEquals(db.getText("2nd"), "second");
 	assertStrictEquals(db.getText("3rd"), "third");
@@ -31,9 +31,9 @@ Deno.test("keyCount", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-keyCount");
 	let db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
-	assertStrictEquals(db.putText("2nd", "second"), true);
-	assertStrictEquals(db.putText("3rd", "third"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("2nd", "second"), true);
+	assertStrictEquals(db.put("3rd", "third"), true);
 	assertStrictEquals(db.keyCount(), 3);
 	await db.truncate();
 	db.unload();
@@ -48,9 +48,9 @@ Deno.test("listKeys", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-listKeys");
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
-	assertStrictEquals(db.putText("2nd", "second"), true);
-	assertStrictEquals(db.putText("3rd", "third"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("2nd", "second"), true);
+	assertStrictEquals(db.put("3rd", "third"), true);
 	assertEquals(await db.listKeys(), ["hello", "2nd", "3rd"]);
 
 	await db.truncate();
@@ -63,7 +63,7 @@ Deno.test("compact", async () =>
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
 	for(let i=0;i<5000;i++)
-		assertStrictEquals(db.putText(`key${i}`, `value${i}`), true);
+		assertStrictEquals(db.put(`key${i}`, `value${i}`), true);
 
 	assertEquals((await db.listKeys()).length, 5000);
 	assertStrictEquals((await Deno.stat(`${dbFilePathPrefix}.spi`)).size, 52120);
@@ -91,16 +91,16 @@ Deno.test("keyOrder", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-keyOrder");
 	const db = await Sparkey.create(dbFilePathPrefix);
 
-	assertStrictEquals(db.putText("keyA", "Letter A"), true);
-	assertStrictEquals(db.putText("keyB", "Letter B"), true);
-	assertStrictEquals(db.putText("keyC", "Letter C"), true);
-	assertStrictEquals(db.putText("keyD", "Letter D"), true);
+	assertStrictEquals(db.put("keyA", "Letter A"), true);
+	assertStrictEquals(db.put("keyB", "Letter B"), true);
+	assertStrictEquals(db.put("keyC", "Letter C"), true);
+	assertStrictEquals(db.put("keyD", "Letter D"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyB", "keyC", "keyD"]);
 
 	assertStrictEquals(db.delete("keyB"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyD"]);
 
-	assertStrictEquals(db.putText("keyB", "Letter B"), true);
+	assertStrictEquals(db.put("keyB", "Letter B"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyC", "keyD", "keyB"]);
 
 	assertStrictEquals(db.delete("keyB"), true);
@@ -108,13 +108,13 @@ Deno.test("keyOrder", async () =>
 	assertStrictEquals(db.delete("keyC"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyD"]);
 
-	assertStrictEquals(db.putText("keyC", "Letter C"), true);
+	assertStrictEquals(db.put("keyC", "Letter C"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC"]);
 
 	assertStrictEquals(await db.compact(), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC"]);
 
-	assertStrictEquals(db.putText("keyB", "Letter B"), true);
+	assertStrictEquals(db.put("keyB", "Letter B"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyD", "keyC", "keyB"]);
 
 	assertStrictEquals((await db.compact()), true);
@@ -129,7 +129,7 @@ Deno.test("delete", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-delete");
 	let db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
 	db.unload();
 	db = await Sparkey.create(dbFilePathPrefix);
 	assertStrictEquals(db.getText("hello"), "Hello, World!");
@@ -155,11 +155,11 @@ Deno.test("deleteMany", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-deleteMany");
 	let db = await Sparkey.create(dbFilePathPrefix);
 
-	assertStrictEquals(db.putText("keyA", "Letter A"), true);
-	assertStrictEquals(db.putText("keyB", "Letter B"), true);
-	assertStrictEquals(db.putText("keyC", "Letter C"), true);
-	assertStrictEquals(db.putText("keyD", "Letter D"), true);
-	assertStrictEquals(db.putText("keyE", "Letter E"), true);
+	assertStrictEquals(db.put("keyA", "Letter A"), true);
+	assertStrictEquals(db.put("keyB", "Letter B"), true);
+	assertStrictEquals(db.put("keyC", "Letter C"), true);
+	assertStrictEquals(db.put("keyD", "Letter D"), true);
+	assertStrictEquals(db.put("keyE", "Letter E"), true);
 	assertEquals(await db.listKeys(), ["keyA", "keyB", "keyC", "keyD", "keyE"]);
 
 	assertStrictEquals(db.deleteMany(["keyB", "keyD", "missing"]), true);
@@ -186,7 +186,7 @@ Deno.test("getLength", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-getLength");
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
 	assertStrictEquals(db.getText("hello"), "Hello, World!");
 	assertStrictEquals(db.getLength("hello"), 13);
 
@@ -236,6 +236,36 @@ Deno.test("putFileHuge", async () =>
 	db.unload();
 });
 
+Deno.test("batchPut", async () =>
+{
+	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-batchPut");
+	const db = await Sparkey.create(dbFilePathPrefix);
+	const batch = db.batchPut({byteLimit : xu.MB, keyLimit : 2});
+
+	batch.put("hello", "Hello, World!");
+	assertStrictEquals(db.getText("hello"), undefined);
+
+	assertStrictEquals(batch.put("2nd", "second"), true);
+	assertStrictEquals(db.getText("hello"), "Hello, World!");
+	assertStrictEquals(db.getText("2nd"), "second");
+
+	const binaryData = new Uint8Array([0, 1, 2, 3, 254, 255]);
+	batch.put("3rd", "third");
+	batch.put("binary", binaryData);
+	assertStrictEquals(db.getText("3rd"), "third");
+	assertEquals(db.get("binary"), binaryData);
+
+	batch.put("4th", "fourth");
+	assertStrictEquals(db.getText("4th"), undefined);
+	assertStrictEquals(batch.flush(), true);
+	assertStrictEquals(db.getText("4th"), "fourth");
+
+	assertStrictEquals(batch.flush(), undefined);
+
+	await db.truncate();
+	db.unload();
+});
+
 Deno.test("extractFile", async () =>
 {
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-extractFile");
@@ -243,7 +273,7 @@ Deno.test("extractFile", async () =>
 
 	const srcFilePath = path.join(import.meta.dirname, "test.png");
 	assertStrictEquals(await hashUtil.hashFile("blake3", srcFilePath), "693e401831758dab9089ffc18c5aa5f3c3a3cc8d717d66d29be689b81b7d8edb");
-	assertStrictEquals(await db.putFile("testFileData", srcFilePath));
+	await db.putFile("testFileData", srcFilePath);
 
 	const tmpFilePath = await fileUtil.genTempPath(undefined, "-Sparkey-test-extractFile.png");
 	await db.extractFile("testFileData", tmpFilePath);
@@ -260,7 +290,7 @@ Deno.test("maxLen", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
 	assertStrictEquals(db.getText("hello"), "Hello, World!");
 
 	assertStrictEquals(db.getText("hello", 4), "Hell");
@@ -273,7 +303,7 @@ Deno.test("openFiles", async () =>
 {
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putGet");
 	const db = await Sparkey.create(dbFilePathPrefix);
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
 	assertStrictEquals(db.getText("hello"), "Hello, World!");
 
 	let {stdout} = await runUtil.run("lsof", ["-p", Deno.pid.toString()]);
@@ -291,7 +321,7 @@ Deno.test("truncate", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-truncate");
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putText("hello", "Hello, World!"), true);
+	assertStrictEquals(db.put("hello", "Hello, World!"), true);
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spi`), true);
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spl`), true);
 
@@ -303,8 +333,8 @@ Deno.test("truncate", async () =>
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spl`), false);
 	assertStrictEquals(db.getText("hello"), undefined);
 
-	assertStrictEquals(db.putText("2nd", "second"), true);
-	assertStrictEquals(db.putText("3rd", "third"), true);
+	assertStrictEquals(db.put("2nd", "second"), true);
+	assertStrictEquals(db.put("3rd", "third"), true);
 
 	assertStrictEquals(db.getText("2nd"), "second");
 	assertStrictEquals(db.getText("3rd"), "third");
@@ -337,7 +367,7 @@ Deno.test("putMany", async () =>
 	const dbFilePathPrefix = await fileUtil.genTempPath(undefined, "-Sparkey-test-putMany");
 	const db = await Sparkey.create(dbFilePathPrefix);
 	
-	assertStrictEquals(db.putTexts(["hello", "2nd", "3rd"], ["Hello, World!", "second", "third"]), true);
+	assertStrictEquals(db.putMany(["hello", "2nd", "3rd"], ["Hello, World!", "second", "third"]), true);
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spi`), true);
 	assertStrictEquals(await fileUtil.exists(`${dbFilePathPrefix}.spl`), true);
 

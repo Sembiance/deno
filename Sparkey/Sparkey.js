@@ -86,22 +86,23 @@ export class Sparkey
 		return size;
 	}
 
-	put(k, v, {skipCompress}={})
+	prepareValue(v)
+	{
+		const data = typeof v==="string" ? this.textEncoder.encode(v) : v;
+		return this.compressed ? this.compressValue(data) : data;
+	}
+
+	put(k, v)
 	{
 		const keyBuffer = this.textEncoder.encode(k);
-		const data = this.compressed && !skipCompress ? this.compressValue(v) : v;
+		const data = this.prepareValue(v);
 		return !!this.sparkey.symbols.put(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keyBuffer, keyBuffer.length, data, data.length);
 	}
 
-	putText(key, val)
-	{
-		return this.put(key, this.textEncoder.encode(val));
-	}
-
-	async putFile(k, filePath, {skipCompress}={})
+	async putFile(k, filePath)
 	{
 		let status, stderr;
-		if(this.compressed && !skipCompress)
+		if(this.compressed)
 		{
 			const tmpFilePath = await fileUtil.genTempPath();
 			await runUtil.run("zstd", ["-D", `${this.dbFilePathPrefix}.dict`, filePath, "-o", tmpFilePath]);
@@ -129,7 +130,7 @@ export class Sparkey
 			pos+=keysEncoded[i].length;
 		}
 
-		const valsToPut = this.compressed ? vals.map(v => this.compressValue(v)) : vals;
+		const valsToPut = vals.map(v => this.prepareValue(v));
 		const valsBuffer = new Uint8Array(valsToPut.map(v => v.length).sum()+(valsToPut.length*4));
 		for(let i=0, pos=0;i<valsToPut.length;i++)
 		{
@@ -142,9 +143,30 @@ export class Sparkey
 		return !!this.sparkey.symbols.putMany(this.dbFilePathPrefixBuffer, this.dbFilePathPrefixBuffer.length, keys.length, keysBuffer, valsBuffer);
 	}
 
-	putTexts(keys, vals)
+	batchPut({byteLimit=xu.MB*256, keyLimit=10000}={})
 	{
-		return this.putMany(keys, vals.map(v => this.textEncoder.encode(v)));
+		const batch = {keys : [], vals : [], byteCount : 0};
+		batch.put = (k, v) =>
+		{
+			batch.keys.push(k);
+			batch.vals.push(v);
+			batch.byteCount += k.length + v.length;
+			if(batch.byteCount>=byteLimit || batch.keys.length>=keyLimit)
+				return batch.flush();
+		};
+		batch.flush = () =>
+		{
+			if(!batch.keys.length)
+				return;
+
+			const r = this.putMany(batch.keys, batch.vals);
+			batch.keys = [];
+			batch.vals = [];
+			batch.byteCount = 0;
+			return r;
+		};
+
+		return batch;
 	}
 
 	delete(k)
