@@ -39,7 +39,8 @@ export function serve(serveOptions, handler, {xlog=new XLog("warn")}={})
 // devMode can be set to true and then any changes to file.js handlers will be monitored and it will automatically reload the handler
 //   NOTE: devMode only works if all the strings in routesRaw that point to file paths share a common parent/grandparent directory
 // getStopper is an optional function that will be called with a function that you can call to stop the monitorer when you choose to stop the server
-export async function route(routesRaw, args, {devMode, logHits, getStopper, xlog : _xlog}={})
+// Set nfsSensitive to true if the filesystem is mounted via NFS and you need to monitor changes in a different/slower way than inotify (which is the default)
+export async function route(routesRaw, args, {devMode, logHits, nfsSensitive=false, getStopper, xlog : _xlog}={})
 {
 	const xlog = _xlog || args?.xlog || new XLog("error");
 	const routes = routesRaw instanceof Map ? routesRaw : new Map(Object.entries(routesRaw));
@@ -51,7 +52,7 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper, xlog
 		let commonDirPath = routePaths[0];
 		while(!routePaths.slice(1).every(v => v.startsWith(commonDirPath)))	// eslint-disable-line no-loop-func
 			commonDirPath = path.dirname(commonDirPath);
-		
+
 		if(commonDirPath==="/")
 			throw new Error("Could not find a common directory for all the route handlers");
 
@@ -61,18 +62,19 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper, xlog
 				return;
 
 			const routeEntry = routesEntries.find(([, {originalHandler}]) => originalHandler===filePath)?.[1];
-			if(routeEntry)
+			if(!routeEntry)
+				return xlog.trace`File ${filePath} changed but no route found for it!`;
+
+			try
 			{
-				try
-				{
-					routeEntry.handler = (await import(`${routeEntry.originalHandler}#${xu.randStr()}`)).default;
-				}
-				catch(err)
-				{
-					xlog.error`Error loading handler: ${err}`;
-				}
+				routeEntry.handler = (await import(`${routeEntry.originalHandler}#${xu.randStr()}`)).default;
+				xlog.debug`Reloaded handler: ${path.relative(commonDirPath, routeEntry.originalHandler)}`;
 			}
-		});
+			catch(err)
+			{
+				xlog.error`Error loading handler: ${err}`;
+			}
+		}, nfsSensitive);
 
 		if(getStopper)
 			getStopper(async () => await monitorer.stop());
@@ -89,7 +91,7 @@ export async function route(routesRaw, args, {devMode, logHits, getStopper, xlog
 		}
 
 		if(logHits)
-			xlog.info`Hit handled (${prefix}): ${u.toString()}`;
+			xlog.info`Hit handled (${prefix}): ${u.href}`;
 		
 		try
 		{
@@ -136,7 +138,7 @@ export async function scrape(url, {click, waitFor}={})
 		json.browser_actions = [];
 
 	if(waitFor)
-		json.browser_actions.push(...Array.force(waitFor).flatMap(value => ([{type : "wait_for_element", selector : {type : "css", value}, "timeout_s" : 60}])));
+		json.browser_actions.push(...Array.force(waitFor).map(value => ({type : "wait_for_element", selector : {type : "css", value}, "timeout_s" : 60})));
 
 	if(click)
 	{
@@ -163,5 +165,8 @@ export async function scrape(url, {click, waitFor}={})
 export async function scrapeStop()
 {
 	if(rateLimiter)
+	{
 		await rateLimiter.stop();
+		rateLimiter = null;
+	}
 }

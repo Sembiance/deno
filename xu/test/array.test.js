@@ -54,6 +54,23 @@ Deno.test("clone", () =>
 	assertEquals(r3, c.clone());
 });
 
+
+Deno.test("combinations", () =>
+{
+	const a = [1, 2, 3, 4];
+	//const r = [[1, 2]];
+	//assertEquals(r, a.clear());
+	//assertEquals(r, a);
+
+	const r2 = [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]];
+	assertEquals(a.combinations(2), r2);
+
+	const r3 = [[1, 2, 3], [1, 2, 4], [1, 3, 4], [2, 3, 4]];
+	assertEquals(a.combinations(3), r3);
+	
+	assertEquals(a.combinations(3, true), [...r3, ...r2]);
+});
+
 Deno.test("filterAsync", async () =>
 {
 	const a = [1, 2, 3, 4, 5];
@@ -315,7 +332,7 @@ Deno.test("sortMulti", () =>
 Deno.test("standardDeviation", () =>
 {
 	const a = [1, 2, 3, 4, 5];
-	let r = 1.414_213_562_373_095_1;
+	let r = Math.SQRT2;
 	assertStrictEquals(r, a.standardDeviation());
 	r = 1.581_138_830_084_189_8;
 	assertStrictEquals(r, a.standardDeviation(true));

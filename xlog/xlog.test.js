@@ -53,7 +53,7 @@ Deno.test("flush", async () =>
 	xlog.trace`xlog test message with number: ${47}`;
 	await xlog.flush(logFilePath);
 
-	const expectedLog = ["WARN: ", "xlog test message", "xlog.test.js: 46: xlog test message with string: hello", "xlog.test.js: 53: xlog test message with number: 47"];
+	const expectedLog = ["WARN: xlog test message", "xlog.test.js: 46: xlog test message with string: hello", "xlog.test.js: 53: xlog test message with number: 47"];
 	const debugLog = (await fileUtil.readTextFile(logFilePath)).trim().split("\n");
 	await fileUtil.unlink(logFilePath);
 
@@ -82,7 +82,7 @@ Deno.test("flush-via-signal", async () =>
 	Deno.kill(Deno.pid, "SIGUSR2");
 	await delay(1000);	// give the flush time to finish since we are doing it async via a kill SIGUSR2 signal
 
-	const expectedLog = ["WARN: ", "xlog test message", "xlog.test.js: 72: xlog test message with string: hello", "xlog.test.js: 80: xlog test message with number: 47"];
+	const expectedLog = ["WARN: xlog test message", "xlog.test.js: 72: xlog test message with string: hello", "xlog.test.js: 80: xlog test message with number: 47"];
 	const debugLog = (await fileUtil.readTextFile(logFilePath)).trim().split("\n");
 	await fileUtil.unlink(logFilePath);
 
@@ -106,13 +106,13 @@ Deno.test("logger", () =>
 	if(xlog.atLeast("trace"))
 		console.log("should NOT see");
 
-	/* eslint-disable unicorn/escape-case, unicorn/no-hex-escape */
+	/* eslint-disable unicorn/escape-case */
 	const expectedLog = [
-		"\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m \nxlog test message",
+		"\n\x1b[93mWARN\x1b[0m\x1b[96m:\x1b[0m xlog test message",
 		"ms\x1b[0m \x1b[90mxlog.test.js:102\x1b[0m\x1b[36m:\x1b[0m xlog test message with string: \x1b[32mhello\x1b[0m",
 		"ms\x1b[0m \x1b[90mxlog.test.js:103\x1b[0m\x1b[36m:\x1b[0m xlog test message with number: \x1b[33m47\x1b[39m"
 	];
-	/* eslint-enable unicorn/escape-case, unicorn/no-hex-escape */
+	/* eslint-enable unicorn/escape-case */
 	for(let i=0;i<debugLog.length;i++)
 		assert(debugLog[i].endsWith(expectedLog[i]), `${i}: ${JSON.stringify(debugLog[i])} vs expected  ${JSON.stringify(expectedLog[i])}`);
 });
@@ -147,7 +147,9 @@ Deno.test("xlog", () =>
 	xlog.debug`debug message, ${fg.red("should NOT see")}`;
 	xlog.trace`trace message, ${fg.red("should NOT see")}`;
 	if(xlog.atLeast("info"))
-		console.log(`${fg.green("should see")}`);
+		console.log(fg.green("should see"));
 	if(xlog.atLeast("debug"))
-		console.log(`${fg.red("should NOT see")}`);
+		console.log(fg.red("should NOT see"));
+
+	xlog.warn`\n\nwarn message with two leading newlines, ${fg.green("should see")}`;
 });

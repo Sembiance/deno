@@ -12,6 +12,7 @@
 		"Sparkey"          : "/mnt/compendium/DevLab/deno/Sparkey/Sparkey.js",
 		"std"              : "/mnt/compendium/DevLab/deno/std.js",
 		"thirdParty"       : "/mnt/compendium/DevLab/deno/thirdParty/thirdParty.js",
+		"UI"               : "/mnt/compendium/DevLab/deno/UI/UI.js",
 		"UInt8ArrayReader" : "/mnt/compendium/DevLab/deno/UInt8ArrayReader.js",
 		"xu"               : "/mnt/compendium/DevLab/deno/xu/xu.js",
 		"xutil"            : "/mnt/compendium/DevLab/deno/xutil/xutil.js",

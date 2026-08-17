@@ -20,7 +20,7 @@ export class AgentPool
 		this.onFail = onFail;
 		this.xlog = xlog;
 
-		this.logPrefix = `${xu.bracket(`${fg.white("AgentPool")}${fg.cyan("-")}${fg.peach(path.basename(this.agentFilePath, path.extname(this.agentFilePath)))}`)}`;
+		this.logPrefix = xu.bracket(`${fg.white("AgentPool")}${fg.cyan("-")}${fg.peach(path.basename(this.agentFilePath, path.extname(this.agentFilePath)))}`);
 	}
 
 	async init({maxProcessDuration, watchdogInterval=xu.SECOND, restartEvery}={})

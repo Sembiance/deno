@@ -13,7 +13,7 @@ String.prototype.decodeURLPath ||= function decodeURLPath()
 /** returns the string str without any ansi escape codes. Useful for measuring actual length of string that will be printed to the terminal */
 String.prototype.decolor ||= function decolor()
 {
-	return this.replace(/[\u001b\u009b][[()#;?]*(?:[\d]{1,4}(?:;[\d]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");	// eslint-disable-line no-control-regex, unicorn/better-regex, unicorn/escape-case, sonarjs/single-char-in-character-classes
+	return this.replace(/[\u001b\u009b][[()#;?]*(?:[\d]{1,4}(?:;[\d]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");	// eslint-disable-line no-control-regex, unicorn/escape-case, sonarjs/single-char-in-character-classes
 };
 
 /** Encode a URL path segment, replacing things like # and ? and % with the proper hex escaping  */
@@ -27,12 +27,6 @@ String.prototype.encodeURLPath ||= function encodeURLPath({skipEncodePercent=fal
 	return r;
 };
 
-/** Escape the string for inclusion in regex */
-String.prototype.escapeRegex ||= function escapeRegex()
-{
-	return this.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');	// eslint-disable-line unicorn/better-regex, no-useless-escape, @stylistic/quotes
-};
-
 /** Escape the string for HTML/XML and other markup language documents */
 String.prototype.escapeXML ||= function escapeXML()
 {
@@ -42,7 +36,7 @@ String.prototype.escapeXML ||= function escapeXML()
 		replaceAll(">", "&gt;").
 		replaceAll('"', "&quot;").
 		replaceAll("'", "&#039;").
-		replace(/[\x00-\x1F\x7F]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`);	// eslint-disable-line no-control-regex, unicorn/no-hex-escape
+		replace(/[\x00-\x1F\x7F]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, "0")}`);	// eslint-disable-line no-control-regex
 };
 String.prototype.escapeHTML ||= String.prototype.escapeXML;
 
@@ -51,7 +45,7 @@ String.prototype.innerTrim ||= function innerTrim()
 {
 	let text = this;	// eslint-disable-line consistent-this
 	const re = new RegExp(/\s\s/g);
-	while(text.search(re)!==-1)
+	while(re.test(text))
 		text = text.replace(re, " ");
 
 	return text;
@@ -107,7 +101,7 @@ String.prototype.squeeze ||= function squeeze()
 /** Converts a string to camel case */
 String.prototype.toCamelCase ||= function toCamelCase()
 {
-	return this.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => (index === 0 ? word.toLowerCase() : word.toUpperCase())).replace(/\s+/g, "");	// eslint-disable-line unicorn/better-regex
+	return this.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => (index === 0 ? word.toLowerCase() : word.toUpperCase())).replace(/\s+/g, "");
 };
 
 /** Converts a string to proper case, capitilizing the first letter of each word and lowercasing the rest of the word */
@@ -118,7 +112,6 @@ String.prototype.toProperCase ||= function toProperCase()
 
 String.prototype.toVisible ||= function toVisible(includeSpace)
 {
-	/* eslint-disable unicorn/no-hex-escape */
 	const MAPPING =
 	{
 		"\t"   : "⇥",  // Tab
@@ -133,7 +126,6 @@ String.prototype.toVisible ||= function toVisible(includeSpace)
 	};
 	if(includeSpace)
 		MAPPING[" "] = "␣";
-	/* eslint-enable unicorn/no-hex-escape */
 
 	return this.split("").map(c => (c.charCodeAt(0) < 0x20 || c.charCodeAt(0) === 0x7F ? (MAPPING[c] || "") : c)).join("");
 };

@@ -10,14 +10,14 @@
 export {assert, assertEquals, assertNotEquals, assertNotStrictEquals, assertStrictEquals, assertThrows, assertRejects} from "jsr:@std/assert@1.0.19";
 
 // async
-export {deadline} from "jsr:@std/async@1.2.0/deadline";
-export {delay} from "jsr:@std/async@1.2.0/delay";
+export {deadline} from "jsr:@std/async@1.5.0/deadline";
+export {delay} from "jsr:@std/async@1.5.0/delay";
 
 // bytes
 export {concat as uint8arrayConcat} from "jsr:@std/bytes@1.0.6/concat";
 
 // crypto
-export {crypto} from "jsr:@std/crypto@1.0.5/crypto";
+export {crypto} from "jsr:@std/crypto@1.1.0/crypto";
 
 // csv
 export {parse as csvParse} from "jsr:@std/csv@1.0.6/parse";
@@ -28,19 +28,19 @@ export {format as dateFormat} from "jsr:@std/datetime@0.225.7/format";
 export {parse as dateParse} from "jsr:@std/datetime@0.225.7/parse";
 
 // encoding
-export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "jsr:@std/encoding@1.0.10/base64";
-export {decodeHex as hexDecode, encodeHex as hexEncode} from "jsr:@std/encoding@1.0.10/hex";
-export {decodeAscii85 as ascii85Decode} from "jsr:@std/encoding@1.0.10/ascii85";
+export {decodeBase64 as base64Decode, encodeBase64 as base64Encode} from "jsr:@std/encoding@1.0.11/base64";
+export {decodeHex as hexDecode, encodeHex as hexEncode} from "jsr:@std/encoding@1.0.11/hex";
+export {decodeAscii85 as ascii85Decode} from "jsr:@std/encoding@1.0.11/ascii85";
 
 // fs
-export * as fs from "jsr:@std/fs@1.0.23";
+export * as fs from "jsr:@std/fs@1.0.24";
 
 // html
-export {unescape as htmlUnescape} from "jsr:@std/html@1.0.5/entities";
+export {unescape as htmlUnescape} from "jsr:@std/html@1.0.7/entities";
 
 // http
-export { getSetCookies } from "jsr:@std/http@1.0.25/cookie";
-export * as http from "jsr:@std/http@1.0.25";
+export { getSetCookies } from "jsr:@std/http@1.1.2/cookie";
+export * as http from "jsr:@std/http@1.1.2";
 
 // io
 export {copy as copyAll} from "jsr:@std/io@0.225.3/copy";
@@ -48,8 +48,8 @@ export {readAll} from "jsr:@std/io@0.225.3/read-all";
 export {writeAll} from "jsr:@std/io@0.225.3/write-all";
 
 // json
-export {JsonParseStream} from "jsr:@std/json@1.0.3/parse-stream";
-export {JsonStringifyStream} from "jsr:@std/json@1.0.3/stringify-stream";
+export {JsonParseStream} from "jsr:@std/json@1.1.0/parse-stream";
+export {JsonStringifyStream} from "jsr:@std/json@1.1.0/stringify-stream";
 
 // msgpack
 export {encode as msgpackEncode} from "jsr:@std/msgpack@1.0.3/encode";
@@ -59,14 +59,14 @@ export {decode as msgpackDecode} from "jsr:@std/msgpack@1.0.3/decode";
 export {getAvailablePort} from "jsr:@std/net@1.0.6";
 
 // path
-export * as path from "jsr:@std/path@1.1.4";
+export * as path from "jsr:@std/path@1.1.6";
 
 // streams
-export {Buffer} from "jsr:@std/streams@1.0.17/buffer";
-export {TextLineStream} from "jsr:@std/streams@1.0.17/text-line-stream";
-export {TextDelimiterStream} from "jsr:@std/streams@1.0.17/text-delimiter-stream";
-export {toArrayBuffer} from "jsr:@std/streams@1.0.17/to-array-buffer";
-export {LimitedBytesTransformStream} from "jsr:@std/streams@1.0.17/limited-bytes-transform-stream";
+export {Buffer} from "jsr:@std/streams@1.1.1/buffer";
+export {TextLineStream} from "jsr:@std/streams@1.1.1/text-line-stream";
+export {TextDelimiterStream} from "jsr:@std/streams@1.1.1/text-delimiter-stream";
+export {toArrayBuffer} from "jsr:@std/streams@1.1.1/to-array-buffer";
+export {LimitedBytesTransformStream} from "jsr:@std/streams@1.1.1/limited-bytes-transform-stream";
 
 // xml
 export {parse as xmlParse} from "jsr:@std/xml@0.1.0/parse";

@@ -11,18 +11,21 @@ export function dropTable(db, tableid)
 	return db.exec(`DROP TABLE IF EXISTS ${tableid}`);
 }
 
-export function open(dbFilePath, opts={})
+export function open(dbFilePath, {create, writable}={})
 {
-	const db = new sqlite.Database(dbFilePath, {create : false, memory : false, readonly : false, int64 : true, ...opts});
-	db.exec("PRAGMA journal_mode=WAL");
-	db.exec("PRAGMA synchronous=NORMAL");
+	const db = new sqlite.Database(dbFilePath, {create, memory : false, readonly : !writable, int64 : true});
 	db.exec("PRAGMA temp_store=MEMORY");
 	db.exec(`PRAGMA mmap_size=${xu.GB*2}`);
-	db.exec(`PRAGMA journal_size_limit=${xu.MB*512}`);
+	if(writable)
+	{
+		db.exec("PRAGMA journal_mode=WAL");
+		db.exec("PRAGMA synchronous=NORMAL");
+		db.exec(`PRAGMA journal_size_limit=${xu.MB*512}`);
+		db.exec("PRAGMA wal_autocheckpoint=10000");
+	}
 
 	return db;
 }
-
 
 export function prepare(db, statementRaw)
 {

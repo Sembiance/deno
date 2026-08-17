@@ -26,11 +26,6 @@ Deno.test("encodeURLPath", () =>
 	assertStrictEquals("this has newlines\nand\rcarriage returnsand\ttabsand\\backslashes\\\\omg?#!&".encodeURLPath(), "this has newlines%0aand%0dcarriage returnsand%09tabsand%5cbackslashes%5c%5comg%3f%23!&");
 });
 
-Deno.test("escapeRegex", () =>
-{
-	assertStrictEquals("this/is NOT! a [very] awesome test*".escapeRegex(), "this\\/is NOT! a \\[very\\] awesome test\\*");
-});
-
 Deno.test("escapeXML", () =>
 {
 	assertStrictEquals(`this filename is > 88 and < 22 with "string's" & more...`.escapeXML(), "this filename is &gt; 88 and &lt; 22 with &quot;string&#039;s&quot; &amp; more...");
@@ -91,6 +86,7 @@ Deno.test("strip", () =>
 	const r = "hll, wrld";
 	assertStrictEquals(r, a.strip("aeiou"));
 	assertStrictEquals(r, a.strip(["a", "e", "i", "o", "u"]));
+	assertStrictEquals("abc/123 xyz".strip(" /"), "abc123xyz");
 });
 
 Deno.test("squeeze", () =>
@@ -117,7 +113,7 @@ Deno.test("toProperCase", () =>
 
 Deno.test("toVisible", () =>
 {
-	assertStrictEquals(`T\x01his newline\nand\rcarriage \x1bescape string with \ttabs\vverticaland nulls \0 with \x07 bells and backspaces \b`.toVisible(), "This newline␤and↵carriage ␛escape string with ⇥tabs⇩verticaland nulls ␀ with ⍾ bells and backspaces ⌫");	// eslint-disable-line unicorn/no-hex-escape, unicorn/escape-case
+	assertStrictEquals(`T\x01his newline\nand\rcarriage \x1bescape string with \ttabs\vverticaland nulls \0 with \x07 bells and backspaces \b`.toVisible(), "This newline␤and↵carriage ␛escape string with ⇥tabs⇩verticaland nulls ␀ with ⍾ bells and backspaces ⌫");	// eslint-disable-line unicorn/escape-case
 });
 
 Deno.test("trimChars", () =>

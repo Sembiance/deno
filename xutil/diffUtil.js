@@ -7,7 +7,7 @@ export function diff(o, n, _options={})
 
 	if(Object.isObject(o))
 		return diffObjects(o, n, options);
-	else if(Array.isArray(o))
+	if(Array.isArray(o))
 		return diffArray(o, n, options);
 	
 	return diffValues(o, n);

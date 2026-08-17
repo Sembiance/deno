@@ -132,7 +132,7 @@ export function multiLineBarChart(o, label="Label", lineLength=120)
 	const LINES = Object.entries(o).sort((a, b) => b[1]-a[1]);
 	const TOTAL = Object.values(o).sum();
 	const VALUES = LINES.map(line => `${xu.cf.fg.white(line[1].toLocaleString())} (${Math.round((line[1]/TOTAL)*100)}%)`);
-	const longestKey = LINES.map(line => line[0].length).sort((a, b) => b-a)[0];
+	const longestKey = LINES.map(line => line[0].length).max();
 	const barLength = lineLength-(longestKey+2);
 
 	r.push(`${" ".repeat(Math.round((lineLength-label.length)/2)) + xu.cf.fg.yellow(label)}\n`);
@@ -250,7 +250,6 @@ export function stdoutWrite(str)
 	Deno.stdout.writeSync(textEncoder.encode(str));
 }
 
-/* eslint-disable unicorn/no-hex-escape */
 class Progress
 {
 	constructor({min=0, max=100, barWidth=55, status="", maxLength=null, includeCount=true, includeDuration=true, includePer=true, perSampleCount=20, dontAutoFinish, directTTY}={})
@@ -386,7 +385,6 @@ class Progress
 		}
 	}
 }
-/* eslint-enable unicorn/no-hex-escape */
 
 export function progress(o)
 {

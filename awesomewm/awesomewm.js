@@ -114,7 +114,7 @@ export async function setTerminalTabName(wid, tabName)
 {
 	await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "shift+Up"], {inheritEnv : true});
 	await delay(125);
-	await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, `${tabName}`], {inheritEnv : true});
+	await runUtil.run("xdotool", ["type", "--clearmodifiers", "--window", wid, tabName], {inheritEnv : true});
 	await delay(125);
 	await runUtil.run("xdotool", ["key", "--clearmodifiers", "--window", wid, "Return"], {inheritEnv : true});
 }

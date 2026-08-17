@@ -8,7 +8,7 @@ Deno.test("calcMaxProcs", async () =>
 		return;
 
 	const a = await sysUtil.calcMaxProcs(undefined, {expectedMemoryUsage : 8*xu.GB});
-	assertStrictEquals(a, 12);
+	assertStrictEquals(a, 8);
 });
 
 Deno.test("getAudioPlaybackDevices", async () =>

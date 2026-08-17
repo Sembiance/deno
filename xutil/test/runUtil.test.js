@@ -279,6 +279,12 @@ Deno.test("stdinData-with-stdoutBlock", async () =>
 	assertStrictEquals(stdout.length, 37552);
 });
 
+Deno.test("sudo", async () =>
+{
+	const {stdout} = await runUtil.run("whoami", [], {sudo : true});
+	assertStrictEquals(stdout, "root\n");
+});
+
 Deno.test("timeout-normal", async () =>
 {
 	const beforeTime = performance.now();
@@ -299,7 +305,7 @@ Deno.test("timeout-detached", async () =>
 
 Deno.test("virtualX-single", async () =>
 {
-	let {stderr} = await runUtil.run("xclock", ["--help"], {timeout : xu.SECOND*2});
+	let {stderr} = await runUtil.run("xclock", [], {timeout : xu.SECOND*2});
 	assertStrictEquals(stderr.includes("Can't open display"), true, stderr);
 	({stderr} = await runUtil.run("/usr/bin/xclock", ["--help"], {virtualX : true}));
 	assertStrictEquals(stderr.startsWith("Usage: /usr/bin/xclock"), true, stderr);

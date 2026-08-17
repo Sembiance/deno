@@ -142,8 +142,26 @@ export async function mkdir(dirPath, {force, recursive}={})
 	}
 }
 
-export async function monitor(dirPath, cb)
+export async function monitor(dirPath, cb, nfsSensitive)
 {
+	function parseEventLine(line)
+	{
+		if(nfsSensitive)
+		{
+			const groups = line.match(/^(?<when>\d+) (?<filePath>.+) (?<events>[A-Za-z,]+)$/)?.groups;
+			if(!groups)
+				return null;
+
+			return {...groups, events : groups.events.split(",")};
+		}
+
+		const groups = line.match(/^(?<when>\d+) (?<events>[^ ]+) (?<filePath>.+)$/)?.groups;
+		if(!groups)
+			return null;
+
+		return {...groups, events : groups.events.split(",")};
+	}
+
 	const linecb = async line =>
 	{
 		if(line.startsWith("Setting up watches"))
@@ -152,26 +170,36 @@ export async function monitor(dirPath, cb)
 		if(line.trim()==="Watches established.")
 			return await cb({type : "ready"});
 
-		let {when, events, filePath} = line.match(/^(?<when>\d+) (?<events>[^ ]+) (?<filePath>.+)$/)?.groups || {};		// eslint-disable-line prefer-const
+		const {when, events, filePath} = parseEventLine(line) || {};
 		if(!when)
-			return console.error(`Failed to parse inotifywait line: ${line}`);
-	
-		events = events.split(",");
+			return console.error(`Failed to parse ${nfsSensitive ? "fswatch" : "inotifywait"} line: ${line}`);
 
 		const o = {when : new Date((+when*xu.SECOND)), filePath};
-		if(events.includesAny(["CREATE", "MOVED_TO"]))
+
+		if(events.some(v => ["CREATE", "MOVED_TO", "Created", "MovedTo"].includes(v)))
 			o.type = "create";
-		else if(events.includes("CLOSE_WRITE"))
+		else if(events.some(v => ["CLOSE_WRITE", "Updated", "AttributeModified", "OwnerModified", "Renamed"].includes(v)))
 			o.type = "modify";
-		else if(events.includesAny(["DELETE", "MOVED_FROM"]))
+		else if(events.some(v => ["DELETE", "MOVED_FROM", "Removed", "MovedFrom"].includes(v)))
 			o.type = "delete";
 		else
 			o.type = `UNKNOWN: ${events.join(",")}`;
-		
+
 		await cb(o);
 	};
 
-	const {p} = await runUtil.run("inotifywait", ["-mr", "--timefmt", "%s", "--format", "%T %e %w%f", "-e", "create", "-e", "close_write", "-e", "delete", "-e", "moved_from", "-e", "moved_to", dirPath], {detached : true, stdoutcb : linecb, stderrcb : linecb});
+	const runOptions = {detached : true, stdoutcb : linecb, stderrcb : linecb};
+	let p;
+	if(nfsSensitive)
+	{
+		({p} = await runUtil.run("fswatch", ["-r", "-m", "poll_monitor", "-l", "0.2", "-t", "-f", "%s", "-x", "--event-flag-separator", ",", dirPath], runOptions));
+		await cb({type : "ready"});
+	}
+	else
+	{
+		({p} = await runUtil.run("inotifywait", ["-mr", "--timefmt", "%s", "--format", "%T %e %w%f", "-e", "create", "-e", "close_write", "-e", "delete", "-e", "moved_from", "-e", "moved_to", dirPath], runOptions));
+	}
+
 	return {stop : async () => await runUtil.kill(p, "SIGKILL")};
 }
 
@@ -310,7 +338,7 @@ export async function tree(root, {depth=Number.MAX_SAFE_INTEGER, glob, nodir=fal
 	if(glob)
 		regex = path.globToRegExp(glob, {extended : true});
 
-	if(regex && regex instanceof RegExp===false)
+	if(regex && !(regex instanceof RegExp))
 		throw new TypeError(`regex must be an actual RegExp to avoid all sorts of edge cases when matching`);
 
 	let r = [];

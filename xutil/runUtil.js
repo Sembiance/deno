@@ -61,13 +61,15 @@ export async function runUntilSuccess(cmd, args, options={})
  *   killChildren		Kill children of the process as well on timeout
  *   limitRAM           Limit RAM to the given number of bytes (or set to true for the default: 2GB)
  *   liveOutput			All stdout/stderr from subprocess will be output on our main outputs
- *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe
+ *   stdinPipe          If set to true, then stdin for the process will be set up as a pipe and stdinPipe will be piped to it
  *	 stdinData          If set, this will be sent to stdin
  *   stdoutEncoding		If set, stdout will be decoded as this. Pass "binary" for raw UInt8Array data. Default: utf-8
  *   stderrEncoding		If set, stderr will be decoded as this. Pass "binary" for raw UInt8Array data. Default: utf-8
  *   stdinFilePath		If set, the data in the file path specified will be piped to the process stdin
  *   stdoutFilePath		If set, stdout will be redirected and written to the file path specified
+ *   stdoutPipe			If set, stdout will be piped to this stream
  *   stderrFilePath		If set, stderr will be redirected and written to the file path specified
+ *   stderrPipe			If set, stdout will be piped to this stream
  *   stdoutcb			If set, this function will be called for every 'line' read from stdout (the current 'p' will be passed as the second arg)
  *   stdoutcbDelimiter	If set, this delimiter will be used for the stdoutcb instead of normal text line delimiters
  *   stderrcb			If set, this function will be called for every 'line' read from stderr (the current 'p' will be passed as the second arg)
@@ -77,25 +79,33 @@ export async function runUntilSuccess(cmd, args, options={})
  *   stderrUnbuffer     If set, stderr will be unbuffered with `stdbuf -o0`
  *   stdoutLimit        If set, stdout data will be limited to this number of bytes, the excess will be discarded
  *   stderrLimit        If set, stderr data will be limited to this number of bytes, the excess will be discarded
+ *   sudo				If set, the command will be run with sudo
  *   timeout			Number of 'ms' to allow the process to run and then terminate it
  *   timeoutSignal		What kill signal to send when the timeout elapses. Default: SIGTERM
+ *   ui                 If this is set, treat it as a UI 'section' and correspondingly handle stdoutPipe/stdinPipe
  *   verbose            Set to true to output some details about the program
  *   virtualX			If set, a virtual X environment will be created using Xvfb and the program run with that as the DISPLAY
  *   virtualXVNCPort    If set, x11vnc will run against the virtual X port so you can see what's going on. If you set to 'true' it will auto assign a port
  *   virtualXGLX		Same as virtualX except the GLX extension will be enabled
  *   xlog               If set, stdout/stderr will be redirected to the logger
  */
-export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, limitRAM, liveOutput, exitcb,
+export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_COLLATE"], killChildren, limitRAM, liveOutput, exitcb, sudo, ui,
 	stdinPipe, stdinData, stdinFilePath,
 	stdoutNull, stderrNull,
-	stdoutEncoding="utf-8", stdoutFilePath, stdoutcb, stdoutUnbuffer, stdoutLimit, stdoutcbDelimiter,
-	stderrEncoding="utf-8", stderrFilePath, stderrcb, stderrUnbuffer, stderrLimit,
+	stdoutEncoding="utf-8", stdoutFilePath, stdoutPipe, stdoutcb, stdoutUnbuffer, stdoutLimit, stdoutcbDelimiter,
+	stderrEncoding="utf-8", stderrFilePath, stderrPipe, stderrcb, stderrUnbuffer, stderrLimit,
 	timeout, timeoutSignal="SIGTERM", verbose, virtualX, virtualXGLX, virtualXVNCPort, xlog}={})
 {
-	if([!!stdoutcb, !!stdoutFilePath, !!stdoutNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
-		throw new Error("You can't set more than one of stdoutcb, stdoutFilePath, stdoutNull, lievOutput, xlog");
-	if([!!stderrcb, !!stderrFilePath, !!stderrNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
-		throw new Error("You can't set more than one of stderrcb, stderrFilePath, stderrNull, liveOutput, xlog");
+	if(ui)
+	{
+		stdoutPipe = ui.out;
+		stdinPipe = ui.in;
+	}
+
+	if([!!stdoutcb, !!stdoutFilePath, !!stdoutPipe, !!stdoutNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
+		throw new Error("You can't set more than one of stdoutcb, stdoutFilePath, stdoutPipe, stdoutNull, lievOutput, xlog");
+	if([!!stderrcb, !!stderrFilePath, !!stderrPipe, !!stderrNull, !!liveOutput, !!xlog].filter(v => v===true).length>1)
+		throw new Error("You can't set more than one of stderrcb, stderrFilePath, stderrPipe, stderrNull, liveOutput, xlog");
 	if([!!stdinPipe, !!stdinFilePath, !!stdinData].filter(v => v===true).length>1)
 		throw new Error("You can't set more than one of stdinPipe, stdinFilePath, stdinData");
 
@@ -119,6 +129,12 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		runCmd = path.join(import.meta.dirname, "..", "bin", "runWithRAMLimit.sh");
 	}
 
+	if(sudo)
+	{
+		runArgs.unshift(runCmd);
+		runCmd = "sudo";
+	}
+
 	if(inheritEnv!==true)
 	{
 		runOpts.clearEnv = true;
@@ -139,8 +155,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	if(cwd)
 		runOpts.cwd = cwd;
 
-	runOpts.stdout = (stdoutFilePath || stdoutcb) ? "piped" : (stdoutNull ? "null" : (liveOutput ? "inherit" : "piped"));
-	runOpts.stderr = (stderrFilePath || stderrcb) ? "piped" : (stderrNull ? "null" : (liveOutput ? "inherit" : "piped"));
+	runOpts.stdout = (stdoutFilePath || stdoutPipe || stdoutcb) ? "piped" : (stdoutNull ? "null" : (liveOutput ? "inherit" : "piped"));
+	runOpts.stderr = (stderrFilePath || stderrPipe || stderrcb) ? "piped" : (stderrNull ? "null" : (liveOutput ? "inherit" : "piped"));
 	runOpts.stdin = (stdinPipe || stdinData || stdinFilePath) ? "piped" : "null";
 
 	let xvfbProc = null;
@@ -165,7 +181,7 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 			if(virtualXVNCPort===true)
 				virtualXVNCPort = getAvailablePort();
 
-			x11vncProc = new Deno.Command("/usr/bin/x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-localhost", "-rfbport", `${virtualXVNCPort}`, "-nomodtweak"], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
+			x11vncProc = new Deno.Command("/usr/bin/x11vnc", {args : ["-display", `:${xvfbPort}`, "-forever", "-shared", "-localhost", "-rfbport", virtualXVNCPort.toString(), "-nomodtweak"], clearEnv : true, stdout : "null", stderr : "null", stdin : "null"}).spawn();
 		}
 	}
 
@@ -203,6 +219,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	if(timeout)
 		timerid = setTimeout(timeoutHandler, timeout);
 
+	// if we are running within a TUI UI section, pass the process along to it so it can handle interpreting Ctrl-C and passing along the appropriate kill signals to the process
+	if(ui)
+		ui.p = p;
+
 	const lineReader = async function(readable, cb)
 	{
 		for await (const line of readable.pipeThrough(new TextDecoderStream()).pipeThrough(new TextLineStream()))
@@ -230,6 +250,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	{
 		stdoutPromise = p.stdout.pipeTo((await Deno.open(stdoutFilePath.startsWith("/") ? stdoutFilePath : path.join(runOpts.cwd || Deno.cwd(), stdoutFilePath), {write : true, createNew : true})).writable);
 	}
+	else if(stdoutPipe)
+	{
+		stdoutPromise = p.stdout.pipeTo(stdoutPipe);
+	}
 	else if(!liveOutput && !stdoutNull)
 	{
 		stdoutBuffer = new Buffer();
@@ -251,6 +275,10 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 	{
 		stderrPromise = p.stderr.pipeTo((await Deno.open(stderrFilePath.startsWith("/") ? stderrFilePath : path.join(runOpts.cwd || Deno.cwd(), stderrFilePath), {write : true, createNew : true})).writable);
 	}
+	else if(stderrPipe)
+	{
+		stderrPromise = p.stderr.pipeTo(stderrPipe);
+	}
 	else if(!liveOutput && !stderrNull)
 	{
 		stderrBuffer = new Buffer();
@@ -267,6 +295,8 @@ export async function run(cmd, args=[], {cwd, detached, env, inheritEnv=["PATH",
 		stdinPromise = (await Deno.open(stdinFilePath)).readable.pipeTo(p.stdin);
 	else if(stdinData)
 		stdinPromise = (new Blob([(typeof stdinData==="string" ? new TextEncoder().encode(stdinData) : stdinData)])).stream().pipeTo(p.stdin);
+	else if(stdinPipe)
+		stdinPromise = stdinPipe.pipeTo(p.stdin);
 
 	let cbCalled = false;
 	const cb = async () =>
@@ -373,11 +403,10 @@ export function denoRunOpts(o={})
 
 export function rsyncArgs(src, dest, {srcHost, destHost, bwlimit, deleteExtra, dereferenceSymlinks, exclude, identityFilePath, include, inPlace, fast, filter, noOwnership, port, quiet, pretend, progress, stats, verbose}={})
 {
-	const r = [];
-
 	if(srcHost && destHost)
 		throw new Error("Can't have both srcHost and destHost");
 	
+	const r = [];
 	if(pretend)
 		r.push("-rlpgoD", "--dry-run");
 	else

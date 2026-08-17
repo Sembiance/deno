@@ -50,10 +50,7 @@ Object.equals ||= function equals(o1, o2)
 	}
 
 	// See if o2 has any keys that o1 doesn't
-	if(!Object.keys(o1).includesAll(Object.keys(o2)))
-		return false;
-
-	return true;
+	return !Object.keys(o1).includesAll(Object.keys(o2));
 };
 
 

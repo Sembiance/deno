@@ -19,7 +19,7 @@ export class HTML
 			...this.argOpts,
 			html : this.html.bind(this),
 			compileStylus : this.compileStylus.bind(this),
-			async include(includeSubPath, includeData=data) { return await self.render(includeSubPath, includeData); } });
+			async include(includeSubPath, includeData=data) { return await self.render(includeSubPath, includeData); } });	// eslint-disable-line unicorn/prefer-short-arrow-method
 		return htmlRaw.trim();
 	}
 

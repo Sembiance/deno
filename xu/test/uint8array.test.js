@@ -26,12 +26,15 @@ Deno.test("copy", () =>
 	assertStrictEquals(5, b[14]);
 });
 
-Deno.test("indexOfX", () =>
+Deno.test("indexOfX", async () =>
 {
 	assertStrictEquals(a.indexOfX("VHDR"), 12);
 	assertStrictEquals(a.indexOfX(Uint8Array.from([0x41, 0x4E, 0x4E, 0x4F])), 40);
 	assertStrictEquals(a.indexOfX(0xDB), 139);
 	assertStrictEquals(a.indexOfX([0x20, 0x50, 0x45]), 61);
+
+	const fileData = await Deno.readFile(path.join(import.meta.dirname, "files", "test.dat"));
+	console.log(fileData.indexOfX("Setup Specialist"));
 });
 
 Deno.test("getInt8", () => assertStrictEquals(a.getInt8(7), -119));

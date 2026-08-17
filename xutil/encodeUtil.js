@@ -27,9 +27,7 @@ export async function decode(data, fromEncoding, {iconvPath="iconv"}={})
 	if(!run)
 		({run} = await import(path.join(import.meta.dirname, "runUtil.js")));
 	
-	let cmdArgs = [iconvPath, ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
-	if(fromEncoding==="PETSCII")
-		cmdArgs = ["petcat", ["-nh", "-text"]];	// from app-emulation/vice
+	const cmdArgs = fromEncoding==="PETSCII" ? ["petcat", ["-nh", "-text"]] : [iconvPath, ["-c", "-f", fromEncoding, "-t", "UTF-8"]];
 	//else if(TCL_ENCODINGS.has(fromEncoding))	// Could uncomment this to try and support the TCL conversion script again, but I had trouble getting it to work
 	//	cmdArgs = ["tclsh", [path.join(import.meta.dirname, "..", "bin", "convert2unicode.tcl"), "-encoding", fromEncoding]];
 

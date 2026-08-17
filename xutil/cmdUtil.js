@@ -177,7 +177,7 @@ export function cmdInit({cmdid="<program>", version="1.0.0", desc="", opts : _op
 	});
 
 	// Verify that we have allowed values
-	for(const [argoptid, allowed] of [...args.filter(arg => arg.allowed?.length).map(arg => [arg.argid, arg.allowed]), ...Object.entries(opts).filter(([, opt]) => opt.allowed?.length).map(([optid, opt]) => [optid, opt.allowed])])
+	for(const [argoptid, allowed] of Iterator.concat(args.filter(arg => arg.allowed?.length).map(arg => [arg.argid, arg.allowed]), Object.entries(opts).filter(([, opt]) => opt.allowed?.length).map(([optid, opt]) => [optid, opt.allowed])))
 	{
 		if(allowed && Object.hasOwn(argv, argoptid))
 		{

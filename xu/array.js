@@ -76,6 +76,33 @@ Array.prototype.clone ||= function clone({shallow=false}={})
 	return r;
 };
 
+/** Returns an array of all the combinations of values in the array of the given count. So [1, 2, 3].combinations(2) would return [[1, 2], [1, 3], [2, 3]] */
+Array.prototype.combinations ||= function combinations(count, includeSmaller)
+{
+	if(!Number.isSafeInteger(count) || count<2 || count>this.length)
+		throw new RangeError(`count (got ${count}) must be between 2 and the array length (${this.length})`);
+
+	const result = [];
+
+	const build = (start, size, values) =>
+	{
+		if(values.length===size)
+			return result.push(Array.from(values));
+
+		for(let i=start;i<=(this.length-size)+values.length;i++)
+		{
+			values.push(this[i]);
+			build(i+1, size, values);
+			values.pop();
+		}
+	};
+
+	for(let size=count;size>=(includeSmaller ? 2 : count);size--)
+		build(0, size, []);
+	
+	return result;
+};
+
 /** Same as .filter() but does the filtering in place, returning the array itself as a result for chaining purposes  */
 Array.prototype.filterInPlace ||= function filterInPlace(cb, thisArg)
 {
@@ -133,7 +160,7 @@ Array.prototype.includesAny ||= function includesAny(vals)
 /** Same as .map() but does the mapping IN PLACE, returning the array itself as a result for chaining purposes  */
 Array.prototype.mapInPlace ||= function mapInPlace(callback, thisArg)
 {
-	return Object.assign(this, [].concat(this.map(callback, thisArg)));	// eslint-disable-line unicorn/prefer-array-flat
+	return Object.assign(this, [].concat(this.map(callback, thisArg)));
 };
 
 /** Returns the largest number in the array */
@@ -178,6 +205,26 @@ Array.prototype.min ||= function min()
 			smallestValue = v;
 	}
 	return smallestValue;
+};
+
+/** Returns the value that appears most often */
+Array.prototype.mode ||= function mode()
+{
+	const counts = new Map();
+	for(const v of this)
+		counts.set(v, (counts.get(v) || 0) + 1);
+
+	let maxCount = 0, modeValue;
+	for(const [v, count] of counts)
+	{
+		if(count>maxCount)
+		{
+			maxCount = count;
+			modeValue = v;
+		}
+	}
+	
+	return modeValue;
 };
 
 /** Runs the given fn in parallel for each item in the array, returning a mapped result. Set atOnce to limit how many run at a time (default 10 or cpus/3 whichever is smaller) set to -1 to use all CPUs */

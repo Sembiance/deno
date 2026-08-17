@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-useless-coercion */
 import {xu} from "../xu.js";
 import {assertEquals, assertStrictEquals} from "std";
 
@@ -12,17 +13,22 @@ Deno.test("bitsToNum", () =>
 Deno.test("bytesToSize", () =>
 {
 	let a = Number(128_939_123);
-	assertStrictEquals(a.bytesToSize(), "123MB");
+	assertStrictEquals(a.bytesToSize(), "123MiB");
 	a = Number(47);
 	assertStrictEquals(a.bytesToSize(), "47b");
 	a = Number(xu.MB);
-	assertStrictEquals(a.bytesToSize(), "1MB");
+	assertStrictEquals(a.bytesToSize(), "1MiB");
 	a = Number(xu.GB);
-	assertStrictEquals(a.bytesToSize(), "1GB");
+	assertStrictEquals(a.bytesToSize(), "1GiB");
 	a = Number(xu.TB);
-	assertStrictEquals(a.bytesToSize(), "1TB");
+	assertStrictEquals(a.bytesToSize(), "1TiB");
 	a = Number(xu.PB);
-	assertStrictEquals(a.bytesToSize(), "1PB");
+	assertStrictEquals(a.bytesToSize(), "1PiB");
+
+	a = Number(xu.MB*1.6742);
+	assertStrictEquals(a.bytesToSize(1), "1.7MiB");
+	a = Number(xu.MB*1.1);
+	assertStrictEquals(a.bytesToSize(2, 1000), "1.15MB");
 });
 
 Deno.test("clearBit", () =>

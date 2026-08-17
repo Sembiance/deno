@@ -10,7 +10,7 @@ export class XLog
 	logLines = [];
 
 	// noANSI does not need to be set if you have a logFilePath or logger set
-	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, includeDateTime, inspectOptions={strAbbreviateSize : 9999}}={})
+	constructor(level="info", {logger, mapper, logFilePath, noANSI, alwaysEcho, includeDateTime, ui, inspectOptions={strAbbreviateSize : 9999}}={})
 	{
 		this.lastMessageAt = performance.now();
 		this.level = level;
@@ -23,6 +23,7 @@ export class XLog
 		this.inspectOptions = inspectOptions;
 		this.includeDateTime = includeDateTime;
 		this.cbs = {};
+		this.ui = ui;
 
 		if(this.logFilePath)
 			Deno.addSignalListener("SIGUSR2", this.signalHandler);
@@ -36,6 +37,11 @@ export class XLog
 			{
 				if(!this.atLeast(levelName))
 					return;
+
+				const msgStrs = Array.from(strs);
+				const leadingNewlines = (msgStrs[0].match(/^[\r\n]+/) || [""])[0];
+				if(leadingNewlines)
+					msgStrs[0] = msgStrs[0].slice(leadingNewlines.length);
 
 				const r = [];
 				if(this.includeDateTime)
@@ -54,7 +60,7 @@ export class XLog
 					r.push(`${fg.black(`${path.basename(filePath)}:${lineNum.padStart(3, " ")}`)}${fg.cyanDim(":")} `);
 				}
 				
-				strs.forEach(str =>
+				msgStrs.forEach(str =>
 				{
 					r.push(str);
 
@@ -72,12 +78,14 @@ export class XLog
 				if(this.mapper)
 					s = this.mapper(s);
 				
-				if(!s)
+				if(!s && !leadingNewlines)
 					return s;
 				
 				const prefixColor = {warn : "yellow", error : "red", fatal : "red"}[levelName];
 				if(prefixColor)
 					s = `${fg[prefixColor]((levelName==="fatal" ? xu.c.blink : "") + levelName.toUpperCase())}${fg.cyan(":")} ${s}`;
+
+				s = `${leadingNewlines}${s}`;
 
 				if(this.logFilePath)
 					this.logLines.push(`${s}\n`);
@@ -86,8 +94,11 @@ export class XLog
 
 				if(this.logger)
 					this.logger(outText);
+
+				if(this.ui)
+					this.ui[(["fatal", "error"].includes(levelName) ? "error" : "log")](outText);
 				
-				if((!this.logFilePath && !this.logger) || this.alwaysEcho)
+				if((!this.logFilePath && !this.logger && !this.ui) || this.alwaysEcho)
 					console[(["fatal", "error", "warn"].includes(levelName) ? "error" : "log")](outText);
 
 				if(this.cbs[levelName])

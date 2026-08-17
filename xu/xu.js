@@ -24,7 +24,6 @@ xu.GB = xu.MB*1024;
 xu.TB = xu.GB*1024;
 xu.PB = xu.TB*1024;
 
-/* eslint-disable unicorn/no-hex-escape */
 // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 xu.c =
 {
@@ -101,7 +100,6 @@ xu.c =
 		show : "\x1B[?25h"
 	}
 };
-/* eslint-enable unicorn/no-hex-escape */
 
 // This will convert the above exports.c so you can call xy.cf.fg.cyan("Cyan Color")
 xu.cf = {};
@@ -281,7 +279,7 @@ xu.trim = function trim(strs, ...vals)
 		if(vals.length>0)
 		{
 			const val = vals.shift();
-			rVals.push((typeof val==="object" ? JSON.stringify(val) : `${val}`));
+			rVals.push((typeof val==="object" ? JSON.stringify(val) : val.toString()));
 		}
 
 		r.push(...rVals.map(rVal => rVal.split("\n").map(line => line.trim()).join("\n")));

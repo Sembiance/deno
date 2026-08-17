@@ -3,7 +3,7 @@ import {assertStrictEquals, assert, assertEquals, path} from "std";
 import {fileUtil, hashUtil, runUtil} from "xutil";
 import {Sparkey} from "Sparkey";
 
-const HUGE_FILE_PATH = "/mnt/trove/iso/SIGGRAPH 2001 DVD/SIGGRAPH 2001 DVD.iso";
+const HUGE_FILE_PATH = "/mnt/trove/iso/done/SIGGRAPH 2001 DVD/SIGGRAPH 2001 DVD.iso";
 
 Deno.test("putGet", async () =>
 {

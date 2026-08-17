@@ -17,7 +17,7 @@ export class MediaWiki
 
 	parseCookies(headers)
 	{
-		const cookieParts = headers.get("set-cookie").split(";").map(v => ([v.trim().split("=")[0], v.trim().split("=")[1]]));
+		const cookieParts = headers.get("set-cookie").split(";").map(v => ([v.trim().split("=", 1)[0], v.trim().split("=", 2)[1]]));
 		cookieParts.mapInPlace(([k, v]) =>
 		{
 			if(k.startsWith("httponly, "))
