@@ -499,7 +499,7 @@ export async function getXVFBNum()
 	return xvfbNum;
 }
 
-export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, retryInterval=5, retryRiskyInterval, retryRiskyMax, timeout, xlog}={})
+export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, retryInterval, retryRiskyInterval, retryRiskyMax, timeout, terminal, xlog}={})
 {
 	cmds = Array.force(cmds);
 
@@ -512,6 +512,8 @@ export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, ret
 		sshArgs.push("-i", identityFilePath);
 	if(port)
 		sshArgs.push("-p", port);
+	if(terminal)
+		sshArgs.push("-tt");
 	sshArgs.push(host);
 
 	if(!risky)
@@ -520,15 +522,16 @@ export async function ssh(host, cmds, {identityFilePath, risky, port, quiet, ret
 		// if we are not risky, then the command is safe to be run more than once, so we just try until ssh doesn't return code 255
 		do
 		{
-			const {stdout, stderr, status, timedOut} = await run("ssh", [...sshArgs, cmds.join("; ")], timeout ? {timeout} : {});
+			const {stdout, stderr, status, timedOut} = await run("ssh", [...sshArgs, `${terminal ? "TERM=xterm " : ""}${cmds.join("; ")}`], {...(timeout && {timeout})});
 			if(timedOut)
-				return {err : `ssh to ${host} timed out`};
+				return {err : `ssh to ${host} timed out (${{stdout, stderr}})`};
 				
 			if(status.code===255)
 			{
+				const retryDelay = retryInterval || xu.falloff(retryCounter++);
 				if(!quiet && xlog)
-					xlog.info`ssh to ${host} failed with code 255, retrying in ${retryInterval.msAsHumanReadable({short : true})}...`;
-				await delay(retryInterval || xu.falloff(retryCounter++));
+					xlog.info`ssh to ${host} failed with code 255 (${{stdout, stderr}}), retrying in ${retryDelay.msAsHumanReadable({short : true})}...`;
+				await delay(retryDelay);
 				continue;
 			}
 
